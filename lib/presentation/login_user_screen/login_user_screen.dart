@@ -6,10 +6,7 @@ import '../../widgets/custom_text_form_field.dart';
 import 'notifier/login_user_notifier.dart';
 
 class LoginUserScreen extends ConsumerStatefulWidget {
-  const LoginUserScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const LoginUserScreen({super.key});
 
   @override
   LoginUserScreenState createState() => LoginUserScreenState();
@@ -17,7 +14,7 @@ class LoginUserScreen extends ConsumerStatefulWidget {
 
 // ignore_for_file: must_be_immutable
 class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,59 +29,11 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                 width: double.maxFinite,
                 padding: EdgeInsets.only(
                   left: 24.h,
-                  top: 44.h,
+                  top: 96.h,
                   right: 24.h,
                 ),
                 child: Column(
                   children: [
-                    SizedBox(height: 20.h),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        width: 94.h,
-                        margin: EdgeInsets.only(right: 6.h),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.h,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: appTheme.orange200,
-                          borderRadius: BorderRadiusStyle.roundedBorder8,
-                          border: Border.all(
-                            color: theme.colorScheme.primary,
-                            width: 1.h,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Text(
-                                "lbl_user".tr,
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.only(left: 10.h),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 4.h,
-                                vertical: 6.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: appTheme.blueGray100,
-                                borderRadius: BorderRadiusStyle.roundedBorder8,
-                              ),
-                              child: Text(
-                                "lbl_logo".tr,
-                                textAlign: TextAlign.left,
-                                style: CustomTextStyles.interPrimary,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
                     SizedBox(height: 78.h),
                     Container(
                       width: double.maxFinite,
@@ -134,7 +83,7 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                                 ),
                                 TextSpan(
                                   text: "lbl_navya_hub".tr,
-                                  style: CustomTextStyles.headlineSmallBold,
+                                  style: CustomTextStyles.signature,
                                 )
                               ],
                             ),
@@ -209,14 +158,14 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                                       (!isValidPassword(value,
                                           isRequired: true))) {
                                     return "err_msg_please_enter_valid_password"
-                                        .tr;
+                                      .tr;
                                   }
                                   return null;
                                 },
                               );
                             },
                           ),
-                          SizedBox(height: 18.h),
+                          SizedBox(height: 12.h),
                           Align(
                             alignment: Alignment.centerRight,
                             child: Text(
@@ -224,9 +173,10 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                               style: theme.textTheme.bodySmall,
                             ),
                           ),
-                          SizedBox(height: 32.h),
+                          SizedBox(height: 24.h),
                           CustomOutlinedButton(
                             text: "lbl_login".tr,
+                            style: theme.textTheme.labelLarge,
                           ),
                           SizedBox(height: 18.h),
                           Row(
@@ -254,7 +204,7 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 124.h),
+                    SizedBox(height: 120.h),
                     Text(
                       "msg_v0_0_0_beta_copyright".tr,
                       maxLines: 2,

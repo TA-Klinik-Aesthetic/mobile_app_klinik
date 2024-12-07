@@ -14,5 +14,5 @@ final loginUserNotifier =
 
 /// A notifier that manages the state of a LoginUser according to the event that is dispatched to it.
 class LoginUserNotifier extends StateNotifier<LoginUserState> {
-  LoginUserNotifier(LoginUserState state) : super(state);
+  LoginUserNotifier(super.state);
 }

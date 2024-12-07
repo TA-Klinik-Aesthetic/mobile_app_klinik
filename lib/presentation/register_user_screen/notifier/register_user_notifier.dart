@@ -19,5 +19,5 @@ final registerUserNotifier =
 
 /// A notifier that manages the state of a RegisterUser according to the event that is dispatched to it.
 class RegisterUserNotifier extends StateNotifier<RegisterUserState> {
-  RegisterUserNotifier(RegisterUserState state) : super(state);
+  RegisterUserNotifier(super.state);
 }

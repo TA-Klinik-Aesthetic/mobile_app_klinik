@@ -3,22 +3,36 @@ import 'package:country_pickers/country.dart';
 import 'package:country_pickers/country_pickers.dart';
 import '../core/app_export.dart';
 
-// ignore_for_file: must_be_immutable
-class CustomPhoneNumber extends StatelessWidget {
-  CustomPhoneNumber(
-      {Key? key,
-      required this.country,
-      required this.onTap,
-      required this.controller})
-      : super(
-          key: key,
+class CustomPhoneNumber extends StatefulWidget {
+  const CustomPhoneNumber({
+    super.key,
+    this.initialCountry,
+    required this.onTap,
+    required this.controller, required Country country,
+  });
+
+  final Country? initialCountry;
+  final Function(Country) onTap;
+  final TextEditingController? controller;
+
+  @override
+  State<CustomPhoneNumber> createState() => _CustomPhoneNumberState();
+}
+
+class _CustomPhoneNumberState extends State<CustomPhoneNumber> {
+  late Country country;
+
+  @override
+  void initState() {
+    super.initState();
+    country = widget.initialCountry ??
+        Country(
+          isoCode: 'ID',
+          iso3Code: 'IDN',
+          phoneCode: '62',
+          name: 'Indonesia',
         );
-
-  Country country;
-
-  Function(Country) onTap;
-
-  TextEditingController? controller;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +68,15 @@ class CustomPhoneNumber extends StatelessWidget {
                   width: 1.h,
                 ),
               ),
-              child: Text(
-                "+${country.phoneCode}",
-                style: CustomTextStyles.bodySmallOnPrimary,
+              child: Row(
+                children: [
+                  CountryPickerUtils.getDefaultFlagImage(country),
+                  const SizedBox(width: 8.0),
+                  Text(
+                    "+${country.phoneCode}",
+                    style: CustomTextStyles.bodySmallOnPrimary,
+                  ),
+                ],
               ),
             ),
           ),
@@ -67,7 +87,7 @@ class CustomPhoneNumber extends StatelessWidget {
               child: TextFormField(
                 focusNode: FocusNode(),
                 autofocus: true,
-                controller: controller,
+                controller: widget.controller,
                 style: theme.textTheme.bodySmall!,
                 decoration: InputDecoration(
                   hintText: "lbl_8".tr,
@@ -81,7 +101,7 @@ class CustomPhoneNumber extends StatelessWidget {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -106,9 +126,10 @@ class CustomPhoneNumber extends StatelessWidget {
               country.name,
               style: TextStyle(fontSize: 14.fSize),
             ),
-          )
+          ),
         ],
       );
+
   void _openCountryPicker(BuildContext context) => showDialog(
         context: context,
         builder: (context) => CountryPickerDialog(
@@ -117,9 +138,16 @@ class CustomPhoneNumber extends StatelessWidget {
             hintStyle: TextStyle(fontSize: 14.fSize),
           ),
           isSearchable: true,
-          title: Text('Select your phone code',
-              style: TextStyle(fontSize: 14.fSize)),
-          onValuePicked: (Country country) => onTap(country),
+          title: Text(
+            'Select your phone code',
+            style: TextStyle(fontSize: 14.fSize),
+          ),
+          onValuePicked: (Country pickedCountry) {
+            setState(() {
+              country = pickedCountry;
+            });
+            widget.onTap(pickedCountry);
+          },
           itemBuilder: _buildDialogItem,
         ),
       );

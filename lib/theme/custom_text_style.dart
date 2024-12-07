@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import '../core/app_export.dart';
 
 extension on TextStyle {
-  TextStyle get inter {
+  TextStyle get lato {
     return copyWith(
-      fontFamily: 'Inter',
+      fontFamily: 'Lato',
+    );
+  }
+
+  TextStyle get playfairDisplay {
+    return copyWith(
+      fontFamily: 'PlayfairDisplay',
     );
   }
 }
@@ -31,9 +37,15 @@ class CustomTextStyles {
         fontWeight: FontWeight.w500,
       );
 // Inter text style
-  static TextStyle get interPrimary => TextStyle(
+  static TextStyle get latoPrimary => TextStyle(
         color: theme.colorScheme.primary,
         fontSize: 4.fSize,
         fontWeight: FontWeight.w400,
-      ).inter;
+      ).lato;
+
+  static TextStyle get signature => TextStyle(
+        fontSize: 24.fSize, 
+        fontWeight: FontWeight.w700, 
+        color: theme.colorScheme.primary, 
+      ).playfairDisplay; 
 }

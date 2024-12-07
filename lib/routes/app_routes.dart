@@ -14,9 +14,9 @@ class AppRoutes {
   static const String initialRoute = '/initialRoute';
 
   static Map<String, WidgetBuilder> routes = {
-    loginUserScreen: (context) => LoginUserScreen(),
-    registerUserScreen: (context) => RegisterUserScreen(),
-    appNavigationScreen: (context) => AppNavigationScreen(),
-    initialRoute: (context) => LoginUserScreen()
+    loginUserScreen: (context) => const LoginUserScreen(),
+    registerUserScreen: (context) => const RegisterUserScreen(),
+    appNavigationScreen: (context) => const AppNavigationScreen(),
+    initialRoute: (context) => const LoginUserScreen()
   };
 }

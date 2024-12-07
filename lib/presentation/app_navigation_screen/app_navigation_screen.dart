@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
 
 class AppNavigationScreen extends ConsumerStatefulWidget {
-  const AppNavigationScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const AppNavigationScreen({super.key});
 
   @override
   AppNavigationScreenState createState() => AppNavigationScreenState();
@@ -16,13 +13,13 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Color(0XFFFFFFFF),
+        backgroundColor: const Color(0XFFFFFFFF),
         body: SizedBox(
           width: 375.h,
           child: Column(
             children: [
               Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Color(0XFFFFFFFF),
                 ),
                 child: Column(
@@ -34,7 +31,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
                         "App Navigation",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0XFF000000),
+                          color: const Color(0XFF000000),
                           fontSize: 20.fSize,
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w400,
@@ -48,7 +45,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
                         "Check your app's UI from the below demo screens of your app.",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0XFF888888),
+                          color: const Color(0XFF888888),
                           fontSize: 16.fSize,
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w400,
@@ -59,7 +56,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
                     Divider(
                       height: 1.h,
                       thickness: 1.h,
-                      color: Color(0XFF000000),
+                      color: const Color(0XFF000000),
                     )
                   ],
                 ),
@@ -67,7 +64,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Color(0XFFFFFFFF),
                     ),
                     child: Column(
@@ -107,7 +104,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
         onTapScreenTitle?.call();
       },
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Color(0XFFFFFFFF),
         ),
         child: Column(
@@ -119,7 +116,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
                 screenTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0XFF000000),
+                  color: const Color(0XFF000000),
                   fontSize: 20.fSize,
                   fontFamily: 'Roboto',
                   fontWeight: FontWeight.w400,
@@ -131,7 +128,7 @@ class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
             Divider(
               height: 1.h,
               thickness: 1.h,
-              color: Color(0XFF888888),
+              color: const Color(0XFF888888),
             )
           ],
         ),

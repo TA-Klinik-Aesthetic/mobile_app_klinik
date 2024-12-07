@@ -9,10 +9,7 @@ import '../../widgets/custom_text_form_field.dart';
 import 'notifier/register_user_notifier.dart';
 
 class RegisterUserScreen extends ConsumerStatefulWidget {
-  const RegisterUserScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const RegisterUserScreen({super.key});
 
   @override
   RegisterUserScreenState createState() => RegisterUserScreenState();
@@ -20,7 +17,7 @@ class RegisterUserScreen extends ConsumerStatefulWidget {
 
 // ignore_for_file: must_be_immutable
 class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +32,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                 width: double.maxFinite,
                 padding: EdgeInsets.only(
                   left: 24.h,
-                  top: 44.h,
+                  top: 24.h,
                   right: 24.h,
                 ),
                 child: Column(
@@ -92,11 +89,11 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                                 children: [
                                   TextSpan(
                                     text: "lbl_welcome_to".tr,
-                                    style: theme.textTheme.headlineSmall,
+                                    style: CustomTextStyles.headlineSmallMedium,
                                   ),
                                   TextSpan(
                                     text: "lbl_navya_hub".tr,
-                                    style: theme.textTheme.headlineSmall,
+                                    style: CustomTextStyles.signature,
                                   )
                                 ],
                               ),
@@ -150,7 +147,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                           _buildRetypePasswordInput(context),
                           SizedBox(height: 48.h),
                           _buildRegisterButton(context),
-                          SizedBox(height: 18.h),
+                          SizedBox(height: 12.h),
                           Align(
                             alignment: Alignment.center,
                             child: Row(
@@ -161,14 +158,22 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                                   "msg_already_have_an".tr,
                                   style: CustomTextStyles.bodySmallBlack900,
                                 ),
-                                SizedBox(width: 6.h),
-                                Text(
-                                  "lbl_login".tr,
-                                  style: theme.textTheme.labelLarge,
-                                )
+                                GestureDetector(
+                                onTap: () {
+                                  onTapTxtLogin(context);
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 4.h),
+                                  child: Text(
+                                    "lbl_login".tr,
+                                    style: theme.textTheme.labelLarge,
+                                  ),
+                                ),
+                              )
                               ],
                             ),
-                          )
+                          ),
+                          SizedBox(height: 24.h),
                         ],
                       ),
                     ),
@@ -286,6 +291,12 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
   Widget _buildRegisterButton(BuildContext context) {
     return CustomOutlinedButton(
       text: "lbl_register".tr,
+    );
+  }
+
+  onTapTxtLogin(BuildContext context) {
+    NavigatorService.pushNamed(
+      AppRoutes.loginUserScreen,
     );
   }
 }
