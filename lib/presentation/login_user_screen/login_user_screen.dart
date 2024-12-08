@@ -195,7 +195,9 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                                   padding: EdgeInsets.only(left: 4.h),
                                   child: Text(
                                     "lbl_register".tr,
-                                    style: theme.textTheme.labelLarge,
+                                    style: 
+                                      CustomTextStyles.bodyBoldOrange,
+                                      selectionColor: Colors.orange,
                                   ),
                                 ),
                               )
