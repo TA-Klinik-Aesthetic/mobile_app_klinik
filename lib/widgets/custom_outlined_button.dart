@@ -3,28 +3,26 @@ import '../core/app_export.dart';
 import 'base_button.dart';
 
 class CustomOutlinedButton extends BaseButton {
-  const CustomOutlinedButton(
-      {Key? key,
-      this.decoration,
-      this.leftIcon,
-      this.rightIcon,
-      this.label,
-      super.onPressed,
-      super.buttonStyle,
-      super.buttonTextStyle,
-      super.isDisabled,
-      super.alignment,
-      super.height,
-      super.width,
-      super.margin,
-      required super.text, TextStyle? style});
+  const CustomOutlinedButton({
+    Key? key,
+    this.decoration,
+    this.leftIcon,
+    this.rightIcon,
+    this.label,
+    super.onPressed,
+    super.buttonStyle,
+    super.buttonTextStyle,
+    super.isDisabled,
+    super.alignment,
+    super.height,
+    super.width,
+    super.margin,
+    required super.text,
+  }) : super(key: key);
 
   final BoxDecoration? decoration;
-
   final Widget? leftIcon;
-
   final Widget? rightIcon;
-
   final Widget? label;
 
   @override
@@ -32,7 +30,8 @@ class CustomOutlinedButton extends BaseButton {
     return alignment != null
         ? Align(
             alignment: alignment ?? Alignment.center,
-            child: buildOutlinedButtonWidget)
+            child: buildOutlinedButtonWidget,
+          )
         : buildOutlinedButtonWidget;
   }
 
@@ -43,7 +42,7 @@ class CustomOutlinedButton extends BaseButton {
         decoration: decoration,
         child: OutlinedButton(
           style: buttonStyle,
-          onPressed: isDisabled ?? false ? null : onPressed ?? () {},
+          onPressed: isDisabled ?? false ? null : onPressed,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -53,7 +52,7 @@ class CustomOutlinedButton extends BaseButton {
                 text,
                 style: buttonTextStyle ?? theme.textTheme.bodySmall,
               ),
-              rightIcon ?? const SizedBox.shrink()
+              rightIcon ?? const SizedBox.shrink(),
             ],
           ),
         ),
