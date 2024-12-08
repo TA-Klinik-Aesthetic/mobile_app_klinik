@@ -32,7 +32,6 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                 width: double.maxFinite,
                 padding: EdgeInsets.only(
                   left: 24.h,
-                  top: 24.h,
                   right: 24.h,
                 ),
                 child: Column(
@@ -166,7 +165,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                                   padding: EdgeInsets.only(left: 4.h),
                                   child: Text(
                                     "lbl_login".tr,
-                                    style: theme.textTheme.labelLarge,
+                                    style: CustomTextStyles.bodyBoldOrange,
                                   ),
                                 ),
                               )
@@ -177,7 +176,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 42.h),
+                    SizedBox(height: 36.h),
                     Text(
                       "msg_v0_0_0_beta_copyright".tr,
                       maxLines: 2,

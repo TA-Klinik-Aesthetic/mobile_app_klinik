@@ -23,6 +23,11 @@ class CustomTextStyles {
   static TextStyle get bodySmallBlack900 => theme.textTheme.bodySmall!.copyWith(
         color: appTheme.black900,
       );
+  static TextStyle get bodyBoldOrange => TextStyle(
+        fontSize: 12.fSize, 
+        fontWeight: FontWeight.w700, 
+        color: appTheme.orange200,
+      );
   static TextStyle get bodySmallOnPrimary =>
       theme.textTheme.bodySmall!.copyWith(
         color: theme.colorScheme.onPrimary,
