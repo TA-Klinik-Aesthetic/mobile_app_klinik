@@ -41,7 +41,22 @@ class CustomTextStyles {
       theme.textTheme.headlineSmall!.copyWith(
         fontWeight: FontWeight.w500,
       );
-// Inter text style
+
+// Label text style
+  static TextStyle get labelLargeMedium => theme.textTheme.labelLarge!.copyWith(
+        fontWeight: FontWeight.w500,
+      );
+// Title text style
+  static TextStyle get titleLargeSemiBold =>
+      theme.textTheme.titleLarge!.copyWith(
+        fontWeight: FontWeight.w600,
+      );
+  static TextStyle get titleMediumMedium =>
+      theme.textTheme.titleMedium!.copyWith(
+        fontSize: 18.fSize,
+        fontWeight: FontWeight.w500,
+      );
+
   static TextStyle get latoPrimary => TextStyle(
         color: theme.colorScheme.primary,
         fontSize: 4.fSize,

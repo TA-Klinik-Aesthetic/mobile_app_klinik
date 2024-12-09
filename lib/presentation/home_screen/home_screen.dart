@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
+import '../../widgets/custom_bottom_bar.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String userName ; // Nama user
+  final String userName;
 
   const HomeScreen({super.key, required this.userName});
 
@@ -11,13 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  void _onNavBarTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  GlobalKey<NavigatorState> navigatorKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +20,14 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text("Hi, ${widget.userName}!"),
       ),
-      body: SingleChildScrollView(
+      body: 
+      SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Container utama
             Container(
-              height: 300, // Tinggi container
+              height: 300,
               width: double.infinity,
               margin: const EdgeInsets.symmetric(vertical: 32.0),
               decoration: BoxDecoration(
@@ -45,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: appTheme.darkCherry,
+                    color: appTheme.black900,
                   ),
                 ),
               ),
@@ -68,13 +63,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: appTheme.lightBadge100,
                 borderRadius: BorderRadius.circular(24.0), // Radius
               ),
-              child: Center(
-                child: Text(
-                  "Promo Content Here",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.darkCherry,
+              child: GestureDetector(
+                onTap: () {
+                  onTapPromo(context);
+                },
+                child: Center(
+                  child: Text(
+                    "Promo Content Here",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: appTheme.black900,
+                    ),
                   ),
                 ),
               ),
@@ -82,10 +82,56 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onNavBarTap,
+      bottomNavigationBar: SizedBox(
+        width: double.maxFinite,
+        child: _buildBottomBar(context),
       ),
     );
   }
-}
+
+  /// Build Bottom Navigation Bar
+  Widget _buildBottomBar(BuildContext context) {
+    return SizedBox(
+      width: double.maxFinite,
+      child: CustomBottomBar(
+        onChanged: (BottomBarEnum type) {
+          Navigator.pushNamed(
+              navigatorKey.currentContext!, getCurrentRoute(type));
+        },
+      ),
+    );
+  }
+  
+  /// Handling route based on bottom navigation click actions
+  String getCurrentRoute(BottomBarEnum type) {
+    switch (type) {
+      case BottomBarEnum.Home:
+        return AppRoutes.homeScreen;
+      case BottomBarEnum.Product:
+        return AppRoutes.productInitialPage;
+      case BottomBarEnum.Booking:
+        return "/";
+      case BottomBarEnum.Profile:
+        return "/";
+      default:
+        return "/";
+    }
+  }
+
+  void onTapPromo(BuildContext context) {
+    NavigatorService.pushNamed(
+      AppRoutes.promoScreen, // Pastikan rute ini didefinisikan di AppRoutes
+    );
+  }
+
+
+  /// Handling page rendering based on current route
+  Widget getCurrentPage(BuildContext context, String currentRoute) {
+    switch (currentRoute) {
+      case AppRoutes.homeScreen:
+        return const HomeScreen(userName: 'Samuel Ezra');
+      default:
+        return const DefaultWidget();
+    }
+  }
+}  

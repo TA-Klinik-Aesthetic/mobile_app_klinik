@@ -16,6 +16,38 @@ final Map<String, String> enUs = {
   "msg_re_type_password": "Re-type Password",
   "msg_re_type_the_password": "Re-type the password",
 
+  // Product Screen
+  "lbl_booking": "Booking",
+  "lbl_facial_product": "Facial Product",
+  "lbl_home": "Home",
+  "lbl_product": "Product",
+  "lbl_profile": "Profile",
+  "lbl_search": "search",
+  "lbl_urutkan": "Urutkan",
+  "msg_kahf_oil_acne": "Kahf Oil & Acne Care Face Wash 50 ml",
+  "lbl_rp_100_000_00": "Rp 100.000,00",
+  "msg_skintific_acne": "Skintific - Acne Clay Stick 40G",
+
+  // Promo Screen
+  "lbl_banner": "Banner", "lbl_special_promo": "Special Promo",
+
+  // Promo Detail Screen
+  "lbl_1_4": "1 / 4",
+  "lbl_2_4": "2 / 4",
+  "lbl_3_4": "3 / 4",
+  "lbl_4_4": "4 / 4",
+  "lbl_alaskan_volcano": "Alaskan Volcano",
+  "lbl_detail_produk": "Detail Produk",
+  "lbl_mugworts": "Mugworts",
+  "lbl_photo_product": "Photo Product",
+  "lbl_sabun_cuci_muka": "Sabun Cuci Muka",
+  "lbl_see_more": "See more",
+  "lbl_varian_produk": "Varian Produk",
+  "msg_dekskripsi_produk": "Dekskripsi Produk",
+  "msg_lorem_ipsum_dolor":
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ",
+  "msg_produk_sabun_cuci": "Produk Sabun Cuci Muka lainnya",
+
   // Common String
   "lbl_email": "Email",
   "lbl_login": "Login",

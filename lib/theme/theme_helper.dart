@@ -118,11 +118,11 @@ class LightCodeColors {
 // Orange
   Color get orange200 => const Color(0XFFED9267);
   // Light Green
-  Color get lightGreen => const Color(0XA5B68D);
+  Color get lightGreen => const Color(0x00a5b68d);
   // Light Green
-  Color get lightBlue => const Color(0XAACCFF);
+  Color get lightBlue => const Color(0x00aaccff);
     // Dark Cherry
-  Color get darkCherry => const Color(0XEA5F5F);
+  Color get darkCherry => const Color(0x00ea5f5f);
 // White
   Color get whiteA700 => const Color(0XFFFFFFFF);
 }
