@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:country_pickers/country.dart';
 import 'package:country_pickers/country_pickers.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_outlined_button.dart';
@@ -45,7 +46,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                         right: 14.h,
                       ),
                       decoration: BoxDecoration(
-                        color: appTheme.lightGreen100,
+                        color: appTheme.lightBadge100,
                         borderRadius: BorderRadiusStyle.roundedBorder40,
                         border: Border.all(
                           color: theme.colorScheme.primary,
@@ -61,24 +62,25 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                           Align(
                             alignment: Alignment.center,
                             child: Container(
-                              height: 80.h,
-                              width: 82.h,
-                              decoration: BoxDecoration(
-                                color: appTheme.blueGray100,
-                                borderRadius: BorderRadiusStyle.roundedBorder40,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(height: 6.h),
-                                  Text(
-                                    "lbl_logo".tr,
-                                    style: theme.textTheme.titleLarge,
-                                  )
-                                ],
-                              ),
+                            height: 100.h,
+                            width: 100.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadiusStyle.roundedBorder40,
                             ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(height: 6.h),
+                                SvgPicture.asset(
+                                  'assets/images/logo_navya_hub.svg',
+                                  height: 80.h, // Sesuaikan ukuran logo sesuai kebutuhan
+                                  width: 80.h,
+                                  fit: BoxFit.contain,
+                                ),
+                              ],
+                            ),
+                          ),
                           ),
                           SizedBox(height: 14.h),
                           Align(
@@ -176,7 +178,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 36.h),
+                    SizedBox(height: 24.h),
                     Text(
                       "msg_v0_0_0_beta_copyright".tr,
                       maxLines: 2,

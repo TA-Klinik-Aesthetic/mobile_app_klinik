@@ -19,7 +19,7 @@ class AppDecoration {
       );
 // Second decorations
   static BoxDecoration get second => BoxDecoration(
-        color: appTheme.lightGreen100,
+        color: appTheme.lightBadge100,
         border: Border.all(
           color: theme.colorScheme.primary,
           width: 1.h,

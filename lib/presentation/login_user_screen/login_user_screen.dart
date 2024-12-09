@@ -4,6 +4,8 @@ import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_outlined_button.dart';
 import '../../widgets/custom_text_form_field.dart';
 import 'notifier/login_user_notifier.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 
 class LoginUserScreen extends ConsumerStatefulWidget {
   const LoginUserScreen({super.key});
@@ -29,7 +31,7 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                 width: double.maxFinite,
                 padding: EdgeInsets.only(
                   left: 24.h,
-                  top: 96.h,
+                  top: 30.h,
                   right: 24.h,
                 ),
                 child: Column(
@@ -42,7 +44,7 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                         vertical: 34.h,
                       ),
                       decoration: BoxDecoration(
-                        color: appTheme.lightGreen100,
+                        color: appTheme.lightBadge100,
                         borderRadius: BorderRadiusStyle.roundedBorder40,
                         border: Border.all(
                           color: theme.colorScheme.primary,
@@ -55,10 +57,9 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            height: 80.h,
-                            width: 82.h,
+                            height: 100.h,
+                            width: 100.h,
                             decoration: BoxDecoration(
-                              color: appTheme.blueGray100,
                               borderRadius: BorderRadiusStyle.roundedBorder40,
                             ),
                             child: Column(
@@ -66,10 +67,12 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 SizedBox(height: 6.h),
-                                Text(
-                                  "lbl_logo".tr,
-                                  style: theme.textTheme.titleLarge,
-                                )
+                                SvgPicture.asset(
+                                  'assets/images/logo_navya_hub.svg',
+                                  height: 80.h, // Sesuaikan ukuran logo sesuai kebutuhan
+                                  width: 80.h,
+                                  fit: BoxFit.contain,
+                                ),
                               ],
                             ),
                           ),
@@ -176,9 +179,16 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                           SizedBox(height: 24.h),
                           CustomOutlinedButton(
                             text: "lbl_login".tr,
-                            style: theme.textTheme.labelLarge,
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                // Lakukan navigasi atau aksi lainnya
+                                NavigatorService.pushNamed(
+                                  AppRoutes.homeScreen,
+                                );
+                              }
+                            },
                           ),
-                          SizedBox(height: 18.h),
+                          SizedBox(height: 12.h),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             mainAxisSize: MainAxisSize.min,
@@ -206,7 +216,7 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 120.h),
+                    SizedBox(height: 90.h),
                     Text(
                       "msg_v0_0_0_beta_copyright".tr,
                       maxLines: 2,
