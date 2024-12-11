@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../core/app_export.dart';
+import 'package:mobile_app_klinik/core/app_export.dart';
+import 'package:mobile_app_klinik/presentation/product_screen/product_screen.dart';
+import 'package:mobile_app_klinik/widgets/common_button.dart';
+import '../consultation_screen/consultation_screen.dart';
+import '../treatment_screen/treatment_screen.dart';
+import '../user_screen/user_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String userName ; // Nama user
+  final String userName;
 
   const HomeScreen({super.key, required this.userName});
 
@@ -11,50 +16,52 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  void _onNavBarTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  GlobalKey<NavigatorState> navigatorKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Hi, ${widget.userName}!"),
+        title: GestureDetector(
+          onTap: () {
+            onTapUserScreen(context);
+          },
+          child: Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(
+                  text: "Hi, ",
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal, // Gaya default
+                  ),
+                ),
+                TextSpan(
+                  text: widget.userName,
+                  style: TextStyle(
+                    color: appTheme.orange200,
+                    fontWeight: FontWeight.bold, // Nama diberi gaya bold
+                  ),
+                ),
+                const TextSpan(
+                  text: "!",
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal, // Gaya default
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Container utama
-            Container(
-              height: 300, // Tinggi container
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(vertical: 32.0),
-              decoration: BoxDecoration(
-                color: appTheme.lightBadge100,
-                borderRadius: BorderRadius.circular(24.0), // Radius
-              ),
-              child: Center(
-                child: Text(
-                  "Main Content Here",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: appTheme.darkCherry,
-                  ),
-                ),
-              ),
-            ),
-            // Latest Promo section
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
               child: Text(
-                "Latest Promo",
+                "Products",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -62,29 +69,103 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Container(
-              height: 150, // Tinggi container promo
+              height: 300,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: appTheme.lightBadge100,
-                borderRadius: BorderRadius.circular(24.0), // Radius
+                borderRadius: BorderRadius.circular(24.0), // Rounded corners
+                border: Border.all(color: Colors.black, width: 2), // Outline
               ),
-              child: Center(
-                child: Text(
-                  "Promo Content Here",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: appTheme.darkCherry,
+              child: GestureDetector(
+                onTap: () {
+                  onTapProductScreen(context);
+                },
+                child: const Center(
+                  child: Text(
+                    "Product Content",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
             ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Text(
+                "Booking",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: CommonButton(
+                    text: "Consultation",
+                    onTap: () {
+                      onTapConsultationScreen(context);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12), // Add spacing between buttons
+                Expanded(
+                  child: CommonButton(
+                    text: "Treatment",
+                    onTap: () {
+                      onTapTreatmentScreen(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onNavBarTap,
+    );
+  }
+
+  onTapUserScreen(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const UserScreen(),
+      ),
+    );
+  }
+
+
+  // Navigate to ProductScreen
+  onTapProductScreen(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProductScreen(),
+      ),
+    );
+  }
+
+  // Navigate to ConsultationScreen
+  onTapConsultationScreen(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ConsultationScreen(),
+      ),
+    );
+  }
+
+  // Navigate to TreatmentScreen
+  onTapTreatmentScreen(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TreatmentScreen(),
       ),
     );
   }

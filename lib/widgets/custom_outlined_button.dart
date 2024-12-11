@@ -4,7 +4,7 @@ import 'base_button.dart';
 
 class CustomOutlinedButton extends BaseButton {
   const CustomOutlinedButton({
-    Key? key,
+    super.key,
     this.decoration,
     this.leftIcon,
     this.rightIcon,
@@ -18,7 +18,7 @@ class CustomOutlinedButton extends BaseButton {
     super.width,
     super.margin,
     required super.text,
-  }) : super(key: key);
+  });
 
   final BoxDecoration? decoration;
   final Widget? leftIcon;

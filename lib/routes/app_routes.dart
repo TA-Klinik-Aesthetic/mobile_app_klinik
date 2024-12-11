@@ -3,6 +3,8 @@ import '../presentation/app_navigation_screen/app_navigation_screen.dart';
 import '../presentation/login_user_screen/login_user_screen.dart';
 import '../presentation/register_user_screen/register_user_screen.dart';
 import '../presentation/home_screen/home_screen.dart';
+import '../presentation/product_screen/product_screen.dart';
+import '../presentation/product_detail_screen/product_detail_screen.dart';
 
 // ignore_for_file: must_be_immutable
 class AppRoutes {
@@ -12,6 +14,12 @@ class AppRoutes {
 
   static const String homeScreen = '/homeScreen';
 
+  static const String productScreen = '/product_screen';
+
+  static const String productInitialPage = '/product_initial_page';
+
+  static const String productDetailScreen = '/product_detail_screen';
+
   static const String appNavigationScreen = '/app_navigation_screen';
 
   static const String initialRoute = '/initialRoute';
@@ -19,8 +27,10 @@ class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
     loginUserScreen: (context) => const LoginUserScreen(),
     registerUserScreen: (context) => const RegisterUserScreen(),
-    homeScreen: (context) => const HomeScreen(userName: 'Samuel Ezra',),
+    homeScreen: (context) => const HomeScreen(userName: 'Samuel Ezra'),
+    productScreen: (context) => const ProductScreen(),
+    productDetailScreen: (context) => const ProductDetailScreen(),
     appNavigationScreen: (context) => const AppNavigationScreen(),
-    initialRoute: (context) => const LoginUserScreen()
+    initialRoute: (context) => const LoginUserScreen(),
   };
 }
