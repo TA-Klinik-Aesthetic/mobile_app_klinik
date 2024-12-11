@@ -31,6 +31,6 @@ class AppRoutes {
     productScreen: (context) => const ProductScreen(),
     productDetailScreen: (context) => const ProductDetailScreen(),
     appNavigationScreen: (context) => const AppNavigationScreen(),
-    initialRoute: (context) => const HomeScreen(userName: 'Malik Ahmad')
+    initialRoute: (context) => const LoginUserScreen(),
   };
 }
