@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app_klinik/presentation/home_screen/home_screen.dart';
-import 'package:mobile_app_klinik/presentation/register_user_screen/register_user_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
-import '../../widgets/custom_outlined_button.dart';
 import '../../widgets/custom_text_form_field.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import '../../widgets/custom_outlined_button.dart';
 
 class LoginUserScreen extends StatefulWidget {
   const LoginUserScreen({super.key});
@@ -14,208 +14,224 @@ class LoginUserScreen extends StatefulWidget {
   LoginUserScreenState createState() => LoginUserScreenState();
 }
 
-// ignore_for_file: must_be_immutable
 class LoginUserScreenState extends State<LoginUserScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool isLoading = false;
+
+  void _loginUser() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://backend-klinik-aesthetic-production.up.railway.app/api/login'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login Successful: ${responseData['message']}")),
+        );
+        Navigator.pushNamed(context, AppRoutes.homeScreen); // Replace with your dashboard route.
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Login Failed: ${errorData['errors'] ?? 'Invalid credentials'}")),
+          );
+        } catch (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Login Failed: Unexpected response format")),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An error occurred: $e")),
+      );
+    }
+  }
+
+  Widget _buildLogo() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 100.h,
+          width: 100.h,
+          child: SvgPicture.asset(
+            'assets/images/logo_navya_hub.svg',
+            height: 80.h,
+            width: 80.h,
+            fit: BoxFit.contain,
+          ),
+        ),
+        SizedBox(height: 14.h),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: "Welcome to ",
+                style: CustomTextStyles.headlineSmallMedium,
+              ),
+              TextSpan(
+                text: "Navya Hub",
+                style: CustomTextStyles.signature,
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmailInput() {
+    return CustomTextFormField(
+      controller: _emailController,
+      hintText: "Enter your email",
+      textInputType: TextInputType.emailAddress,
+      validator: (value) {
+        if (value == null || !isValidEmail(value, isRequired: true)) {
+          return "Please enter a valid email.";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPasswordInput() {
+    return CustomTextFormField(
+      controller: _passwordController,
+      hintText: "Enter your password",
+      textInputType: TextInputType.visiblePassword,
+      obscureText: true,
+      validator: (value) {
+        if (value == null || value.length < 8) {
+          return "Password must be at least 8 characters.";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14.h,
+        vertical: 34.h,
+      ),
+      decoration: BoxDecoration(
+        color: appTheme.lightBadge100,
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(
+          color: theme.colorScheme.primary,
+          width: 1.h,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildLogo(),
+          SizedBox(height: 24.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "lbl_enter_the_email".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          _buildEmailInput(),
+          SizedBox(height: 16.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "msg_enter_the_password".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          _buildPasswordInput(),
+          SizedBox(height: 48.h),
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _buildLoginButton(),
+          SizedBox(height: 16.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [ Text(
+                "msg_don_t_have_an_account".tr,
+                style: theme.textTheme.bodyMedium,
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.registerUserScreen);
+                },
+                child: Text(
+                  "Login",
+                  style: TextStyle(
+                    color: appTheme.orange200,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: Form(
-          key: _formKey,
-          child: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Container(
-                width: double.maxFinite,
-                padding: EdgeInsets.only(
-                  left: 24.h,
-                  top: 30.h,
-                  right: 24.h,
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(24.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 120.h),
+                _buildLoginForm(),
+                SizedBox(height: 150.h),
+                Text(
+                  "v0.0.0 Beta © 2024",
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall,
                 ),
-                child: Column(
-                  children: [
-                    SizedBox(height: 78.h),
-                    Container(
-                      width: double.maxFinite,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.h,
-                        vertical: 34.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: appTheme.lightBadge100,
-                        borderRadius: BorderRadiusStyle.roundedBorder40,
-                        border: Border.all(
-                          color: theme.colorScheme.primary,
-                          width: 1.h,
-                          strokeAlign: BorderSide.strokeAlignOutside,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: 100.h,
-                            width: 100.h,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadiusStyle.roundedBorder40,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(height: 6.h),
-                                SvgPicture.asset(
-                                  'assets/images/logo_navya_hub.svg',
-                                  height: 80.h, // Sesuaikan ukuran logo sesuai kebutuhan
-                                  width: 80.h,
-                                  fit: BoxFit.contain,
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 14.h),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: "lbl_welcome_to".tr,
-                                  style: CustomTextStyles.headlineSmallMedium,
-                                ),
-                                TextSpan(
-                                  text: "lbl_navya_hub".tr,
-                                  style: CustomTextStyles.signature,
-                                )
-                              ],
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: 40.h),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 4.h),
-                              child: Text(
-                                "lbl_email".tr,
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 6.h),
-                          CustomTextFormField(
-                            hintText: "msg_enter_your_email".tr,
-                            textInputType: TextInputType.emailAddress,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16.h,
-                              vertical: 10.h,
-                            ),
-                            validator: (value) {
-                              if (value == null ||
-                                  (!isValidEmail(value,
-                                      isRequired: true))) {
-                                return "err_msg_please_enter_valid_email"
-                                    .tr;
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 24.h),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 4.h),
-                              child: Text(
-                                "lbl_password".tr,
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 6.h),
-                          CustomTextFormField(
-                            hintText: "lbl_enter_password".tr,
-                            textInputAction: TextInputAction.done,
-                            textInputType: TextInputType.visiblePassword,
-                            obscureText: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16.h,
-                              vertical: 10.h,
-                            ),
-                            validator: (value) {
-                              if (value == null ||
-                                  (!isValidPassword(value,
-                                      isRequired: true))) {
-                                return "err_msg_please_enter_valid_password"
-                                  .tr;
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 12.h),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              "msg_forgot_password".tr,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ),
-                          SizedBox(height: 24.h),
-                          CustomOutlinedButton(
-                            text: "lbl_login".tr,
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                // Lakukan navigasi atau aksi lainnya
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomeScreen(userName: 'Samuel Ezra'),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "msg_don_t_have_an_account".tr,
-                                style: CustomTextStyles.bodySmallBlack900,
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  onTapTxtRegisterone(context);
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.only(left: 4.h),
-                                  child: Text(
-                                    "lbl_register".tr,
-                                    style: 
-                                      CustomTextStyles.bodyBoldOrange,
-                                      selectionColor: Colors.orange,
-                                  ),
-                                ),
-                              )
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 90.h),
-                    Text(
-                      "msg_v0_0_0_beta_copyright".tr,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall,
-                    )
-                  ],
-                ),
-              ),
+              ],
             ),
           ),
         ),
@@ -223,13 +239,10 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     );
   }
 
-  /// Navigates to the registerUserScreen when the action is triggered.
-  onTapTxtRegisterone(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const RegisterUserScreen(),
-      ),
+  Widget _buildLoginButton() {
+    return CustomOutlinedButton(
+      text: "Login",
+      onPressed: _loginUser,
     );
   }
 }

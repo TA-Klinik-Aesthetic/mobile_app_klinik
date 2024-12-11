@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_outlined_button.dart';
@@ -22,7 +23,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   final TextEditingController _retypePasswordController = TextEditingController();
   bool isLoading = false;
 
-  void _registerUser(BuildContext context) async {
+  void _registerUser() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -36,35 +37,226 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
       isLoading = true;
     });
 
-    final response = await http.post(
-      Uri.parse('https://127.0.0.1:8000/api/register'), // Sesuaikan endpoint backend
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'nama_user': nama_user,
-        'no_telp': phone,
-        'email': email,
-        'password': password,
-      }),
-    );
-
-    setState(() {
-      isLoading = false;
-    });
-
-    if (response.statusCode == 201) {
-      final responseData = jsonDecode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Registration Successful: ${responseData['message']}")),
+    try {
+      final response = await http.post(
+        Uri.parse('http://backend-klinik-aesthetic-production.up.railway.app/api/register'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'nama_user': nama_user,
+          'no_telp': phone,
+          'email': email,
+          'password': password,
+        }),
       );
-      Navigator.pushNamed(context, AppRoutes.loginUserScreen);
-    } else {
-      final errorData = jsonDecode(response.body);
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Registration Successful: ${responseData['message']}")),
+        );
+        Navigator.pushNamed(context, AppRoutes.loginUserScreen);
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Registration Failed: ${errorData['errors'] ?? 'Unknown error'}")),
+          );
+        } catch (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Registration Failed: Unexpected response format")),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Registration Failed: ${errorData['errors']}")),
+        SnackBar(content: Text("An error occurred: $e")),
       );
     }
+  }
+
+  Widget _buildLogo() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 100.h,
+          width: 100.h,
+          child: SvgPicture.asset(
+            'assets/images/logo_navya_hub.svg',
+            height: 80.h,
+            width: 80.h,
+            fit: BoxFit.contain,
+          ),
+        ),
+        SizedBox(height: 14.h),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: "Welcome to ",
+                style: CustomTextStyles.headlineSmallMedium,
+              ),
+              TextSpan(
+                text: "Navya Hub",
+                style: CustomTextStyles.signature,
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegisterForm() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14.h,
+        vertical: 34.h,
+      ),
+      decoration: BoxDecoration(
+        color: appTheme.lightBadge100,
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(
+          color: theme.colorScheme.primary,
+          width: 1.h,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildLogo(),
+          SizedBox(height: 24.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "lbl_username".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          CustomTextFormField(
+            controller: _usernameController,
+            hintText: "User Name",
+            textInputType: TextInputType.name,
+          ),
+          SizedBox(height: 16.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "lbl_phone_number".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          CustomTextFormField(
+            controller: _phoneController,
+            hintText: "08** **** ****",
+            textInputType: TextInputType.phone,
+          ),
+          SizedBox(height: 16.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "lbl_enter_the_email".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          _buildEmailInput(),
+          SizedBox(height: 16.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "msg_enter_the_password".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          _buildPasswordInput(),
+          SizedBox(height: 16.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text(
+                "msg_re_type_password".tr,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          _buildRetypePasswordInput(),
+          SizedBox(height: 48.h),
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _buildRegisterButton(),
+          SizedBox(height: 16.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Already have an account? "),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.loginUserScreen);
+                },
+                child: Text(
+                  "Login",
+                  style: TextStyle(
+                    color: appTheme.orange200,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(24.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 24.h),
+                _buildRegisterForm(),
+                SizedBox(height: 36.h),
+                Text(
+                  "v0.0.0 Beta © 2024",
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildEmailInput() {
@@ -88,8 +280,8 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
       textInputType: TextInputType.visiblePassword,
       obscureText: true,
       validator: (value) {
-        if (value == null || value.length < 6) {
-          return "Password must be at least 6 characters.";
+        if (value == null || value.length < 8) {
+          return "Password must be at least 8 characters.";
         }
         return null;
       },
@@ -113,37 +305,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   Widget _buildRegisterButton() {
     return CustomOutlinedButton(
       text: "Register",
-      onPressed: () => _registerUser(context),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildEmailInput(),
-                  const SizedBox(height: 16),
-                  _buildPasswordInput(),
-                  const SizedBox(height: 16),
-                  _buildRetypePasswordInput(),
-                  const SizedBox(height: 24),
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _buildRegisterButton(),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      onPressed: _registerUser,
     );
   }
 }

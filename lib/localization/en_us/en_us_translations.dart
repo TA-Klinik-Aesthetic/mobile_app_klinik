@@ -7,14 +7,13 @@ final Map<String, String> enUs = {
   "msg_forgot_password": "Forgot Password?",
 
   // Register User Screen
-  "lbl_62": "+62",
+  "lbl_username": "Enter Username",
   "lbl_8": "8** **** ****",
   "lbl_enter_the_email": "Enter the email",
-  "lbl_phone_number": "Phone Number",
+  "lbl_phone_number": "Enter Phone Number",
   "msg_already_have_an": "Already have an account? ",
   "msg_enter_the_password": "Enter the password",
   "msg_re_type_password": "Re-type Password",
-  "msg_re_type_the_password": "Re-type the password",
 
   // Product Screen
   "lbl_booking": "Booking",
