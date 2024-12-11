@@ -1,23 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:country_pickers/country.dart';
-import 'package:country_pickers/country_pickers.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_outlined_button.dart';
-import '../../widgets/custom_phone_number.dart';
 import '../../widgets/custom_text_form_field.dart';
-import 'notifier/register_user_notifier.dart';
 
-class RegisterUserScreen extends ConsumerStatefulWidget {
+class RegisterUserScreen extends StatefulWidget {
   const RegisterUserScreen({super.key});
 
   @override
   RegisterUserScreenState createState() => RegisterUserScreenState();
 }
 
-// ignore_for_file: must_be_immutable
-class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
+class RegisterUserScreenState extends State<RegisterUserScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -62,25 +57,25 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                           Align(
                             alignment: Alignment.center,
                             child: Container(
-                            height: 100.h,
-                            width: 100.h,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadiusStyle.roundedBorder40,
+                              height: 100.h,
+                              width: 100.h,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadiusStyle.roundedBorder40,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(height: 6.h),
+                                  SvgPicture.asset(
+                                    'assets/images/logo_navya_hub.svg',
+                                    height: 80.h,
+                                    width: 80.h,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(height: 6.h),
-                                SvgPicture.asset(
-                                  'assets/images/logo_navya_hub.svg',
-                                  height: 80.h, // Sesuaikan ukuran logo sesuai kebutuhan
-                                  width: 80.h,
-                                  fit: BoxFit.contain,
-                                ),
-                              ],
-                            ),
-                          ),
                           ),
                           SizedBox(height: 14.h),
                           Align(
@@ -122,10 +117,6 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          SizedBox(
-                            width: double.maxFinite,
-                            child: _buildPhoneNumber(context),
-                          ),
                           SizedBox(height: 24.h),
                           Padding(
                             padding: EdgeInsets.only(left: 4.h),
@@ -160,17 +151,17 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
                                   style: CustomTextStyles.bodySmallBlack900,
                                 ),
                                 GestureDetector(
-                                onTap: () {
-                                  onTapTxtLogin(context);
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.only(left: 4.h),
-                                  child: Text(
-                                    "lbl_login".tr,
-                                    style: CustomTextStyles.bodyBoldOrange,
+                                  onTap: () {
+                                    onTapTxtLogin(context);
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 4.h),
+                                    child: Text(
+                                      "lbl_login".tr,
+                                      style: CustomTextStyles.bodyBoldOrange,
+                                    ),
                                   ),
-                                ),
-                              )
+                                )
                               ],
                             ),
                           ),
@@ -198,92 +189,57 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
 
   /// Section Widget
   Widget _buildEmailInput(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, _) {
-        return CustomTextFormField(
-          controller: ref.watch(registerUserNotifier).emailInputController,
-          hintText: "lbl_enter_the_email".tr,
-          textInputType: TextInputType.emailAddress,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.h,
-            vertical: 10.h,
-          ),
-          validator: (value) {
-            if (value == null || (!isValidEmail(value, isRequired: true))) {
-              return "err_msg_please_enter_valid_email".tr;
-            }
-            return null;
-          },
-        );
+    return CustomTextFormField(
+      hintText: "lbl_enter_the_email".tr,
+      textInputType: TextInputType.emailAddress,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 10.h,
+      ),
+      validator: (value) {
+        if (value == null || (!isValidEmail(value, isRequired: true))) {
+          return "err_msg_please_enter_valid_email".tr;
+        }
+        return null;
       },
     );
   }
 
   /// Section Widget
-  Widget _buildPhoneNumber(BuildContext context) {
-    return SizedBox(
-      width: double.maxFinite,
-      child: Consumer(
-        builder: (context, ref, _) {
-          return CustomPhoneNumber(
-            country: ref.watch(registerUserNotifier).selectedCountry ??
-                CountryPickerUtils.getCountryByPhoneCode('1'),
-            controller: ref.watch(registerUserNotifier).phoneNumberController,
-            onTap: (Country value) {
-              ref.watch(registerUserNotifier).selectedCountry = value;
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  /// Section Widget
   Widget _buildPasswordInput(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, _) {
-        return CustomTextFormField(
-          controller: ref.watch(registerUserNotifier).passwordInputController,
-          hintText: "msg_enter_the_password".tr,
-          textInputType: TextInputType.visiblePassword,
-          obscureText: true,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.h,
-            vertical: 10.h,
-          ),
-          validator: (value) {
-            if (value == null || (!isValidPassword(value, isRequired: true))) {
-              return "err_msg_please_enter_valid_password".tr;
-            }
-            return null;
-          },
-        );
+    return CustomTextFormField(
+      hintText: "msg_enter_the_password".tr,
+      textInputType: TextInputType.visiblePassword,
+      obscureText: true,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 10.h,
+      ),
+      validator: (value) {
+        if (value == null || (!isValidPassword(value, isRequired: true))) {
+          return "err_msg_please_enter_valid_password".tr;
+        }
+        return null;
       },
     );
   }
 
   /// Section Widget
   Widget _buildRetypePasswordInput(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, _) {
-        return CustomTextFormField(
-          controller:
-              ref.watch(registerUserNotifier).retypePasswordInputController,
-          hintText: "msg_re_type_the_password".tr,
-          textInputAction: TextInputAction.done,
-          textInputType: TextInputType.visiblePassword,
-          obscureText: true,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.h,
-            vertical: 10.h,
-          ),
-          validator: (value) {
-            if (value == null || (!isValidPassword(value, isRequired: true))) {
-              return "err_msg_please_enter_valid_password".tr;
-            }
-            return null;
-          },
-        );
+    return CustomTextFormField(
+      hintText: "msg_re_type_the_password".tr,
+      textInputAction: TextInputAction.done,
+      textInputType: TextInputType.visiblePassword,
+      obscureText: true,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.h,
+        vertical: 10.h,
+      ),
+      validator: (value) {
+        if (value == null || (!isValidPassword(value, isRequired: true))) {
+          return "err_msg_please_enter_valid_password".tr;
+        }
+        return null;
       },
     );
   }
@@ -295,7 +251,7 @@ class RegisterUserScreenState extends ConsumerState<RegisterUserScreen> {
     );
   }
 
-  onTapTxtLogin(BuildContext context) {
+  void onTapTxtLogin(BuildContext context) {
     NavigatorService.pushNamed(
       AppRoutes.loginUserScreen,
     );

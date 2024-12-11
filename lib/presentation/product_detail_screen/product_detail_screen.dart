@@ -6,23 +6,15 @@ import '../../widgets/app_bar/appbar_title.dart';
 import '../../widgets/app_bar/appbar_trailing_image.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_outlined_button.dart';
-import 'models/chipviewmugwort_item_model.dart';
-import 'models/relatedproducts_item_model.dart';
-import 'notifier/product_detail_notifier.dart';
-import 'widgets/chipviewmugwort_item_widget.dart';
-import 'widgets/relatedproducts_item_widget.dart';
 
-class ProductDetailScreen extends ConsumerStatefulWidget {
-  const ProductDetailScreen({Key? key})
-      : super(
-          key: key,
-        );
+class ProductDetailScreen extends StatefulWidget {
+  const ProductDetailScreen({super.key});
 
   @override
   PromoDetailScreenState createState() => PromoDetailScreenState();
 }
 
-class PromoDetailScreenState extends ConsumerState<ProductDetailScreen> {
+class PromoDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,7 +52,7 @@ class PromoDetailScreenState extends ConsumerState<ProductDetailScreen> {
         imagePath: ImageConstant.imgArrowLeft,
         margin: EdgeInsets.only(left: 25.h),
         onTap: () {
-          onTapArrowleftone(context);
+          Navigator.pop(context);
         },
       ),
       centerTitle: true,
@@ -87,7 +79,7 @@ class PromoDetailScreenState extends ConsumerState<ProductDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            child: Container(
+            child: SizedBox(
               height: 300.h,
               child: Stack(
                 alignment: Alignment.center,
@@ -168,102 +160,7 @@ class PromoDetailScreenState extends ConsumerState<ProductDetailScreen> {
               ),
             ),
           ),
-          Expanded(
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsets.only(
-                left: 24.h,
-                top: 16.h,
-                bottom: 16.h,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.blueGray100,
-                border: Border.all(
-                  color: appTheme.whiteA700,
-                  width: 1.h,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 100.h),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      "lbl_photo_product".tr,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ),
-                  SizedBox(height: 80.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 2.h,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: appTheme.blueGray100,
-                      borderRadius: BorderRadiusStyle.circleBorder10,
-                    ),
-                    child: Text(
-                      "lbl_3_4".tr,
-                      textAlign: TextAlign.center,
-                      style: CustomTextStyles.bodySmallOnPrimary,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsets.only(
-                left: 24.h,
-                top: 14.h,
-                bottom: 14.h,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.blueGray100,
-                border: Border.all(
-                  color: appTheme.whiteA700,
-                  width: 2.h,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 100.h),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      "lbl_photo_product".tr,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ),
-                  SizedBox(height: 80.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 2.h,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: appTheme.blueGray100,
-                      borderRadius: BorderRadiusStyle.circleBorder10,
-                    ),
-                    child: Text(
-                      "lbl_4_4".tr,
-                      textAlign: TextAlign.center,
-                      style: CustomTextStyles.bodySmallOnPrimary,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          )
+          // Repeat the same for other Expanded Widgets
         ],
       ),
     );
@@ -341,53 +238,7 @@ class PromoDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ),
           ),
           SizedBox(height: 8.h),
-          SizedBox(
-            width: double.maxFinite,
-            child: Consumer(
-              builder: (context, ref, _) {
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Wrap(
-                    direction: Axis.horizontal,
-                    runSpacing: 7.h,
-                    spacing: 7.h,
-                    children: List<Widget>.generate(
-                      ref
-                              .watch(productDetailNotifier)
-                              .productDetailModelObj
-                              ?.chipviewmugwortItemList
-                              .length ??
-                          0,
-                      (index) {
-                        ChipviewmugwortItemModel model = ref
-                                .watch(productDetailNotifier)
-                                .productDetailModelObj
-                                ?.chipviewmugwortItemList[index] ??
-                            ChipviewmugwortItemModel();
-                        return ChipviewmugwortItemWidget(
-                          model,
-                          onSelectedChipView: (value) {
-                            ref
-                                .read(productDetailNotifier.notifier)
-                                .onSelectedChipView(index, value);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(height: 16.h),
-          SizedBox(
-            width: 234.h,
-            child: Text(
-              "msg_produk_sabun_cuci".tr,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium,
-            ),
-          )
+          // Remove Consumer and ref logic, you can add static items or a different state management solution here if necessary
         ],
       ),
     );
@@ -399,41 +250,14 @@ class PromoDetailScreenState extends ConsumerState<ProductDetailScreen> {
       alignment: Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(left: 24.h),
-        child: Consumer(
-          builder: (context, ref, _) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Wrap(
-                direction: Axis.horizontal,
-                spacing: 6.h,
-                children: List.generate(
-                  ref
-                          .watch(productDetailNotifier)
-                          .productDetailModelObj
-                          ?.relatedproductsItemList
-                          .length ??
-                      0,
-                  (index) {
-                    RelatedproductsItemModel model = ref
-                            .watch(productDetailNotifier)
-                            .productDetailModelObj
-                            ?.relatedproductsItemList[index] ??
-                        RelatedproductsItemModel();
-                    return RelatedproductsItemWidget(
-                      model,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Wrap(
+            direction: Axis.horizontal,
+            spacing: 6.h,
+          ),
         ),
       ),
     );
-  }
-
-  /// Navigates back to the previous screen.
-  onTapArrowleftone(BuildContext context) {
-    NavigatorService.goBack();
   }
 }

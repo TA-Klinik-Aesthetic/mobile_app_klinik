@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/presentation/home_screen/home_screen.dart';
+import 'package:mobile_app_klinik/presentation/register_user_screen/register_user_screen.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_outlined_button.dart';
 import '../../widgets/custom_text_form_field.dart';
-import 'notifier/login_user_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
-class LoginUserScreen extends ConsumerStatefulWidget {
+class LoginUserScreen extends StatefulWidget {
   const LoginUserScreen({super.key});
 
   @override
@@ -15,7 +15,7 @@ class LoginUserScreen extends ConsumerStatefulWidget {
 }
 
 // ignore_for_file: must_be_immutable
-class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
+class LoginUserScreenState extends State<LoginUserScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -106,28 +106,21 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          Consumer(
-                            builder: (context, ref, _) {
-                              return CustomTextFormField(
-                                controller: ref
-                                    .watch(loginUserNotifier)
-                                    .emailtwoController,
-                                hintText: "msg_enter_your_email".tr,
-                                textInputType: TextInputType.emailAddress,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16.h,
-                                  vertical: 10.h,
-                                ),
-                                validator: (value) {
-                                  if (value == null ||
-                                      (!isValidEmail(value,
-                                          isRequired: true))) {
-                                    return "err_msg_please_enter_valid_email"
-                                        .tr;
-                                  }
-                                  return null;
-                                },
-                              );
+                          CustomTextFormField(
+                            hintText: "msg_enter_your_email".tr,
+                            textInputType: TextInputType.emailAddress,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.h,
+                              vertical: 10.h,
+                            ),
+                            validator: (value) {
+                              if (value == null ||
+                                  (!isValidEmail(value,
+                                      isRequired: true))) {
+                                return "err_msg_please_enter_valid_email"
+                                    .tr;
+                              }
+                              return null;
                             },
                           ),
                           SizedBox(height: 24.h),
@@ -142,30 +135,23 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          Consumer(
-                            builder: (context, ref, _) {
-                              return CustomTextFormField(
-                                controller: ref
-                                    .watch(loginUserNotifier)
-                                    .passwordtwoController,
-                                hintText: "lbl_enter_password".tr,
-                                textInputAction: TextInputAction.done,
-                                textInputType: TextInputType.visiblePassword,
-                                obscureText: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16.h,
-                                  vertical: 10.h,
-                                ),
-                                validator: (value) {
-                                  if (value == null ||
-                                      (!isValidPassword(value,
-                                          isRequired: true))) {
-                                    return "err_msg_please_enter_valid_password"
-                                      .tr;
-                                  }
-                                  return null;
-                                },
-                              );
+                          CustomTextFormField(
+                            hintText: "lbl_enter_password".tr,
+                            textInputAction: TextInputAction.done,
+                            textInputType: TextInputType.visiblePassword,
+                            obscureText: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.h,
+                              vertical: 10.h,
+                            ),
+                            validator: (value) {
+                              if (value == null ||
+                                  (!isValidPassword(value,
+                                      isRequired: true))) {
+                                return "err_msg_please_enter_valid_password"
+                                  .tr;
+                              }
+                              return null;
                             },
                           ),
                           SizedBox(height: 12.h),
@@ -182,8 +168,11 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 // Lakukan navigasi atau aksi lainnya
-                                NavigatorService.pushNamed(
-                                  AppRoutes.homeScreen,
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const HomeScreen(userName: 'Samuel Ezra'),
+                                  ),
                                 );
                               }
                             },
@@ -236,8 +225,11 @@ class LoginUserScreenState extends ConsumerState<LoginUserScreen> {
 
   /// Navigates to the registerUserScreen when the action is triggered.
   onTapTxtRegisterone(BuildContext context) {
-    NavigatorService.pushNamed(
-      AppRoutes.registerUserScreen,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RegisterUserScreen(),
+      ),
     );
   }
 }

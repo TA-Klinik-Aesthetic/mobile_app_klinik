@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../core/app_export.dart';
-import '../../theme/custom_button_style.dart';
 import '../../widgets/app_bar/appbar_subtitle.dart';
 import '../../widgets/app_bar/custom_app_bar.dart';
 import '../../widgets/custom_outlined_button.dart';
 import '../../widgets/custom_search_view.dart';
-import 'models/product_initial_model.dart';
-import 'models/productgrid_item_model.dart';
-import 'notifier/product_notifier.dart';
-import 'widgets/productgrid_item_widget.dart';
 
 class ProductInitialPage extends StatefulWidget {
   const ProductInitialPage({super.key});
@@ -72,14 +67,9 @@ class ProductInitialPageState extends State<ProductInitialPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            child: Consumer(
-              builder: (context, ref, _) {
-                return CustomSearchView(
-                  controller: ref.watch(productNotifier).searchController,
-                  hintText: "lbl_search".tr,
-                  contentPadding: EdgeInsets.fromLTRB(14.h, 8.h, 12.h, 8.h),
-                );
-              },
+            child: CustomSearchView(
+              hintText: "lbl_search".tr,
+              contentPadding: EdgeInsets.fromLTRB(14.h, 8.h, 12.h, 8.h),
             ),
           ),
           SizedBox(width: 12.h),
@@ -103,43 +93,22 @@ class ProductInitialPageState extends State<ProductInitialPage> {
 
   /// Section Widget
   Widget _buildProductGrid(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, _) {
-        return ResponsiveGridListBuilder(
-          minItemWidth: 1,
-          minItemsPerRow: 2,
-          maxItemsPerRow: 2,
-          horizontalGridSpacing: 12.h,
-          verticalGridSpacing: 12.h,
-          builder: (context, items) => ListView(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            children: items,
-          ),
-          gridItems: List.generate(
-            ref
-                    .watch(productNotifier)
-                    .productInitialModelObj
-                    ?.productgridItemList
-                    .length ??
-                0,
-            (index) {
-              ProductgridItemModel model = ref
-                      .watch(productNotifier)
-                      .productInitialModelObj
-                      ?.productgridItemList[index] ??
-                  ProductgridItemModel();
-              return ProductgridItemWidget(
-                model,
-                onTapColumnweight: () {
-                  onTapColumnweight(context);
-                },
-              );
-            },
-          ),
-        );
-      },
+    // Replace this with your actual product items
+    List<Widget> gridItems = []; // Populate this list with your product widgets
+
+    return ResponsiveGridListBuilder(
+      minItemWidth: 1,
+      minItemsPerRow: 2,
+      maxItemsPerRow: 2,
+      horizontalGridSpacing: 12.h,
+      verticalGridSpacing: 12.h,
+      builder: (context, items) => ListView(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        children: items,
+      ),
+      gridItems: gridItems,
     );
   }
 

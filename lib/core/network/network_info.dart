@@ -24,22 +24,22 @@ class NetworkInfo implements NetworkInfoI {
     connectivity = connectivity;
   }
 
-  ///checks internet is connected or not
-  ///returns [true] if internet is connected
-  ///else it will return [false]
+  /// Checks if the internet is connected or not
+  /// Returns [true] if internet is connected
+  /// Else it will return [false]
   @override
   Future<bool> isConnected() async {
     final result = await connectivityResult;
     return !result.contains(ConnectivityResult.none);
   }
 
-  // to check type of internet connectivity
+  // To check type of internet connectivity
   @override
   Future<List<ConnectivityResult>> get connectivityResult async {
     return connectivity.checkConnectivity();
   }
 
-  //check the type on internet connection on changed of internet connection
+  // Check the type of internet connection on change of internet connection
   @override
   Stream<List<ConnectivityResult>> get onConnectivityChanged =>
       connectivity.onConnectivityChanged;
@@ -60,7 +60,7 @@ class CacheException implements Exception {}
 
 class NetworkException implements Exception {}
 
-///can be used for throwing [NoInternetException]
+/// Can be used for throwing [NoInternetException]
 class NoInternetException implements Exception {
   late String _message;
 

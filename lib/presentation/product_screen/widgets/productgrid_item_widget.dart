@@ -5,10 +5,7 @@ import '../models/productgrid_item_model.dart';
 // ignore_for_file: must_be_immutable
 class ProductgridItemWidget extends StatelessWidget {
   ProductgridItemWidget(this.productgridItemModelObj,
-      {Key? key, this.onTapColumnweight})
-      : super(
-          key: key,
-        );
+      {super.key, this.onTapColumnweight});
 
   ProductgridItemModel productgridItemModelObj;
 

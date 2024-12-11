@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
 
-class AppNavigationScreen extends ConsumerStatefulWidget {
+class AppNavigationScreen extends StatefulWidget {
   const AppNavigationScreen({super.key});
 
   @override
   AppNavigationScreenState createState() => AppNavigationScreenState();
 }
 
-class AppNavigationScreenState extends ConsumerState<AppNavigationScreen> {
+class AppNavigationScreenState extends State<AppNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
