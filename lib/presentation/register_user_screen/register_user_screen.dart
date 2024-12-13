@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_outlined_button.dart';
@@ -23,13 +24,13 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   final TextEditingController _retypePasswordController = TextEditingController();
   bool isLoading = false;
 
-  void _registerUser() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> _registerUser() async {
+    if (_formKey.currentState?.validate() ?? false) {
       return;
     }
 
     final email = _emailController.text;
-    final nama_user = _usernameController.text;
+    final namaUser = _usernameController.text;
     final phone = _phoneController.text;
     final password = _passwordController.text;
 
@@ -39,19 +40,17 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://backend-klinik-aesthetic-production.up.railway.app/api/register'),
+        Uri.parse(ApiConstants.register),
         headers: {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'nama_user': nama_user,
+          'nama_user': namaUser,
           'no_telp': phone,
           'email': email,
           'password': password,
         }),
       );
-
-      if (!mounted) return;
 
       setState(() {
         isLoading = false;
@@ -59,25 +58,19 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
 
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
+
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Registration Successful: ${responseData['message']}")),
         );
         Navigator.pushNamed(context, AppRoutes.loginUserScreen);
       } else {
-        try {
-          final errorData = jsonDecode(response.body);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Registration Failed: ${errorData['errors'] ?? 'Unknown error'}")),
-          );
-        } catch (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Registration Failed: Unexpected response format")),
-          );
-        }
+        final errorData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Registration Failed: ${errorData['errors'] ?? 'Unknown error'}")),
+        );
       }
     } catch (e) {
-      if (!mounted) return;
-
       setState(() {
         isLoading = false;
       });

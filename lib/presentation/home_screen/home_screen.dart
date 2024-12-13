@@ -2,21 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app_klinik/core/app_export.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/product_screen.dart';
 import 'package:mobile_app_klinik/widgets/common_button.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 import '../consultation_screen/consultation_screen.dart';
 import '../treatment_screen/treatment_screen.dart';
 import '../user_screen/user_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String userName;
-
-  const HomeScreen({super.key, required this.userName});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String userName = "User"; // Default name
   GlobalKey<NavigatorState> navigatorKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName(); // Load userName when screen is initialized
+  }
+
+  // Function to load the userName from SharedPreferences
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userName = prefs.getString('userName') ?? "User"; // Load value from SharedPreferences, fallback to "User"
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +46,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 const TextSpan(
                   text: "Hi, ",
                   style: TextStyle(
-                    fontWeight: FontWeight.normal, // Gaya default
+                    fontWeight: FontWeight.normal, // Default style
                   ),
                 ),
                 TextSpan(
-                  text: widget.userName,
+                  text: userName,
                   style: TextStyle(
-                    color: appTheme.orange200,
-                    fontWeight: FontWeight.bold, // Nama diberi gaya bold
+                    color: appTheme.lightGreen,
+                    fontWeight: FontWeight.bold, // Bold user name
                   ),
                 ),
                 const TextSpan(
                   text: "!",
                   style: TextStyle(
-                    fontWeight: FontWeight.normal, // Gaya default
+                    fontWeight: FontWeight.normal, // Default style
                   ),
                 ),
               ],
@@ -59,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
+              padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
                 "Products",
                 style: TextStyle(
@@ -92,8 +106,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            SizedBox(height: 24.h),
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
+              padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
                 "Booking",
                 style: TextStyle(
@@ -138,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 
   // Navigate to ProductScreen
   onTapProductScreen(BuildContext context) {
