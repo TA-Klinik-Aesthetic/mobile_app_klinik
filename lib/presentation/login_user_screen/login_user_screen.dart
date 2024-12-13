@@ -23,7 +23,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   bool isLoading = false;
 
   Future<void> _loginUser() async {
-    if (!_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
       return;
     }
 
