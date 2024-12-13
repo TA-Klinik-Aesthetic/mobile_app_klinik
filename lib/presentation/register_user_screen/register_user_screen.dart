@@ -29,7 +29,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
     }
 
     final email = _emailController.text;
-    final nama_user = _usernameController.text;
+    final namaUser = _usernameController.text;
     final phone = _phoneController.text;
     final password = _passwordController.text;
 
@@ -44,7 +44,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'nama_user': nama_user,
+          'nama_user': namaUser,
           'no_telp': phone,
           'email': email,
           'password': password,

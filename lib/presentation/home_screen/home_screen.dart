@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextSpan(
                   text: widget.userName,
                   style: TextStyle(
-                    color: appTheme.orange200,
+                    color: appTheme.lightGreen,
                     fontWeight: FontWeight.bold, // Nama diberi gaya bold
                   ),
                 ),
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
+              padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
                 "Products",
                 style: TextStyle(
@@ -92,8 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            SizedBox(height: 24.h),
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
+              padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
                 "Booking",
                 style: TextStyle(
