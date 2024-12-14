@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app_klinik/core/app_export.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/product_screen.dart';
 import 'package:mobile_app_klinik/widgets/common_button.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../consultation_screen/consultation_screen.dart';
 import '../treatment_screen/treatment_screen.dart';
 import '../user_screen/user_screen.dart';
@@ -16,11 +17,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String userName = "User"; // Default name
-  GlobalKey<NavigatorState> navigatorKey = GlobalKey();
+  late PersistentTabController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller = PersistentTabController(initialIndex: 0);
     _loadUserName(); // Load userName when screen is initialized
   }
 
@@ -28,40 +30,95 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      userName = prefs.getString('userName') ?? "User"; // Load value from SharedPreferences, fallback to "User"
+      userName = prefs.getString('userName') ?? "User"; // Load value from SharedPreferences
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    return PersistentTabView(
+      context,
+      controller: _controller,
+      screens: _buildScreens(),
+      items: _navBarsItems(),
+      backgroundColor: appTheme.lightBadge100,
+      confineToSafeArea: true,
+      handleAndroidBackButtonPress: true,
+      resizeToAvoidBottomInset: true,
+      stateManagement: true,
+      navBarStyle: NavBarStyle.style3, // Choose the style you prefer
+    );
+  }
+
+  List<Widget> _buildScreens() {
+    return [
+      _mainScreen(),
+      const ProductScreen(),
+      const ConsultationScreen(),
+      const TreatmentScreen(),
+      const UserScreen(),
+    ];
+  }
+
+  List<PersistentBottomNavBarItem> _navBarsItems() {
+    return [
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.home),
+        title: "Home",
+        activeColorPrimary: appTheme.orange200,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.shopping_bag),
+        title: "Products",
+        activeColorPrimary: appTheme.orange200,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.chat),
+        title: "Consultation",
+        activeColorPrimary: appTheme.orange200,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.healing),
+        title: "Treatment",
+        activeColorPrimary: appTheme.orange200,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.person),
+        title: "User",
+        activeColorPrimary: appTheme.orange200,
+        inactiveColorPrimary: Colors.grey,
+      ),
+    ];
+  }
+
+  Widget _mainScreen() {
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
           onTap: () {
-            onTapUserScreen(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserScreen(),
+              ),
+            );
           },
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(
-                  text: "Hi, ",
-                  style: TextStyle(
-                    fontWeight: FontWeight.normal, // Default style
-                  ),
-                ),
+                const TextSpan(text: "Hi, "),
                 TextSpan(
                   text: userName,
                   style: TextStyle(
-                    color: appTheme.lightGreen,
-                    fontWeight: FontWeight.bold, // Bold user name
+                    color: appTheme.orange200,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const TextSpan(
-                  text: "!",
-                  style: TextStyle(
-                    fontWeight: FontWeight.normal, // Default style
-                  ),
-                ),
+                const TextSpan(text: "!"),
               ],
             ),
           ),
@@ -86,13 +143,18 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 300,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: appTheme.lightBadge100,
-                borderRadius: BorderRadius.circular(24.0), // Rounded corners
-                border: Border.all(color: Colors.black, width: 2), // Outline
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(24.0),
+                border: Border.all(color: Colors.black, width: 2),
               ),
               child: GestureDetector(
                 onTap: () {
-                  onTapProductScreen(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProductScreen(),
+                    ),
+                  );
                 },
                 child: const Center(
                   child: Text(
@@ -106,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24.h),
+            const SizedBox(height: 24),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
@@ -124,16 +186,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: CommonButton(
                     text: "Consultation",
                     onTap: () {
-                      onTapConsultationScreen(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ConsultationScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
-                const SizedBox(width: 12), // Add spacing between buttons
+                const SizedBox(width: 12),
                 Expanded(
                   child: CommonButton(
                     text: "Treatment",
                     onTap: () {
-                      onTapTreatmentScreen(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TreatmentScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -141,45 +213,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  onTapUserScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const UserScreen(),
-      ),
-    );
-  }
-
-  // Navigate to ProductScreen
-  onTapProductScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ProductScreen(),
-      ),
-    );
-  }
-
-  // Navigate to ConsultationScreen
-  onTapConsultationScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ConsultationScreen(),
-      ),
-    );
-  }
-
-  // Navigate to TreatmentScreen
-  onTapTreatmentScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const TreatmentScreen(),
       ),
     );
   }

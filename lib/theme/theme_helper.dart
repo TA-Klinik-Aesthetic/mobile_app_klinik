@@ -122,7 +122,7 @@ class LightCodeColors {
   // Light Green
   Color get lightBlue => const Color(0x00aaccff);
     // Dark Cherry
-  Color get darkCherry => const Color(0x00ea5f5f);
+  Color get darkCherry => const Color(0xFFEA5F5F);
 // White
   Color get whiteA700 => const Color(0XFFFFFFFF);
 }

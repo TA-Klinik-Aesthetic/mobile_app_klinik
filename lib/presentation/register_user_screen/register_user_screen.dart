@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:toastification/toastification.dart';
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
@@ -56,18 +57,26 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
         isLoading = false;
       });
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201) { 
         final responseData = jsonDecode(response.body);
-
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Registration Successful: ${responseData['message']}")),
+        toastification.show(
+          context: context,
+          title: const Text('Registration Successful'),
+          description: Text("${responseData['message']}"),
+          autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
+          backgroundColor: appTheme.lightGreen, // Warna hijau untuk sukses
+          icon: const Icon(Icons.check_circle, color: Colors.white), // Ikon sukses
         );
         Navigator.pushNamed(context, AppRoutes.loginUserScreen);
       } else {
         final errorData = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Registration Failed: ${errorData['errors'] ?? 'Unknown error'}")),
+        toastification.show(
+          context: context,
+          title: const Text('Registration Failed'),
+          description: Text("${errorData['errors'] ?? 'Unknown error'}"),
+          autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
+          backgroundColor: appTheme.darkCherry, // Warna merah untuk error
+          icon: const Icon(Icons.error, color: Colors.white), // Ikon error
         );
       }
     } catch (e) {
