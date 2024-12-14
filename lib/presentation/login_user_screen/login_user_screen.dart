@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toastification/toastification.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../api/api_constant.dart';
@@ -56,17 +57,28 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         await prefs.setString('email', responseData['user']['email']);
         await prefs.setString('role', responseData['user']['role']);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Login successful! Welcome, ${responseData['user']['nama_user']}")),
+        toastification.show(
+          context: context,
+          title: const Text('Success!'),
+          description: Text("Login successful! Welcome, ${responseData['user']['nama_user']}"),
+          autoCloseDuration: const Duration(seconds: 3), // Durasi otomatis tertutup
+          backgroundColor: appTheme.lightGreen, // Warna latar belakang
+          icon: const Icon(Icons.check_circle, color: Colors.white), // Ikon toast
         );
+
 
         // Navigasi ke halaman Home
         Navigator.pushReplacementNamed(context, '/homeScreen');
       } else {
         final errorData = jsonDecode(response.body);
         final errorMessage = errorData['message'];
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Login Failed: $errorMessage")),
+        toastification.show(
+          context: context,
+          title: const Text('Login Failed'),
+          description: Text("$errorMessage"),
+          autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
+          backgroundColor: appTheme.darkCherry, // Warna merah untuk error
+          icon: const Icon(Icons.error, color: Colors.white), // Ikon error
         );
       }
     } catch (e) {
