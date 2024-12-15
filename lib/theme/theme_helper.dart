@@ -111,6 +111,8 @@ class ColorSchemes {
 class LightCodeColors {
   // Black
   Color get black900 => const Color(0XFF040404);
+  // Black
+  Color get lightGrey => const Color(0xFFB7B7B7);
 // BlueGray
   Color get blueGray100 => const Color(0XFFD9D9D9);
 // Light Badge

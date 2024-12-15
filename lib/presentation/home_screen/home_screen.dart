@@ -66,31 +66,31 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.home),
         title: "Home",
         activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: Colors.grey,
+        inactiveColorPrimary: appTheme.lightGrey,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
         title: "Products",
         activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: Colors.grey,
+        inactiveColorPrimary: appTheme.lightGrey,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.chat),
         title: "Consultation",
         activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: Colors.grey,
+        inactiveColorPrimary: appTheme.lightGrey,
       ),
       PersistentBottomNavBarItem(
-        icon: const Icon(Icons.healing),
+        icon: const Icon(Icons.vaccines),
         title: "Treatment",
         activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: Colors.grey,
+        inactiveColorPrimary: appTheme.lightGrey,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person),
         title: "User",
         activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: Colors.grey,
+        inactiveColorPrimary: appTheme.lightGrey,
       ),
     ];
   }
