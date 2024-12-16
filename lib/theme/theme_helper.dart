@@ -113,16 +113,18 @@ class LightCodeColors {
   Color get black900 => const Color(0XFF040404);
   // Black
   Color get lightGrey => const Color(0xFFB7B7B7);
-// BlueGray
+  // BlueGray
   Color get blueGray100 => const Color(0XFFD9D9D9);
-// Light Badge
+  // Light Badge
   Color get lightBadge100 => const Color(0XFFECDFCC);
-// Orange
+  // Orange
   Color get orange200 => const Color(0XFFED9267);
   // Light Green
-  Color get lightGreen => const Color.fromARGB(255, 165, 182, 141);
-  // Light Green
+  Color get lightGreen => const Color(0xFFA5B68D);
+  // Light Blue
   Color get lightBlue => const Color(0x00aaccff);
+  // Light Yellow
+  Color get lightYellow => const Color(0xFFD6D38E);
     // Dark Cherry
   Color get darkCherry => const Color(0xFFEA5F5F);
 // White

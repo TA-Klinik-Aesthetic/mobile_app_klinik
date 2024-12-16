@@ -9,6 +9,7 @@ import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/custom_outlined_button.dart';
+import '../home_screen/home_screen.dart';
 
 class LoginUserScreen extends StatefulWidget {
   const LoginUserScreen({super.key});
@@ -24,7 +25,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   bool isLoading = false;
 
   Future<void> _loginUser() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
@@ -46,6 +47,9 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         isLoading = false;
       });
 
+      print('Response Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
@@ -65,10 +69,10 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           backgroundColor: appTheme.lightGreen, // Warna latar belakang
           icon: const Icon(Icons.check_circle, color: Colors.white), // Ikon toast
         );
-
-
-        // Navigasi ke halaman Home
-        Navigator.pushReplacementNamed(context, '/homeScreen');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
       } else {
         final errorData = jsonDecode(response.body);
         final errorMessage = errorData['message'];
@@ -77,7 +81,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           title: const Text('Login Failed'),
           description: Text("$errorMessage"),
           autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
-          backgroundColor: appTheme.darkCherry, // Warna merah untuk error
+          backgroundColor: appTheme.lightYellow, // Warna merah untuk error
           icon: const Icon(Icons.error, color: Colors.white), // Ikon error
         );
       }

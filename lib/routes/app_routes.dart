@@ -28,7 +28,7 @@ class AppRoutes {
     homeScreen: (context) => const HomeScreen(),
     productScreen: (context) => const ProductScreen(),
     appNavigationScreen: (context) => const AppNavigationScreen(),
-    initialRoute: (context) => const HomeScreen(),
+    initialRoute: (context) => const LoginUserScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {

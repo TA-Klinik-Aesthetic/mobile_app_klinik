@@ -82,7 +82,7 @@ class ProductDetailScreen extends StatelessWidget {
             Text(
               "Rp ${product['harga_produk']}",
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 24,
                 fontWeight: FontWeight.w600,
                 color: appTheme.orange200,
               ),

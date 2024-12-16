@@ -23,7 +23,7 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Future<void> fetchProducts() async {
-    final response = await http.get(Uri.parse(ApiConstants.getProduct));
+    final response = await http.get(Uri.parse(ApiConstants.product));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -45,12 +45,12 @@ class _ProductScreenState extends State<ProductScreen> {
               title: Text(
                 'Product',
                 style: TextStyle(
-                  color: innerBoxIsScrolled ? Colors.white : appTheme.orange200,
+                  color: innerBoxIsScrolled ? appTheme.orange200 : appTheme.orange200,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              backgroundColor: innerBoxIsScrolled ? appTheme.orange200 : Colors.white,
+              backgroundColor: innerBoxIsScrolled ? appTheme.lightBadge100 : appTheme.whiteA700,
               elevation: 0.0,
               centerTitle: true,
               pinned: true,
