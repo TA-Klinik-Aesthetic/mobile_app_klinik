@@ -18,6 +18,7 @@ class _TreatmentScreenState extends State<TreatmentScreen> {
   List<Map<String, dynamic>> doctors = [];
   List<Map<String, dynamic>> beauticians = [];
   List<Map<String, dynamic>> treatments = [];
+  List<Map<String, dynamic>> bookingHistory = [];
   int? idUser;
 
   @override
@@ -28,6 +29,7 @@ class _TreatmentScreenState extends State<TreatmentScreen> {
     fetchBeauticians();
     fetchTreatments();
     _loadUserId();
+    fetchBookingHistory();
   }
 
   Future<void> _loadUserId() async {
@@ -36,7 +38,49 @@ class _TreatmentScreenState extends State<TreatmentScreen> {
       idUser = prefs.getInt('id_user');
     });
     print('ID User dari SharedPreferences: $idUser');
+
+    if (idUser != null) {
+      fetchBookingHistory();
   }
+  }
+
+Future<void> fetchBookingHistory() async {
+  debugPrint("Memulai fetchBookingHistory...");
+  try {
+    final response = await http.get(Uri.parse(ApiConstants.booking));
+    debugPrint("Response statusCode fetchBookingHistory: ${response.statusCode}");
+    debugPrint("Response body fetchBookingHistory: ${response.body}");
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final List<Map<String, dynamic>> rawData = List<Map<String, dynamic>>.from(jsonDecode(response.body));
+
+      setState(() {
+        bookingHistory = rawData
+            .where((item) {
+              final bookingUserId = item['id_user'];
+              debugPrint("bookingUserId: $bookingUserId (type: ${bookingUserId.runtimeType})");
+              if (bookingUserId is int) {
+                return bookingUserId == idUser;
+              } else if (bookingUserId is String) {
+                return int.tryParse(bookingUserId) == idUser;
+              }
+              return false;
+            })
+            .toList();
+      });
+
+      debugPrint("Filtered booking history: $bookingHistory");
+    } else {
+      throw Exception('Gagal memuat data riwayat booking');
+    }
+  } catch (e) {
+    debugPrint("Error fetchBookingHistory: $e");
+    showErrorDialog('Gagal mengambil data riwayat booking: $e');
+  }
+}
+
+
+
 
   Future<void> fetchDoctors() async {
     debugPrint("Memulai fetchDoctors...");
@@ -225,114 +269,183 @@ class _TreatmentScreenState extends State<TreatmentScreen> {
     }
   }
 
+Widget _buildHistoryTab() {
+  return ListView.builder(
+    itemCount: bookingHistory.length,
+    itemBuilder: (context, index) {
+      final booking = bookingHistory[index];
+
+      Color cardColor;
+      switch (booking['status_booking_treatment']) {
+        case 'Verifikasi':
+          cardColor = Colors.yellow.shade100;
+          break;
+        case 'Berhasil dibooking':
+          cardColor = Colors.green.shade100;
+          break;
+        default:
+          cardColor = Colors.grey.shade100;
+      }
+
+      return Card(
+        margin: const EdgeInsets.all(8.0),
+        elevation: 4,
+        color: cardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Treatment ID: ${booking['id_booking_treatment']}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text('Tanggal Treatment: ${booking['waktu_treatment']}'),
+              Text('Status: ${booking['status_booking_treatment']}'),
+              if (booking['harga_total'] != null)
+                Text('Harga Total: Rp ${booking['harga_total']}'),
+              if (booking['potongan_harga'] != null)
+                Text('Potongan Harga: Rp ${booking['potongan_harga']}'),
+              if (booking['harga_akhir_treatment'] != null)
+                Text('Harga Akhir: Rp ${booking['harga_akhir_treatment']}'),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+
+  Widget _buildBookingTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _pickDateTime,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _selectedDateTime == null
+                    ? 'Pilih Waktu Treatment'
+                    : _selectedDateTime.toString().split(' ').first,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              itemCount: treatmentDetails.length,
+              itemBuilder: (context, index) {
+                final detail = treatmentDetails[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<int>(
+                          value: detail['id_treatment'],
+                          onChanged: (value) {
+                            setState(() {
+                              detail['id_treatment'] = value;
+                            });
+                          },
+                          items: treatments.map((treatment) {
+                            return DropdownMenuItem<int>(
+                              value: treatment['id_treatment'],
+                              child: Text(treatment['nama_treatment']),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(labelText: 'Pilih Treatment'),
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<int>(
+                          value: detail['id_dokter'],
+                          onChanged: (value) {
+                            setState(() {
+                              detail['id_dokter'] = value;
+                            });
+                          },
+                          items: doctors.map((doctor) {
+                            return DropdownMenuItem<int>(
+                              value: doctor['id_dokter'],
+                              child: Text(doctor['nama_dokter']),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(labelText: 'Pilih Dokter'),
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<int>(
+                          value: detail['id_beautician'],
+                          onChanged: (value) {
+                            setState(() {
+                              detail['id_beautician'] = value;
+                            });
+                          },
+                          items: beauticians.map((beautician) {
+                            return DropdownMenuItem<int>(
+                              value: beautician['id_beautician'],
+                              child: Text(beautician['nama_beautician']),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(labelText: 'Pilih Beautician'),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            onPressed: () => _removeTreatmentDetail(index),
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: _addTreatmentDetail,
+            icon: const Icon(Icons.add),
+            label: const Text('Tambah Treatment'),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: _submitBooking,
+            child: const Text('Kirim Booking Treatment'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Treatment'),
-        backgroundColor: Colors.green,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Treatment'),
+          backgroundColor: Colors.green,
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.history), text: 'History'),
+              Tab(icon: Icon(Icons.book_online), text: 'Booking'),
+            ],
+          ),
+        ),
+        body: TabBarView(
           children: [
-            GestureDetector(
-              onTap: _pickDateTime,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _selectedDateTime == null
-                      ? 'Pilih Waktu Treatment'
-                      : _selectedDateTime.toString().replaceFirst('T', ' ').split('.').first,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: treatmentDetails.length,
-                itemBuilder: (context, index) {
-                  final detail = treatmentDetails[index];
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          DropdownButtonFormField<int>(
-                            value: detail['id_treatment'],
-                            onChanged: (value) {
-                              setState(() {
-                                detail['id_treatment'] = value;
-                              });
-                            },
-                            items: treatments.map((treatment) {
-                              return DropdownMenuItem<int>(
-                                value: treatment['id_treatment'],
-                                child: Text(treatment['nama_treatment']),
-                              );
-                            }).toList(),
-                            decoration: const InputDecoration(labelText: 'Pilih Treatment'),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<int>(
-                            value: detail['id_dokter'],
-                            onChanged: (value) {
-                              setState(() {
-                                detail['id_dokter'] = value;
-                              });
-                            },
-                            items: doctors.map((doctor) {
-                              return DropdownMenuItem<int>(
-                                value: doctor['id_dokter'],
-                                child: Text(doctor['nama_dokter']),
-                              );
-                            }).toList(),
-                            decoration: const InputDecoration(labelText: 'Pilih Dokter'),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<int>(
-                            value: detail['id_beautician'],
-                            onChanged: (value) {
-                              setState(() {
-                                detail['id_beautician'] = value;
-                              });
-                            },
-                            items: beauticians.map((beautician) {
-                              return DropdownMenuItem<int>(
-                                value: beautician['id_beautician'],
-                                child: Text(beautician['nama_beautician']),
-                              );
-                            }).toList(),
-                            decoration: const InputDecoration(labelText: 'Pilih Beautician'),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: IconButton(
-                              onPressed: () => _removeTreatmentDetail(index),
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: _addTreatmentDetail,
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Treatment'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _submitBooking,
-              child: const Text('Kirim Booking Treatment'),
-            ),
+            _buildHistoryTab(),
+            _buildBookingTab(),
           ],
         ),
       ),
