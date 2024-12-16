@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/presentation/product_screen/product_detail_screen.dart';
 
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
@@ -61,22 +62,27 @@ class _ProductScreenState extends State<ProductScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: products.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : GridView.builder(
-                  itemCount: products.length,
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    childAspectRatio: 0.7,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 16,
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    itemCount: products.length,
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200,
+                      childAspectRatio: 0.7,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 16,
+                    ),
+                    itemBuilder: (context, index) => ProductCard(
+                      product: products[index],
+                      onPress: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProductDetailScreen(product: products[index]),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  itemBuilder: (context, index) => ProductCard(
-                    product: products[index],
-                    onPress: () {
-                      // Handle product click
-                    },
-                  ),
-                ),
           ),
         ),
       ),
@@ -102,6 +108,10 @@ class ProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: appTheme.lightBadge100,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: appTheme.lightGrey, // Warna border
+              width: 1.0, 
+            ),    
         ),
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -112,12 +122,9 @@ class ProductCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF979797).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(product['gambar_produk'], fit: BoxFit.cover),
-                ),
+                child: Image.network(product['gambar_produk'], fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 8),
