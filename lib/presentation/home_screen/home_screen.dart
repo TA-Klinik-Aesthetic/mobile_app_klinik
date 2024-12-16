@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_klinik/core/app_export.dart';
+import 'package:mobile_app_klinik/presentation/doctor_schedule_screen/doctor_schedule_screen.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/product_screen.dart';
 import 'package:mobile_app_klinik/widgets/common_button.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
@@ -16,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String userName = "User"; // Default name
+  String? namaUser;
   late PersistentTabController _controller;
 
   @override
@@ -30,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      userName = prefs.getString('userName') ?? "User"; // Load value from SharedPreferences
+      namaUser = prefs.getString('nama_user') ?? "Guest";
     });
   }
 
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
       handleAndroidBackButtonPress: true,
       resizeToAvoidBottomInset: true,
       stateManagement: true,
-      navBarStyle: NavBarStyle.style3, // Choose the style you prefer
+      navBarStyle: NavBarStyle.style13, // Choose the style you prefer
     );
   }
 
@@ -110,15 +111,30 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(text: "Hi, "),
+                const TextSpan(
+                  text: "Hello, ",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
                 TextSpan(
-                  text: userName,
+                  text: namaUser,
                   style: TextStyle(
                     color: appTheme.orange200,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const TextSpan(text: "!"),
+                const TextSpan(
+                  text: "!",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),  
               ],
             ),
           ),
@@ -132,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
-                "Products",
+                "Promo for you",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -140,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Container(
-              height: 300,
+              height: 250,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey.shade200,
@@ -158,7 +174,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: const Center(
                   child: Text(
-                    "Product Content",
+                    "Promo Content",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                "Jadwal Doctor",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Container(
+              height: 75,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: appTheme.lightGreen,
+                borderRadius: BorderRadius.circular(24.0),
+                border: Border.all(color: Colors.black, width: 2),
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DoctorScheduleScreen(),
+                    ),
+                  );
+                },
+                child: const Center(
+                  child: Text(
+                    "Calender Jadwal Dokter",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
