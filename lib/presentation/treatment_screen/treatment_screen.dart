@@ -224,7 +224,7 @@ Future<void> fetchBookingHistory() async {
       return;
     }
 
-    final String url = ApiConstants.bookingTreatment;
+    const String url = ApiConstants.bookingTreatment;
     final body = {
       "id_user": idUser,
       "waktu_treatment": _selectedDateTime!
