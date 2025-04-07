@@ -103,7 +103,7 @@ class ColorSchemes {
   static const lightCodeColorScheme = ColorScheme.light(
     primary: Color(0XFF000000),
     onPrimary: Color(0XFF1D1D1D),
-    onPrimaryContainer: Color(0XFFED9267),
+    onPrimaryContainer: Color(0xFFB4CBB4),
   );
 }
 
@@ -116,11 +116,11 @@ class LightCodeColors {
   // BlueGray
   Color get blueGray100 => const Color(0XFFD9D9D9);
   // Light Badge
-  Color get lightBadge100 => const Color(0XFFECDFCC);
+  Color get lightBadge100 => const Color(0xFFFFF1DD);
   // Orange
   Color get orange200 => const Color(0XFFED9267);
   // Light Green
-  Color get lightGreen => const Color(0xFFA5B68D);
+  Color get lightGreen => const Color(0xFFB4CBB4);
   // Light Blue
   Color get lightBlue => const Color(0x00aaccff);
   // Light Yellow
