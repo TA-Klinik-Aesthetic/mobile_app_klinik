@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_klinik/core/app_export.dart';
-import 'package:mobile_app_klinik/presentation/doctor_schedule_screen/doctor_schedule_screen.dart';
-import 'package:mobile_app_klinik/presentation/product_screen/product_screen.dart';
-import 'package:mobile_app_klinik/widgets/common_button.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../consultation_screen/consultation_screen.dart';
-import '../treatment_screen/treatment_screen.dart';
-import '../user_screen/user_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,15 +18,36 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _controller = PersistentTabController(initialIndex: 0);
-    _loadUserName(); // Load userName when screen is initialized
+    _loadUserName(); // Load user name on init
   }
 
-  // Function to load the userName from SharedPreferences
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      namaUser = prefs.getString('nama_user') ?? "Guest";
-    });
+    final loginTimeStr = prefs.getString('login_time');
+    final token = prefs.getString('token');
+
+    if (loginTimeStr != null && token != null) {
+      final loginTime = DateTime.tryParse(loginTimeStr);
+      final now = DateTime.now();
+
+      if (loginTime != null && now.difference(loginTime).inDays < 7) {
+        final savedName = prefs.getString('nama_user');
+        if (mounted) {
+          setState(() {
+            namaUser = savedName ?? "Guest";
+          });
+        }
+        return;
+      } else {
+        await prefs.clear();
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        namaUser = "Guest";
+      });
+    }
   }
 
   @override
@@ -40,24 +55,41 @@ class _HomeScreenState extends State<HomeScreen> {
     return PersistentTabView(
       context,
       controller: _controller,
-      screens: _buildScreens(),
+      screens: _buildScreens(context),
       items: _navBarsItems(),
-      backgroundColor: appTheme.lightBadge100,
+      backgroundColor: appTheme.lightGreenOld,
       confineToSafeArea: true,
       handleAndroidBackButtonPress: true,
       resizeToAvoidBottomInset: true,
       stateManagement: true,
-      navBarStyle: NavBarStyle.style13, // Choose the style you prefer
+      navBarStyle: NavBarStyle.style9,
     );
   }
 
-  List<Widget> _buildScreens() {
+  List<Widget> _buildScreens(BuildContext context) {
     return [
-      _mainScreen(),
-      const ProductScreen(),
-      const ConsultationScreen(),
-      const TreatmentScreen(),
-      const UserScreen(),
+      Navigator(
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          builder: (context) => _mainScreen(),
+        ),
+      ),
+      Navigator(
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          builder: (context) =>
+              AppRoutes.routes[AppRoutes.productScreen]!(context),
+        ),
+      ),
+      Navigator(
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          builder: (context) =>
+              AppRoutes.routes[AppRoutes.bookingScreen]!(context),
+        ),
+      ),
+      Navigator(
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          builder: (context) => AppRoutes.routes[AppRoutes.userScreen]!(context),
+        ),
+      ),
     ];
   }
 
@@ -66,32 +98,26 @@ class _HomeScreenState extends State<HomeScreen> {
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home),
         title: "Home",
-        activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: appTheme.lightGrey,
+        activeColorPrimary: appTheme.lightBadge100,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
         title: "Products",
-        activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: appTheme.lightGrey,
+        activeColorPrimary: appTheme.lightBadge100,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.chat),
-        title: "Consultation",
-        activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: appTheme.lightGrey,
-      ),
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.vaccines),
-        title: "Treatment",
-        activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: appTheme.lightGrey,
+        title: "Booking",
+        activeColorPrimary: appTheme.lightBadge100,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person),
         title: "User",
-        activeColorPrimary: appTheme.orange200,
-        inactiveColorPrimary: appTheme.lightGrey,
+        activeColorPrimary: appTheme.lightBadge100,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
     ];
   }
@@ -101,40 +127,50 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const UserScreen(),
-              ),
-            );
+            if (namaUser == null || namaUser == "Guest") {
+              Navigator.pushNamed(context, AppRoutes.loginUserScreen);
+            } else {
+              Navigator.pushNamed(context, AppRoutes.userScreen);
+            }
           },
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(
-                  text: "Hello, ",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                if (namaUser == null || namaUser == "Guest")
+                  const TextSpan(
+                    text: "Masuk / Daftar",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  )
+                else ...[
+                  const TextSpan(
+                    text: "Hello, ",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: namaUser,
-                  style: TextStyle(
-                    color: appTheme.orange200,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                  TextSpan(
+                    text: namaUser,
+                    style: TextStyle(
+                      color: appTheme.black900,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const TextSpan(
-                  text: "!",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                  const TextSpan(
+                    text: "!",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                ),  
+                ],
               ],
             ),
           ),
@@ -148,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
-                "Promo for you",
+                "Latest Promo",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -159,18 +195,13 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 250,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: appTheme.lightBadge100,
                 borderRadius: BorderRadius.circular(24.0),
                 border: Border.all(color: Colors.black, width: 2),
               ),
               child: GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProductScreen(),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.productScreen);
                 },
                 child: const Center(
                   child: Text(
@@ -205,12 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DoctorScheduleScreen(),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
                 },
                 child: const Center(
                   child: Text(
@@ -225,48 +251,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                "Booking",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: CommonButton(
-                    text: "Consultation",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ConsultationScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: CommonButton(
-                    text: "Treatment",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TreatmentScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),

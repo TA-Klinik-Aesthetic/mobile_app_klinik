@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'core/app_export.dart';
+import 'core/app_export.dart'; // pastikan AppRoutes di-export lewat app_export.dart
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -39,16 +39,14 @@ class MyApp extends StatelessWidget {
             AppLocalizationDelegate(),
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate
+            GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: const [
-            Locale(
-              'en',
-              '',
-            )
+            Locale('en', 'US'),
           ],
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,
+          onGenerateRoute: AppRoutes.onGenerateRoute, // ini fallback kalau ada route tidak ditemukan
         );
       },
     );

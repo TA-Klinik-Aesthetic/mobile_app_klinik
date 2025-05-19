@@ -5,6 +5,8 @@ final Map<String, String> enUs = {
   "msg_don_t_have_an_account": "Don’t have an account? ",
   "msg_enter_your_email": "Enter your email",
   "msg_forgot_password": "Forgot Password?",
+  "lbl_enter_your_email": "Enter your email",
+  "lbl_enter_your_password": "Enter your password",
 
   // Register User Screen
   "lbl_username": "Enter Username",

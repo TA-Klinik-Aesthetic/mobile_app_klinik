@@ -22,12 +22,11 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
   bool isLoading = false;
 
   Future<void> _loginUser() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -47,14 +46,10 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         isLoading = false;
       });
 
-      print('Response Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-
-        // Simpan data pengguna ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
+
         await prefs.setInt('id_user', responseData['user']['id_user']);
         await prefs.setString('nama_user', responseData['user']['nama_user']);
         await prefs.setString('no_telp', responseData['user']['no_telp']);
@@ -65,24 +60,27 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           context: context,
           title: const Text('Success!'),
           description: Text("Login successful! Welcome, ${responseData['user']['nama_user']}"),
-          autoCloseDuration: const Duration(seconds: 3), // Durasi otomatis tertutup
-          backgroundColor: appTheme.lightGreen, // Warna latar belakang
-          icon: const Icon(Icons.check_circle, color: Colors.white), // Ikon toast
+          autoCloseDuration: const Duration(seconds: 3),
+          backgroundColor: appTheme.lightGreen,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
         );
+
+        // Navigasi ke HomeScreen dan hapus halaman login dari stack
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } else {
         final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['message'];
+        final errorMessage = errorData['message'] ?? 'Login failed.';
+
         toastification.show(
           context: context,
           title: const Text('Login Failed'),
-          description: Text("$errorMessage"),
-          autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
-          backgroundColor: appTheme.lightYellow, // Warna merah untuk error
-          icon: const Icon(Icons.error, color: Colors.white), // Ikon error
+          description: Text(errorMessage),
+          autoCloseDuration: const Duration(seconds: 3),
+          backgroundColor: appTheme.lightYellow,
+          icon: const Icon(Icons.error, color: Colors.white),
         );
       }
     } catch (e) {
@@ -91,7 +89,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred: $e")),
+        SnackBar(content: Text("Something went wrong: $e")),
       );
     }
   }
@@ -109,10 +107,15 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 120),
-                  _buildLoginForm(),
+                  buildLoginForm(),
                   const SizedBox(height: 150),
                   Text(
                     "v0.0.0 Beta © 2024",
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  Text(
+                    "Copyright Aesthetic Clinic",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall,
                   ),
@@ -125,7 +128,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     );
   }
 
-  Widget _buildLoginForm() {
+  Widget buildLoginForm() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 34),
       decoration: BoxDecoration(
@@ -135,42 +138,42 @@ class LoginUserScreenState extends State<LoginUserScreen> {
       ),
       child: Column(
         children: [
-          _buildLogo(),
+          buildLogo(),
           const SizedBox(height: 24),
           Align(
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "Enter your email",
-                style: theme.textTheme.bodySmall,
-              ),
+              child: Text("Email", style: theme.textTheme.bodySmall),
             ),
           ),
-          _buildEmailInput(),
+          buildEmailInput(),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "Enter your password",
-                style: theme.textTheme.bodySmall,
-              ),
+              child: Text("Password", style: theme.textTheme.bodySmall),
             ),
           ),
-          _buildPasswordInput(),
-          const SizedBox(height: 48),
+          buildPasswordInput(),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Text("Forgot Password?", style: theme.textTheme.bodySmall),
+            ),
+          ),
+          const SizedBox(height: 24),
           isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _buildLoginButton(),
+              : buildLoginButton(),
           SizedBox(height: 16.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [ Text(
-                "msg_don_t_have_an_account".tr,
-                style: theme.textTheme.bodyMedium,
-              ),
+            children: [
+              Text("msg_don_t_have_an_account".tr, style: theme.textTheme.bodyMedium),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.registerUserScreen);
@@ -178,7 +181,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                 child: Text(
                   "lbl_register".tr,
                   style: TextStyle(
-                    color: appTheme.orange200,
+                    color: appTheme.orange400,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -190,20 +193,20 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     );
   }
 
-  Widget _buildLoginButton() {
+  Widget buildLoginButton() {
     return CustomOutlinedButton(
       text: "Login",
       onPressed: _loginUser,
     );
   }
 
-  Widget _buildLogo() {
+  Widget buildLogo() {
     return Column(
       children: [
         SvgPicture.asset(
-          'assets/images/logo_navya_hub.svg',
-          height: 80,
-          width: 80,
+          'assets/images/login_illustration_app.svg',
+          height: 120,
+          width: 120,
           fit: BoxFit.contain,
         ),
         const SizedBox(height: 14),
@@ -226,28 +229,43 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     );
   }
 
-  Widget _buildEmailInput() {
+  Widget buildEmailInput() {
     return CustomTextFormField(
       controller: _emailController,
-      hintText: "Enter your email",
+      hintText: "lbl_enter_your_email".tr,
       textInputType: TextInputType.emailAddress,
       validator: (value) {
-        if (value == null || !isValidEmail(value, isRequired: true)) {
-          return "Please enter a valid email.";
+        final trimmedValue = value?.trim();
+        if (trimmedValue == null || trimmedValue.isEmpty) {
+          return "msg_email_required".tr;
+        }
+        if (!isValidEmail(trimmedValue)) {
+          return "msg_email_invalid".tr;
         }
         return null;
       },
     );
   }
 
-  Widget _buildPasswordInput() {
+  Widget buildPasswordInput() {
     return CustomTextFormField(
       controller: _passwordController,
-      hintText: "Enter your password",
-      obscureText: true,
+      hintText: "lbl_enter_your_password".tr,
+      obscureText: _obscurePassword,
+      suffix: GestureDetector(
+        onTap: () {
+          setState(() {
+            _obscurePassword = !_obscurePassword;
+          });
+        },
+        child: Icon(
+          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+          color: Colors.grey,
+        ),
+      ),
       validator: (value) {
-        if (value == null || value.length < 8) {
-          return "Password must be at least 8 characters.";
+        if (value == null || value.trim().length < 8) {
+          return "msg_password_must_be_8".tr;
         }
         return null;
       },

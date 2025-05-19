@@ -61,6 +61,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           height: 116.h,
           width: double.maxFinite,
           decoration: BoxDecoration(
+            // ignore: deprecated_member_use
             color: appTheme.whiteA700.withOpacity(0.9),
           ),
         );

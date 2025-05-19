@@ -3,10 +3,15 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
+<<<<<<< Updated upstream:lib/presentation/treatment_screen/treatment_screen.dart
 import '../../api/api_constant.dart';
 
 class TreatmentScreen extends StatefulWidget {
   const TreatmentScreen({super.key});
+=======
+class ScheduleDoctorScreen extends StatelessWidget {
+  const ScheduleDoctorScreen({super.key});
+>>>>>>> Stashed changes:lib/presentation/schedule_doctor_screen/schedule_doctor_screen.dart
 
   @override
   State<TreatmentScreen> createState() => _TreatmentScreenState();
@@ -165,6 +170,7 @@ Future<void> fetchBookingHistory() async {
     );
   }
 
+<<<<<<< Updated upstream:lib/presentation/treatment_screen/treatment_screen.dart
   void _addTreatmentDetail() {
     setState(() {
       treatmentDetails.add({
@@ -449,6 +455,21 @@ Widget _buildHistoryTab() {
           ],
         ),
       ),
+=======
+  AppBar appBar() {
+    return AppBar(
+      title: Text(
+        'Schedule Doctor',
+        style: TextStyle(
+          color: appTheme.black900,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      backgroundColor: appTheme.whiteA700,
+      elevation: 0.0,
+      centerTitle: true,
+>>>>>>> Stashed changes:lib/presentation/schedule_doctor_screen/schedule_doctor_screen.dart
     );
   }
 }

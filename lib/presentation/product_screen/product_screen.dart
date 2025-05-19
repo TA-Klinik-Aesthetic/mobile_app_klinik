@@ -26,8 +26,9 @@ class _ProductScreenState extends State<ProductScreen> {
     final response = await http.get(Uri.parse(ApiConstants.product));
 
     if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
       setState(() {
-        products = jsonDecode(response.body);
+        products = data['data']; // <- Sesuaikan dengan struktur JSON
       });
     } else {
       debugPrint('Failed to load products');
@@ -43,14 +44,14 @@ class _ProductScreenState extends State<ProductScreen> {
           return [
             SliverAppBar(
               title: Text(
-                'Product',
+                'Facial Product',
                 style: TextStyle(
-                  color: innerBoxIsScrolled ? appTheme.orange200 : appTheme.orange200,
+                  color: innerBoxIsScrolled ? appTheme.whiteA700 : appTheme.black900,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              backgroundColor: innerBoxIsScrolled ? appTheme.lightBadge100 : appTheme.whiteA700,
+              backgroundColor: innerBoxIsScrolled ? appTheme.lightGreenOld : appTheme.whiteA700,
               elevation: 0.0,
               centerTitle: true,
               pinned: true,
@@ -124,13 +125,23 @@ class ProductCard extends StatelessWidget {
                   color: const Color(0xFF979797).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: Image.network(product['gambar_produk'], fit: BoxFit.cover),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    product['gambar_produk'],
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               product['nama_produk'],
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: appTheme.black900,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -140,7 +151,7 @@ class ProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: appTheme.orange200,
+                color: appTheme.black900,
               ),
             ),
           ],
