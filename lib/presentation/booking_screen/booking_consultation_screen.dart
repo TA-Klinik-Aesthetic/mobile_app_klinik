@@ -46,12 +46,8 @@ class _BookingConsultationScreenState extends State<BookingConsultationScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
+                const Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Text(
-                    "Terdapat ${doctorList.length} Dokter Terdaftar",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
                 ),
                 Expanded(
                   child: ListView.builder(
