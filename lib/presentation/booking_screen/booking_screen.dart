@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_klinik/core/app_export.dart';
 
+import 'booking_consultation_screen.dart';
+
 class BookingScreen extends StatelessWidget {
   const BookingScreen({super.key});
 
@@ -54,7 +56,7 @@ class BookingScreen extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
-            Center(child: Text("Consultation Content")),
+            BookingConsultationScreen(),
             Center(child: Text("Treatment Content")),
           ],
         ),

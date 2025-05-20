@@ -37,7 +37,7 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
           final String doctorName = item['dokter']['nama_dokter'];
           final String timeSlot = '${item['jam_mulai']} - ${item['jam_selesai']}';
 
-          // Pastikan tipe data sesuai
+          // Tambahkan event ke tanggal kerja
           if (events[date] == null) {
             events[date] = [];
           }
@@ -66,7 +66,7 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Doctor Schedule'),
+        title: const Text('Jadwal Dokter'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -95,7 +95,7 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
                           _events[_selectedDay!]!.isEmpty
                       ? const Center(
                           child: Text(
-                            'No schedule available for the selected date.',
+                            'Tidak ada dokter pada tanggal ini.',
                             style: TextStyle(fontSize: 16),
                           ),
                         )
@@ -110,7 +110,7 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
                               child: ListTile(
                                 leading: const Icon(Icons.person),
                                 title: Text(event['doctorName']!),
-                                subtitle: Text('Time: ${event['timeSlot']}'),
+                                subtitle: Text('Jam: ${event['timeSlot']}'),
                               ),
                             );
                           },

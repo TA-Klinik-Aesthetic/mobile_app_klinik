@@ -116,20 +116,13 @@ class LightCodeColors {
   // BlueGray
   Color get blueGray100 => const Color(0XFFD9D9D9);
   // Light Badge
-<<<<<<< Updated upstream
   Color get lightBadge100 => const Color(0xFFFFF1DD);
-=======
-  Color get lightBadge100 => const Color(0xFFFFEBCE);
->>>>>>> Stashed changes
   // Orange
   Color get orange200 => const Color(0XFFED9267);
   Color get orange400 => const Color(0XFFDC7646);
   // Light Green
   Color get lightGreen => const Color(0xFFB4CBB4);
-<<<<<<< Updated upstream
-=======
   Color get lightGreenOld => const Color(0xFFA5B68D);
->>>>>>> Stashed changes
   // Light Blue
   Color get lightBlue => const Color(0x00aaccff);
   // Light Yellow
