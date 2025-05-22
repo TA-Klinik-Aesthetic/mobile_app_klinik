@@ -143,15 +143,17 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
   // Fungsi untuk melakukan booking konsultasi
   Future<void> _bookingKonsultasi() async {
     if (!_isFormValid) return;
-    
+
     setState(() {
       _isBookingLoading = true;
     });
-    
+
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final String? token = prefs.getString('token');
-      
+      // Get user ID directly from SharedPreferences instead of _userData
+      final int? userId = prefs.getInt('id_user');
+
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Silakan login untuk melakukan booking')),
@@ -161,7 +163,17 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
         });
         return;
       }
-      
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User ID tidak ditemukan, silakan login ulang')),
+        );
+        setState(() {
+          _isBookingLoading = false;
+        });
+        return;
+      }
+
       // Format waktu konsultasi: YYYY-MM-DD HH:MM:SS
       final DateTime konsultasiDate = DateTime(
         _selectedDay!.year,
@@ -170,14 +182,17 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
         _selectedTime!.hour,
         _selectedTime!.minute,
       );
-      
-      final String formattedDate = 
+
+      final String formattedDate =
           '${konsultasiDate.year}-'
           '${konsultasiDate.month.toString().padLeft(2, '0')}-'
           '${konsultasiDate.day.toString().padLeft(2, '0')} '
           '${konsultasiDate.hour.toString().padLeft(2, '0')}:'
           '${konsultasiDate.minute.toString().padLeft(2, '0')}:00';
-      
+
+      print('Creating consultation with user ID: $userId');
+
+      // Create the consultation
       final response = await http.post(
         Uri.parse(ApiConstants.bookingKonsultasi),
         headers: {
@@ -187,19 +202,53 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
         },
         body: jsonEncode({
           'id_dokter': widget.dokter['id_dokter'],
+          'id_user': userId,
           'waktu_konsultasi': formattedDate,
-          'keluhan_pelanggan': _keluhanController.text.trim(),
         }),
       );
-      
-      setState(() {
-        _isBookingLoading = false;
-      });
-      
+
+      print('Consultation response: ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        jsonDecode(response.body);
-        
-        // Tampilkan dialog sukses
+        final responseData = jsonDecode(response.body);
+
+        // Extract konsultasi ID properly from the response
+        int? konsultasiId;
+        if (responseData['data'] != null && responseData['data']['id_konsultasi'] != null) {
+          konsultasiId = responseData['data']['id_konsultasi'];
+        } else if (responseData['id_konsultasi'] != null) {
+          konsultasiId = responseData['id_konsultasi'];
+        }
+
+        print('Extracted konsultasiId: $konsultasiId');
+
+        if (konsultasiId != null) {
+          // Create consultation details with patient complaint
+          print('Creating detail consultation with ID: $konsultasiId');
+
+          final detailResponse = await http.post(
+            Uri.parse(ApiConstants.detailBookingKonsultasi),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'id_konsultasi': konsultasiId,
+              'keluhan_pelanggan': _keluhanController.text.trim(),
+            }),
+          );
+
+          print('Detail consultation response: ${detailResponse.body}');
+
+          if (detailResponse.statusCode != 200 && detailResponse.statusCode != 201) {
+            print('Failed to create consultation details: ${detailResponse.body}');
+          }
+        } else {
+          print('No konsultasiId found in response');
+        }
+
+        // Show success dialog
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -210,7 +259,7 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+                    Navigator.of(context).pop(); // Go back to previous page
                   },
                   child: const Text('OK'),
                 ),
@@ -224,6 +273,10 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
           SnackBar(content: Text(jsonData['message'] ?? 'Gagal membuat jadwal')),
         );
       }
+
+      setState(() {
+        _isBookingLoading = false;
+      });
     } catch (e) {
       setState(() {
         _isBookingLoading = false;
