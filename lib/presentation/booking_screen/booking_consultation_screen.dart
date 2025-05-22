@@ -47,7 +47,7 @@ class _BookingConsultationScreenState extends State<BookingConsultationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 Expanded(
                   child: ListView.builder(

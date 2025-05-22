@@ -15,11 +15,34 @@ class ProductScreen extends StatefulWidget {
 
 class _ProductScreenState extends State<ProductScreen> {
   List<dynamic> products = [];
+  List<dynamic> filteredProducts = [];
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchProducts();
+    searchController.addListener(_filterProducts);
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterProducts() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        filteredProducts = products;
+      } else {
+        filteredProducts = products.where((product) {
+          return product['nama_produk'].toString().toLowerCase().contains(
+              query);
+        }).toList();
+      }
+    });
   }
 
   Future<void> fetchProducts() async {
@@ -28,7 +51,9 @@ class _ProductScreenState extends State<ProductScreen> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
-        products = data['data']; // <- Sesuaikan dengan struktur JSON
+        products = data['data'];
+        filteredProducts =
+            products; // Initialize filtered list with all products
       });
     } else {
       debugPrint('Failed to load products');
@@ -46,44 +71,95 @@ class _ProductScreenState extends State<ProductScreen> {
               title: Text(
                 'Facial Product',
                 style: TextStyle(
-                  color: innerBoxIsScrolled ? appTheme.whiteA700 : appTheme.black900,
+                  color: innerBoxIsScrolled ? appTheme.whiteA700 : appTheme
+                      .black900,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              backgroundColor: innerBoxIsScrolled ? appTheme.lightGreenOld : appTheme.whiteA700,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(120), // Increased height
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 16, right: 16, bottom: 16, top: 24), // Added bottom padding
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: appTheme.whiteA700,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: appTheme.black900, width: 1),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Cari Produk...',
+                        prefixIcon: Icon(
+                            Icons.search, color: appTheme.lightGrey),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              backgroundColor: innerBoxIsScrolled
+                  ? appTheme.lightGreenOld
+                  : appTheme.whiteA700,
               elevation: 0.0,
               centerTitle: true,
               pinned: true,
               floating: true,
+              expandedHeight: 120, // Added expandedHeight
             ),
           ];
         },
         body: SafeArea(
+          // Rest of the body code remains the same
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: products.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : GridView.builder(
-                    itemCount: products.length,
+            child: Column(
+              children: [
+                // Product Grid
+                Expanded(
+                  child: products.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : filteredProducts.isEmpty
+                      ? Center(
+                    child: Text(
+                      "Produk tidak ditemukan",
+                      style: TextStyle(
+                        color: appTheme.black900,
+                        fontSize: 16,
+                      ),
+                    ),
+                  )
+                      : GridView.builder(
+                    itemCount: filteredProducts.length,
                     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 200,
                       childAspectRatio: 0.7,
                       mainAxisSpacing: 20,
                       crossAxisSpacing: 16,
                     ),
-                    itemBuilder: (context, index) => ProductCard(
-                      product: products[index],
-                      onPress: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailScreen(product: products[index]),
-                          ),
-                        );
-                      },
-                    ),
+                    itemBuilder: (context, index) =>
+                        ProductCard(
+                          product: filteredProducts[index],
+                          onPress: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProductDetailScreen(
+                                        product: filteredProducts[index]),
+                              ),
+                            );
+                          },
+                        ),
                   ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

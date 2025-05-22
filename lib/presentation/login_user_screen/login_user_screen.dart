@@ -56,6 +56,8 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         await prefs.setString('email', responseData['user']['email']);
         await prefs.setString('role', responseData['user']['role']);
 
+        await prefs.setString('token', responseData['token']);
+
         toastification.show(
           context: context,
           title: const Text('Success!'),

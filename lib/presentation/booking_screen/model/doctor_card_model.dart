@@ -73,14 +73,7 @@ class _DoctorCardState extends State<DoctorCard> {
         decoration: BoxDecoration(
           color: appTheme.lightBadge100, 
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: appTheme.black900, width: 1),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -93,11 +86,19 @@ class _DoctorCardState extends State<DoctorCard> {
                 height: 110,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: appTheme.lightGrey
+                  color: appTheme.lightGrey,
+                  image: widget.doctor['foto_dokter'] != null
+                      ? DecorationImage(
+                          image: NetworkImage('${widget.doctor['foto_dokter']}'),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Center(
-                  child: Icon(Icons.person, size: 50, color: appTheme.black900),
-                ),
+                child: widget.doctor['foto_dokter'] == null
+                    ? Center(
+                        child: Icon(Icons.person, size: 50, color: appTheme.black900),
+                      )
+                    : null,
               ),
               const SizedBox(width: 16),
               // Informasi dokter

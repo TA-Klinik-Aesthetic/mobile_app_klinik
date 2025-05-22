@@ -87,7 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       Navigator(
         onGenerateRoute: (settings) => MaterialPageRoute(
-          builder: (context) => AppRoutes.routes[AppRoutes.userScreen]!(context),
+          builder: (context) => 
+              AppRoutes.routes[AppRoutes.userScreen]!(context),
         ),
       ),
     ];

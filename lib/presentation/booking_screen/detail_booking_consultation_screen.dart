@@ -1,9 +1,13 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'dart:convert';
 import 'package:table_calendar/table_calendar.dart';
 import '../../api/api_constant.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/cupertino.dart';
 
 class DetailBookingKonsultasi extends StatefulWidget {
   final Map<String, dynamic> dokter;
@@ -22,11 +26,212 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool isFavorite = false;
+  
+  // Tambahkan variabel baru untuk fitur booking
+  TimeOfDay? _selectedTime;
+  final TextEditingController _keluhanController = TextEditingController();
+  Map<String, dynamic>? _userData;
+  bool _isBookingLoading = false;
+
+  // Getter untuk validasi form
+  bool get _isFormValid => 
+      _selectedDay != null && 
+      _selectedTime != null && 
+      _keluhanController.text.trim().isNotEmpty;
 
   @override
   void initState() {
     super.initState();
     fetchDoctorDetails();
+    _getUserData();
+  }
+  
+  // Fungsi untuk mendapatkan data user dari session token
+  Future<void> _getUserData() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      
+      if (token != null) {
+        final response = await http.get(
+          Uri.parse(ApiConstants.profile),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            _userData = jsonDecode(response.body);
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal memuat data pengguna')),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
+  }
+
+  // Time picker untuk memilih jam konsultasi
+  void _showTimePicker() {
+    // Round the current time to the nearest 15 minutes to avoid the interval error
+    final DateTime now = DateTime.now();
+    const int minuteInterval = 15;
+    final int minutes = ((now.minute + minuteInterval ~/ 2) ~/ minuteInterval) * minuteInterval;
+    final DateTime initialDateTime = DateTime(
+      now.year, 
+      now.month, 
+      now.day, 
+      now.hour, 
+      minutes
+    );
+    
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 280,
+          padding: const EdgeInsets.only(top: 6.0),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Batal'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    CupertinoButton(
+                      child: const Text('Selesai'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    initialDateTime: initialDateTime,
+                    minuteInterval: minuteInterval,
+                    onDateTimeChanged: (DateTime newTime) {
+                      setState(() {
+                        _selectedTime = TimeOfDay(
+                          hour: newTime.hour, 
+                          minute: newTime.minute
+                        );
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Fungsi untuk melakukan booking konsultasi
+  Future<void> _bookingKonsultasi() async {
+    if (!_isFormValid) return;
+    
+    setState(() {
+      _isBookingLoading = true;
+    });
+    
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Silakan login untuk melakukan booking')),
+        );
+        setState(() {
+          _isBookingLoading = false;
+        });
+        return;
+      }
+      
+      // Format waktu konsultasi: YYYY-MM-DD HH:MM:SS
+      final DateTime konsultasiDate = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month,
+        _selectedDay!.day,
+        _selectedTime!.hour,
+        _selectedTime!.minute,
+      );
+      
+      final String formattedDate = 
+          '${konsultasiDate.year}-'
+          '${konsultasiDate.month.toString().padLeft(2, '0')}-'
+          '${konsultasiDate.day.toString().padLeft(2, '0')} '
+          '${konsultasiDate.hour.toString().padLeft(2, '0')}:'
+          '${konsultasiDate.minute.toString().padLeft(2, '0')}:00';
+      
+      final response = await http.post(
+        Uri.parse(ApiConstants.bookingKonsultasi),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'id_dokter': widget.dokter['id_dokter'],
+          'waktu_konsultasi': formattedDate,
+          'keluhan_pelanggan': _keluhanController.text.trim(),
+        }),
+      );
+      
+      setState(() {
+        _isBookingLoading = false;
+      });
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        jsonDecode(response.body);
+        
+        // Tampilkan dialog sukses
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Booking Berhasil'),
+              content: const Text('Jadwal konsultasi Anda telah berhasil dibuat.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        final jsonData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(jsonData['message'] ?? 'Gagal membuat jadwal')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isBookingLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
 Future<void> fetchDoctorDetails() async {
@@ -149,19 +354,22 @@ Future<void> fetchDoctorDetails() async {
                         width: 150,
                         height: 150,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: Colors.grey[300],
-                          // Uncomment when you have the image
-                          // image: DecorationImage(
-                          //   image: AssetImage('assets/images/doctor_placeholder.png'),
-                          //   fit: BoxFit.cover,
-                          // ),
+                          borderRadius: BorderRadius.circular(8),
+                          color: appTheme.lightGrey,
+                          image: widget.dokter['foto_dokter'] != null
+                              ? DecorationImage(
+                                  image: NetworkImage('${widget.dokter['foto_dokter']}'),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.person, size: 50, color: Colors.grey),
-                        ),
+                        child: widget.dokter['foto_dokter'] == null
+                            ? Center(
+                                child: Icon(Icons.person, size: 50, color: appTheme.black900),
+                              )
+                            : null,
                       ),
-                    ),
+                    ),  
                     const SizedBox(height: 16),
                     
                     // Doctor's name
@@ -200,17 +408,17 @@ Future<void> fetchDoctorDetails() async {
                                   Text(
                                     "±5",
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.brown[700],
+                                      color: appTheme.black900,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     "Tahun",
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: appTheme.black900,
                                     ),
                                   ),
                                 ],
@@ -232,17 +440,17 @@ Future<void> fetchDoctorDetails() async {
                                   Text(
                                     averageRating.toStringAsFixed(1),
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.brown[700],
+                                      color: appTheme.black900,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     "/ 10",
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: appTheme.black900,
                                     ),
                                   ),
                                 ],
@@ -259,17 +467,17 @@ Future<void> fetchDoctorDetails() async {
                                   Text(
                                     "FREE",
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.brown[700],
+                                      color: appTheme.black900,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     "/ sesi konsultasi",
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: appTheme.black900,
                                     ),
                                   ),
                                 ],
@@ -308,6 +516,7 @@ Future<void> fetchDoctorDetails() async {
                             decoration: BoxDecoration(
                               color: appTheme.lightBadge100,
                               borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: appTheme.black900, width: 1),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -389,7 +598,7 @@ Future<void> fetchDoctorDetails() async {
                                 decoration: BoxDecoration(
                                   color: appTheme.lightBadge100,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.white, width: 0.5),
+                                  border: Border.all(color: appTheme.black900, width: 1),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,7 +648,7 @@ Future<void> fetchDoctorDetails() async {
                                         return Icon(
                                           Icons.star,
                                           color: starIndex < (feedback['rating']) 
-                                              ? Colors.orange 
+                                              ? appTheme.orange400 
                                               : Colors.grey,
                                           size: 16,
                                         );
@@ -480,6 +689,7 @@ Future<void> fetchDoctorDetails() async {
                       decoration: BoxDecoration(
                         color: appTheme.lightBadge100,
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: appTheme.black900, width: 1),
                       ),
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -582,6 +792,46 @@ Future<void> fetchDoctorDetails() async {
                       ),
                     ),
                     const SizedBox(height: 24),
+
+                    // Time picker section
+                    const Text(
+                      "Pilih jam konsultasi",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: _showTimePicker,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: appTheme.lightBadge100,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: appTheme.black900, width: 1),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedTime == null
+                                  ? "Pilih jam konsultasi"
+                                  : "Jam ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}",
+                              style: TextStyle(
+                                color: _selectedTime == null
+                                    ? appTheme.black900.withOpacity(0.5)
+                                    : appTheme.black900,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Icon(Icons.access_time, color: appTheme.black900),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
                     // Text field untuk keluhan
                     const Text(
                       "Keluhan Anda",
@@ -595,10 +845,14 @@ Future<void> fetchDoctorDetails() async {
                       decoration: BoxDecoration(
                         color: appTheme.lightBadge100,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                        border: Border.all(color: appTheme.black900, width: 1),
                       ),
                       child: TextField(
+                        controller: _keluhanController,
                         maxLines: 5,
+                        onChanged: (text) {
+                          setState(() {}); // Refresh UI untuk validasi tombol
+                        },
                         decoration: InputDecoration(
                           hintText: 'Tuliskan keluhan Anda di sini...',
                           contentPadding: const EdgeInsets.all(16),
@@ -621,24 +875,35 @@ Future<void> fetchDoctorDetails() async {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _selectedDay == null
-                            ? null
-                            : () {
-                                // Handle booking
-                              },
+                        onPressed: _isFormValid 
+                            ? _isBookingLoading 
+                                ? null 
+                                : _bookingKonsultasi 
+                            : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
+                          backgroundColor: _isFormValid 
+                              ? appTheme.lightGreen
+                              : appTheme.lightGrey, // Abu-abu jika tidak valid
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Text(
-                          "ATUR JADWAL",
-                          style: TextStyle(
-                            color: _selectedDay == null ? Colors.grey : Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isBookingLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "ATUR JADWAL",
+                                style: TextStyle(
+                                  color: _isFormValid ? appTheme.whiteA700 : appTheme.lightGrey,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
