@@ -54,7 +54,7 @@ class _UserScreenState extends State<UserScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      
+
       if (token != null) {
         await http.post(
           Uri.parse(ApiConstants.logout),
@@ -64,39 +64,54 @@ class _UserScreenState extends State<UserScreen> {
           },
         );
       }
-      
+
+      // Hapus semua data user dari SharedPreferences
       await prefs.clear();
-      
+
       setState(() {
         isLoggedIn = false;
         userName = '';
         userEmail = '';
         phoneNumber = '';
       });
-      
+
       toastification.show(
-          context: context,
-          title: const Text('Success!'),
-          description: const Text("Berhasil keluar dari akun"),
-          autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.lightGreen,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-        );
+        context: context,
+        title: const Text('Success!'),
+        description: const Text("Berhasil keluar dari akun"),
+        autoCloseDuration: const Duration(seconds: 3),
+        backgroundColor: appTheme.lightGreen,
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+      );
+
+      // Kembali ke HomeScreen dan hapus semua rute sebelumnya
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.homeScreen,
+            (route) => false,
+      );
 
     } catch (e) {
       print('Logout error: $e');
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      
+
       setState(() {
         isLoggedIn = false;
         userName = '';
         userEmail = '';
         phoneNumber = '';
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan, tetapi Anda berhasil keluar'))
+          const SnackBar(content: Text('Terjadi kesalahan, tetapi Anda berhasil keluar'))
+      );
+
+      // Kembali ke HomeScreen dan hapus semua rute sebelumnya
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.homeScreen,
+            (route) => false,
       );
     }
   }
@@ -139,6 +154,7 @@ class _UserScreenState extends State<UserScreen> {
                           decoration: BoxDecoration(
                             color: appTheme.lightBadge100,
                             borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: appTheme.black900, width: 1),
                           ),
                           padding: const EdgeInsets.all(16),
                           child: Row(
@@ -263,18 +279,45 @@ class _UserScreenState extends State<UserScreen> {
                     ],
                     
                     // Dynamic Login/Logout Button
+                    // Perbaikan untuk tombol LOGIN di UserScreen.dart
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: isLoggedIn 
-                          ? _logout  // Call logout function if logged in
-                          : () {     // Navigate to login page if logged out
-                              Navigator.pushNamedAndRemoveUntil(
-                                context, 
-                                AppRoutes.loginUserScreen, 
-                                (route) => false
+                        onPressed: isLoggedIn
+                            ? _logout
+                            : () {
+                          try {
+                            // Tambahkan log untuk debugging
+                            print('Mencoba navigasi ke halaman login');
+
+                            // Gunakan Navigator.pushNamed biasa untuk troubleshooting
+                            Navigator.pushNamed(context, AppRoutes.loginUserScreen)
+                                .then((_) {
+                              // Refresh data setelah kembali dari halaman login
+                              loadUserData();
+                              print('Kembali dari halaman login');
+                            })
+                                .catchError((error) {
+                              print('Error navigasi: $error');
+                              // Tampilkan pesan error
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Gagal membuka halaman login: $error'))
                               );
-                            },
+                            });
+
+                            // Jika ingin tetap gunakan pushNamedAndRemoveUntil
+                            // Navigator.pushNamedAndRemoveUntil(
+                            //   context,
+                            //   AppRoutes.loginUserScreen,
+                            //   (route) => false
+                            // );
+                          } catch (e) {
+                            print('Exception saat navigasi: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Terjadi kesalahan: $e'))
+                            );
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isLoggedIn ? appTheme.orange400 : appTheme.lightGreen,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -291,7 +334,7 @@ class _UserScreenState extends State<UserScreen> {
                           ),
                         ),
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
@@ -306,7 +349,7 @@ class _UserScreenState extends State<UserScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFFFEF1D7),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.transparent),
+          border: Border.all(color: appTheme.black900, width: 1),
         ),
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),

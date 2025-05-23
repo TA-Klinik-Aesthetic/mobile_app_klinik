@@ -185,10 +185,7 @@ class ProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: appTheme.lightBadge100,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: appTheme.lightGrey, // Warna border
-              width: 1.0, 
-            ),    
+          border: Border.all(color: appTheme.lightGrey, width: 1.0),
         ),
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -227,7 +224,7 @@ class ProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: appTheme.black900,
+                color: appTheme.orange200,
               ),
             ),
           ],

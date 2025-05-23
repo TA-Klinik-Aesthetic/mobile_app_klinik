@@ -10,43 +10,81 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? namaUser;
   late PersistentTabController _controller;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _controller = PersistentTabController(initialIndex: 0);
-    _loadUserName(); // Load user name on init
+    WidgetsBinding.instance.addObserver(this);
+    _loadUserName();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadUserName();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadUserName();
   }
 
   Future<void> _loadUserName() async {
-    final prefs = await SharedPreferences.getInstance();
-    final loginTimeStr = prefs.getString('login_time');
-    final token = prefs.getString('token');
+    setState(() {
+      _isLoading = true;
+    });
 
-    if (loginTimeStr != null && token != null) {
-      final loginTime = DateTime.tryParse(loginTimeStr);
-      final now = DateTime.now();
+    try {
+      final prefs = await SharedPreferences.getInstance();
 
-      if (loginTime != null && now.difference(loginTime).inDays < 7) {
-        final savedName = prefs.getString('nama_user');
+      // Debug logging
+      final token = prefs.getString('token');
+      final savedName = prefs.getString('nama_user');
+      final userId = prefs.getInt('id_user');
+
+      print('DEBUG HomeScreen: token = ${token != null ? "ada" : "tidak ada"}');
+      print('DEBUG HomeScreen: nama_user = $savedName');
+      print('DEBUG HomeScreen: id_user = $userId');
+
+      // Simplify the logic - if we have a token and name, show the name
+      if (token != null && savedName != null) {
         if (mounted) {
           setState(() {
-            namaUser = savedName ?? "Guest";
+            namaUser = savedName;
+            _isLoading = false;
           });
         }
         return;
-      } else {
-        await prefs.clear();
       }
-    }
 
-    if (mounted) {
-      setState(() {
-        namaUser = "Guest";
-      });
+      // Otherwise, set as guest
+      if (mounted) {
+        setState(() {
+          namaUser = "Guest";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('ERROR loading user name: $e');
+      if (mounted) {
+        setState(() {
+          namaUser = "Guest";
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -87,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       Navigator(
         onGenerateRoute: (settings) => MaterialPageRoute(
-          builder: (context) => 
+          builder: (context) =>
               AppRoutes.routes[AppRoutes.userScreen]!(context),
         ),
       ),
@@ -129,26 +167,32 @@ class _HomeScreenState extends State<HomeScreen> {
         title: GestureDetector(
           onTap: () {
             if (namaUser == null || namaUser == "Guest") {
-              Navigator.pushNamed(context, AppRoutes.loginUserScreen);
+              Navigator.pushNamed(context, AppRoutes.loginUserScreen)
+                  .then((_) => _loadUserName());
             } else {
               Navigator.pushNamed(context, AppRoutes.userScreen);
             }
           },
-          child: Text.rich(
+          child: _isLoading
+              ? const CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+          )
+              : Text.rich(
             TextSpan(
               children: [
                 if (namaUser == null || namaUser == "Guest")
                   const TextSpan(
                     text: "Masuk / Daftar",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   )
                 else ...[
                   const TextSpan(
-                    text: "Hello, ",
+                    text: "Halo, ",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -159,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     text: namaUser,
                     style: TextStyle(
                       color: appTheme.black900,
-                      fontSize: 18,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -177,82 +221,88 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                "Latest Promo",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+      body: RefreshIndicator(
+        onRefresh: _loadUserName,
+        color: appTheme.lightGreen,
+        backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(), // Penting: memungkinkan scroll meskipun konten tidak penuh
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Text(
+                  "Latest Promo",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: appTheme.lightBadge100,
-                borderRadius: BorderRadius.circular(24.0),
-                border: Border.all(color: Colors.black, width: 2),
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.productScreen);
-                },
-                child: const Center(
-                  child: Text(
-                    "Promo Content",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+              Container(
+                height: 250,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: appTheme.lightBadge100,
+                  borderRadius: BorderRadius.circular(24.0),
+                  border: Border.all(color: Colors.black, width: 2),
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.productScreen);
+                  },
+                  child: const Center(
+                    child: Text(
+                      "Promo Content",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                "Jadwal Doctor",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Text(
+                  "Jadwal Doctor",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              height: 75,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: appTheme.lightGreen,
-                borderRadius: BorderRadius.circular(24.0),
-                border: Border.all(color: Colors.black, width: 2),
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
-                },
-                child: const Center(
-                  child: Text(
-                    "Calender Jadwal Dokter",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+              Container(
+                height: 75,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: appTheme.lightGreen,
+                  borderRadius: BorderRadius.circular(24.0),
+                  border: Border.all(color: Colors.black, width: 2),
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
+                  },
+                  child: const Center(
+                    child: Text(
+                      "Calender Jadwal Dokter",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
