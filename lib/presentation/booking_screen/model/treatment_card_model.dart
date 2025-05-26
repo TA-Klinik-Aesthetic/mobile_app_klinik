@@ -17,6 +17,7 @@ class TreatmentCard extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: appTheme.black900, width: 1.0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

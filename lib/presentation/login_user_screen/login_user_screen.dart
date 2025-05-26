@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../api/api_constant.dart';
@@ -24,6 +25,26 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool isLoading = false;
+  String appVersion = "Loading...";
+
+  @override
+  void initState() {
+    super.initState();
+    _getAppVersion();
+  }
+
+  Future<void> _getAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        appVersion = "${packageInfo.version}${packageInfo.buildNumber.isNotEmpty ? '+${packageInfo.buildNumber}' : ''}";
+      });
+    } catch (e) {
+      setState(() {
+        appVersion = "0.0.0";
+      });
+    }
+  }
 
   Future<void> _loginUser() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -48,6 +69,20 @@ class LoginUserScreenState extends State<LoginUserScreen> {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
+        
+        // Check if user role is "pelanggan"
+        if (responseData['user']['role'] != "pelanggan") {
+          toastification.show(
+            context: context,
+            title: const Text('Akses Ditolak'),
+            description: const Text("Login hanya dengan akun pelanggan"),
+            autoCloseDuration: const Duration(seconds: 3),
+            backgroundColor: appTheme.darkCherry,
+            icon: const Icon(Icons.block, color: Colors.white),
+          );
+          return;
+        }
+        
         final prefs = await SharedPreferences.getInstance();
 
         await prefs.setInt('id_user', responseData['user']['id_user']);
@@ -112,12 +147,12 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                   buildLoginForm(),
                   const SizedBox(height: 150),
                   Text(
-                    "v0.0.0 Beta © 2024",
+                    "v$appVersion © 2024",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall,
                   ),
                   Text(
-                    "Copyright Aesthetic Clinic",
+                    "Copyright By NESH Navya",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall,
                   ),
@@ -155,7 +190,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.all(6.0),
-              child: Text("Password", style: theme.textTheme.bodySmall),
+              child: Text("lbl_password".tr, style: theme.textTheme.bodySmall),
             ),
           ),
           buildPasswordInput(),
@@ -164,7 +199,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
             alignment: Alignment.centerRight,
             child: Padding(
               padding: const EdgeInsets.all(6.0),
-              child: Text("Forgot Password?", style: theme.textTheme.bodySmall),
+              child: Text("msg_forgot_password".tr, style: theme.textTheme.bodySmall),
             ),
           ),
           const SizedBox(height: 24),
@@ -197,7 +232,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
 
   Widget buildLoginButton() {
     return CustomOutlinedButton(
-      text: "Login",
+      text: "btn_login".tr,
       onPressed: _loginUser,
     );
   }

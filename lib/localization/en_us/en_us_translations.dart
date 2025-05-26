@@ -2,17 +2,22 @@ final Map<String, String> enUs = {
   // Login User Screen
   "lbl_enter_password": "Enter password",
   "lbl_user": "User",
+  "lbl_password": "Password",
   "msg_don_t_have_an_account": "Don’t have an account? ",
   "msg_enter_your_email": "Enter your email",
   "msg_forgot_password": "Forgot Password?",
   "lbl_enter_your_email": "Enter your email",
   "lbl_enter_your_password": "Enter your password",
+  "msg_email_required": "Email cannot be empty",
+  "msg_email_invalid": "Email is not valid",
+  "btn_login": "Login",
 
   // Register User Screen
   "lbl_username": "Enter Username",
-  "lbl_8": "8** **** ****",
+  "lbl_hint_phonum": "08** **** ****",
   "lbl_enter_the_email": "Enter the email",
   "lbl_phone_number": "Enter Phone Number",
+  "lbl_have_account": "Already have an account? ",
   "msg_already_have_an": "Already have an account? ",
   "msg_enter_the_password": "Enter the password",
   "msg_re_type_password": "Re-type Password",

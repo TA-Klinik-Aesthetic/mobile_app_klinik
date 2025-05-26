@@ -4,6 +4,7 @@ import 'package:mobile_app_klinik/presentation/booking_screen/booking_consultati
 import 'package:mobile_app_klinik/presentation/booking_screen/booking_treatment_screen.dart';
 import 'package:mobile_app_klinik/presentation/doctor_schedule_screen/doctor_schedule_screen.dart';
 import 'package:mobile_app_klinik/presentation/login_user_screen/login_user_screen.dart';
+import 'package:mobile_app_klinik/presentation/promo_screen/promo_screen.dart';
 import 'package:mobile_app_klinik/presentation/register_user_screen/register_user_screen.dart';
 import 'package:mobile_app_klinik/presentation/home_screen/home_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/user_screen.dart';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String bookingConsultationScreen = '/booking_consultation_screen';
   static const String bookingTreatmentScreen = '/booking_treatment_screen';
   static const String userScreen = '/user_screen';
+  static const String promoScreen = '/promo_screen';
   static const String appNavigationScreen = '/app_navigation_screen';
   static const String initialRoute = '/initialRoute';
 
@@ -31,6 +33,7 @@ class AppRoutes {
     loginUserScreen: (context) => const LoginUserScreen(),
     registerUserScreen: (context) => const RegisterUserScreen(),
     productScreen: (context) => const ProductScreen(),
+    promoScreen: (context) => const PromoScreen(),
     doctorScheduleScreen: (context) => const DoctorScheduleScreen(),
     bookingScreen: (context) => const BookingScreen(),
     bookingConsultationScreen: (context) => const BookingConsultationScreen(),

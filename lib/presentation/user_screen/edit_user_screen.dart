@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
@@ -22,6 +23,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _birthDateController = TextEditingController();
+  String? _profileImageUrl;
   
   bool _isLoading = true;
   bool _isSaving = false;
@@ -92,6 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _nameController.text = userData['nama_user'] ?? '';
           _emailController.text = userData['email'] ?? '';
           _phoneController.text = userData['no_telp'] ?? '';
+          _profileImageUrl = userData['foto_profil'];
 
           // Handle date format conversion if needed
           if (userData['tanggal_lahir'] != null && userData['tanggal_lahir'].toString().isNotEmpty) {
@@ -220,6 +223,174 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _selectImage() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: const Text('Enter Image URL'),
+              onTap: () {
+                Navigator.pop(context);
+                _enterImageUrl();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+
+      if (pickedFile != null) {
+        setState(() => _isLoading = true);
+
+        // Create multipart request
+        final request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${ApiConstants.baseUrl}/upload-profile-image'),
+        );
+
+        // Get token for authorization
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+
+        // Add authorization header
+        request.headers['Authorization'] = 'Bearer $token';
+
+        // Add file to request
+        request.files.add(await http.MultipartFile.fromPath(
+          'image',
+          pickedFile.path,
+        ));
+
+        // Send request
+        final response = await request.send();
+
+        // Process response
+        if (response.statusCode == 200) {
+          final responseData = await response.stream.bytesToString();
+          final data = jsonDecode(responseData);
+
+          setState(() {
+            _profileImageUrl = data['url'];
+            _isLoading = false;
+          });
+
+          _showSuccessSnackbar('Profile image updated successfully');
+        } else {
+          setState(() => _isLoading = false);
+          _showErrorSnackbar('Failed to upload image');
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorSnackbar('Error picking image: $e');
+    }
+  }
+
+  void _enterImageUrl() {
+    final TextEditingController urlController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Image URL'),
+        content: TextField(
+          controller: urlController,
+          decoration: const InputDecoration(hintText: 'https://...'),
+          keyboardType: TextInputType.url,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (urlController.text.isNotEmpty) {
+                Navigator.pop(context);
+
+                setState(() => _isLoading = true);
+
+                try {
+                  // Validate URL by attempting to load it
+                  final response = await http.head(Uri.parse(urlController.text));
+
+                  if (response.statusCode == 200) {
+                    setState(() {
+                      _profileImageUrl = urlController.text;
+                      _isLoading = false;
+                    });
+
+                    // Save profile image URL to backend
+                    _updateProfileImageUrl();
+                  } else {
+                    setState(() => _isLoading = false);
+                    _showErrorSnackbar('Invalid image URL');
+                  }
+                } catch (e) {
+                  setState(() => _isLoading = false);
+                  _showErrorSnackbar('Error loading image: $e');
+                }
+              }
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateProfileImageUrl() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/update-profile-image'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'image_url': _profileImageUrl,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _showSuccessSnackbar('Profile image updated successfully');
+      } else {
+        _showErrorSnackbar('Failed to update profile image');
+      }
+    } catch (e) {
+      _showErrorSnackbar('Error updating profile image: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,10 +427,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           Container(
                             width: 100,
                             height: 100,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.grey,
-                              image: DecorationImage(
+                              color: Colors.grey.shade200,
+                              image: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                                  ? DecorationImage(
+                                image: NetworkImage(_profileImageUrl!),
+                                fit: BoxFit.cover,
+                                onError: (_, __) => const AssetImage('assets/images/profile_placeholder.png'),
+                              )
+                                  : const DecorationImage(
                                 image: AssetImage('assets/images/profile_placeholder.png'),
                                 fit: BoxFit.cover,
                               ),
@@ -268,15 +445,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           Positioned(
                             bottom: 0,
                             right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFEF1D7),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.edit,
-                                size: 20,
+                            child: InkWell(
+                              onTap: _selectImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF1D7),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Color(0xFFF8A44C),
+                                ),
                               ),
                             ),
                           ),

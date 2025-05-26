@@ -168,7 +168,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
           ),
           CustomTextFormField(
             controller: _phoneController,
-            hintText: "08** **** ****",
+            hintText: "lbl_hint_phonum".tr,
             textInputType: TextInputType.phone,
           ),
           SizedBox(height: 16.h),
@@ -215,13 +215,13 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Already have an account? "),
+              Text("lbl_have_account".tr),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.loginUserScreen);
                 },
                 child: Text(
-                  "Login",
+                  "btn_login".tr,
                   style: TextStyle(
                     color: appTheme.orange200,
                     fontWeight: FontWeight.bold,

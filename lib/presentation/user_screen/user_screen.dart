@@ -19,6 +19,7 @@ class _UserScreenState extends State<UserScreen> {
   String userName = '';
   String userEmail = '';
   String phoneNumber = '';
+  String userProfilePhoto = ''; // Added missing variable
   bool isLoading = true;
   bool isLoggedIn = true; // Track login status
 
@@ -31,7 +32,7 @@ class _UserScreenState extends State<UserScreen> {
   Future<void> loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    
+
     if (token == null) {
       setState(() {
         isLoggedIn = false;
@@ -39,16 +40,17 @@ class _UserScreenState extends State<UserScreen> {
       });
       return;
     }
-    
+
     setState(() {
       userName = prefs.getString('nama_user') ?? 'User';
       userEmail = prefs.getString('email') ?? 'user@example.com';
       phoneNumber = prefs.getString('no_telp') ?? '62xxxxxxx';
+      userProfilePhoto = prefs.getString('foto_profil') ?? ''; // Load profile photo URL
       isLoading = false;
       isLoggedIn = true;
     });
   }
-  
+
   // Logout Function
   Future<void> _logout() async {
     try {
@@ -73,6 +75,7 @@ class _UserScreenState extends State<UserScreen> {
         userName = '';
         userEmail = '';
         phoneNumber = '';
+        userProfilePhoto = '';
       });
 
       toastification.show(
@@ -101,6 +104,7 @@ class _UserScreenState extends State<UserScreen> {
         userName = '';
         userEmail = '';
         phoneNumber = '';
+        userProfilePhoto = '';
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,213 +139,209 @@ class _UserScreenState extends State<UserScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // Profile Section - Show only if logged in
-                    if (isLoggedIn) ...[
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const EditProfileScreen(),
-                            ),
-                          ).then((_) => loadUserData());
-                        },
-                        child: Container(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Profile Section - Show only if logged in
+              if (isLoggedIn) ...[
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen(),
+                      ),
+                    ).then((_) => loadUserData());
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: appTheme.lightBadge100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: appTheme.black900, width: 1),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        // Profile Image
+                        Container(
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
-                            color: appTheme.lightBadge100,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: appTheme.black900, width: 1),
+                            shape: BoxShape.circle,
+                            color: appTheme.lightGrey,
+                            border: Border.all(color: Colors.black, width: 1),
+                            image: DecorationImage(
+                              image: userProfilePhoto.isNotEmpty
+                                  ? NetworkImage(userProfilePhoto) as ImageProvider
+                                  : const AssetImage('assets/images/profile_placeholder.png'),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
+                        ),
+                        const SizedBox(width: 16),
+                        // User Info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Profile Image
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: appTheme.lightGrey,
-                                  image: const DecorationImage(
-                                    image: AssetImage('assets/images/profile_placeholder.png'),
-                                    fit: BoxFit.cover,
-                                  ),
+                              Text(
+                                userName,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              // User Info
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      userName,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      userEmail,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: appTheme.black900,
-                                      ),
-                                    ),
-                                    Text(
-                                      phoneNumber,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: appTheme.black900,
-                                      ),
-                                    ),
-                                  ],
+                              Text(
+                                userEmail,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: appTheme.black900,
                                 ),
                               ),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                size: 16,
-                                color: appTheme.black900,
+                              Text(
+                                phoneNumber,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: appTheme.black900,
+                                ),
                               ),
                             ],
                           ),
                         ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: appTheme.black900,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Menu Options - Show only if logged in
+                _buildMenuOption(
+                  title: 'Favorit',
+                  onTap: () {
+                    // Navigate to favorites screen
+                  },
+                ),
+                _buildMenuOption(
+                  title: 'Histori Pembelian',
+                  onTap: () {
+                    // Navigate to purchase history screen
+                  },
+                ),
+                _buildMenuOption(
+                  title: 'Histori Kunjungan',
+                  onTap: () {
+                    // Navigate to visit history screen
+                  },
+                ),
+                _buildMenuOption(
+                  title: 'Pengajuan Komplain',
+                  onTap: () {
+                    // Navigate to complaint screen
+                  },
+                ),
+
+                const SizedBox(height: 36),
+              ] else ...[
+                // Message when not logged in
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: appTheme.lightBadge100,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.account_circle,
+                        size: 70,
+                        color: appTheme.orange200,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Anda belum login',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Silakan login untuk mengakses profil dan fitur lainnya',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      
-                      // Menu Options - Show only if logged in
-                      _buildMenuOption(
-                        title: 'Favorit',
-                        onTap: () {
-                          // Navigate to favorites screen
-                        },
-                      ),
-                      _buildMenuOption(
-                        title: 'Histori Pembelian',
-                        onTap: () {
-                          // Navigate to purchase history screen
-                        },
-                      ),
-                      _buildMenuOption(
-                        title: 'Histori Kunjungan',
-                        onTap: () {
-                          // Navigate to visit history screen
-                        },
-                      ),
-                      _buildMenuOption(
-                        title: 'Pengajuan Komplain',
-                        onTap: () {
-                          // Navigate to complaint screen
-                        },
-                      ),
-                      
-                      const SizedBox(height: 36),
-                    ] else ...[
-                      // Message when not logged in
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: appTheme.lightBadge100,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.account_circle,
-                              size: 70,
-                              color: appTheme.orange200,
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Anda belum login',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Silakan login untuk mengakses profil dan fitur lainnya',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 36),
                     ],
-                    
-                    // Dynamic Login/Logout Button
-                    // Perbaikan untuk tombol LOGIN di UserScreen.dart
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isLoggedIn
-                            ? _logout
-                            : () {
-                          try {
-                            // Tambahkan log untuk debugging
-                            print('Mencoba navigasi ke halaman login');
-
-                            // Gunakan Navigator.pushNamed biasa untuk troubleshooting
-                            Navigator.pushNamed(context, AppRoutes.loginUserScreen)
-                                .then((_) {
-                              // Refresh data setelah kembali dari halaman login
-                              loadUserData();
-                              print('Kembali dari halaman login');
-                            })
-                                .catchError((error) {
-                              print('Error navigasi: $error');
-                              // Tampilkan pesan error
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Gagal membuka halaman login: $error'))
-                              );
-                            });
-
-                            // Jika ingin tetap gunakan pushNamedAndRemoveUntil
-                            // Navigator.pushNamedAndRemoveUntil(
-                            //   context,
-                            //   AppRoutes.loginUserScreen,
-                            //   (route) => false
-                            // );
-                          } catch (e) {
-                            print('Exception saat navigasi: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Terjadi kesalahan: $e'))
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isLoggedIn ? appTheme.orange400 : appTheme.lightGreen,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          isLoggedIn ? 'KELUAR' : 'LOGIN',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: appTheme.whiteA700,
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
+                  ),
                 ),
-              ),
-            ),
+                const SizedBox(height: 36),
+              ],
+
+              // Dynamic Login/Logout Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isLoggedIn
+                      ? _logout
+                      : () {
+                    try {
+                      // Tambahkan log untuk debugging
+                      print('Mencoba navigasi ke halaman login');
+
+                      // Gunakan Navigator.pushNamed biasa untuk troubleshooting
+                      Navigator.pushNamed(context, AppRoutes.loginUserScreen)
+                          .then((_) {
+                        // Refresh data setelah kembali dari halaman login
+                        loadUserData();
+                        print('Kembali dari halaman login');
+                      })
+                          .catchError((error) {
+                        print('Error navigasi: $error');
+                        // Tampilkan pesan error
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Gagal membuka halaman login: $error'))
+                        );
+                      });
+                    } catch (e) {
+                      print('Exception saat navigasi: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Terjadi kesalahan: $e'))
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isLoggedIn ? appTheme.orange400 : appTheme.lightGreen,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.black, width: 1.0),
+                    ),
+                  ),
+                  child: Text(
+                    isLoggedIn ? 'KELUAR' : 'LOGIN',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: appTheme.whiteA700,
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
-  
+
   Widget _buildMenuOption({required String title, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
