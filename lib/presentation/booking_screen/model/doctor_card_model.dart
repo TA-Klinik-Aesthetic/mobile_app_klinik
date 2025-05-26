@@ -136,7 +136,7 @@ class _DoctorCardState extends State<DoctorCard> {
                     // Rating
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 20),
+                        Icon(Icons.stars_rounded, color: appTheme.orange200, size: 20),
                         const SizedBox(width: 4),
                         Text(
                           isLoading 
