@@ -1,11 +1,70 @@
 // booking_summary_screen.dart
 import 'package:flutter/material.dart';
-import 'package:mobile_app_klinik/theme/theme_helper.dart'; // Ensure this import is correct
+import 'package:mobile_app_klinik/theme/theme_helper.dart';
 
-class DetailBookingTreatmentScreen extends StatelessWidget {
+class DetailBookingTreatmentScreen extends StatefulWidget {
   final List<Map<String, dynamic>> selectedTreatments;
 
   const DetailBookingTreatmentScreen({super.key, required this.selectedTreatments});
+
+  @override
+  State<DetailBookingTreatmentScreen> createState() => _DetailBookingTreatmentScreenState();
+}
+
+class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScreen> {
+  late List<Map<String, dynamic>> _treatments;
+
+  @override
+  void initState() {
+    super.initState();
+    // Create a copy of the list to avoid modifying the original
+    _treatments = List.from(widget.selectedTreatments);
+  }
+
+  void _showDeleteConfirmation(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi'),
+          content: const Text('Yakin ingin menghapusnya dari cart?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: Text(
+                'Tidak jadi',
+                style: TextStyle(color: appTheme.lightGrey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Remove the item
+                setState(() {
+                  _treatments.removeAt(index);
+                });
+                Navigator.of(context).pop(); // Close dialog
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: appTheme.orange200,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Ya, saya ingin',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   String _formatPrice(dynamic price) {
     if (price == null) return '0';
@@ -35,7 +94,7 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
 
   double _calculateTotalPrice() {
     double total = 0.0;
-    for (var t in selectedTreatments) {
+    for (var t in _treatments) {
       if (t['biaya_treatment'] != null) {
         if (t['biaya_treatment'] is int) {
           total += (t['biaya_treatment'] as int).toDouble();
@@ -80,13 +139,15 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
           'Ringkasan Booking',
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
-        elevation: 0,
         backgroundColor: appTheme.whiteA700,
+        elevation: 0.0,
+        centerTitle: true,
         foregroundColor: appTheme.black900,
       ),
-      body: selectedTreatments.isEmpty
+      body: _treatments.isEmpty
           ? Center(
         child: Text(
           'Tidak ada treatment yang dipilih.',
@@ -98,9 +159,9 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              itemCount: selectedTreatments.length,
+              itemCount: _treatments.length,
               itemBuilder: (context, index) {
-                final treatment = selectedTreatments[index];
+                final treatment = _treatments[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   elevation: 1,
@@ -121,18 +182,20 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              width: 80,
-                              height: 80,
-                              color: Colors.grey[200],
-                              child: const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
-                            ),
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image_not_supported),
+                              );
+                            },
                           )
                               : Container(
                             width: 80,
                             height: 80,
                             color: Colors.grey[200],
-                            child: const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
+                            child: const Icon(Icons.image_not_supported),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -149,16 +212,16 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Rp ${_formatPrice(treatment['biaya_treatment'] ?? 0)}',
+                                'Rp ${_formatPrice(treatment['biaya_treatment'])}',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
                                   color: appTheme.orange200,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Estimasi: ${_formatEstimasi(treatment['estimasi_treatment'] ?? '00:00:00')}',
+                                'Durasi: ${_formatEstimasi(treatment['estimasi_treatment'] ?? '00:00:00')}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: appTheme.lightGrey,
@@ -166,6 +229,11 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
                               ),
                             ],
                           ),
+                        ),
+                        // Add trash bin icon
+                        IconButton(
+                          icon: Icon(Icons.delete_outline_rounded, color: appTheme.lightGrey),
+                          onPressed: () => _showDeleteConfirmation(context, index),
                         ),
                       ],
                     ),
@@ -216,16 +284,15 @@ class DetailBookingTreatmentScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: _treatments.isEmpty ? null : () {
                       // Implement final booking process here
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Melanjutkan ke proses pembayaran...')),
                       );
-                      // Example: Navigate to payment screen
-                      // Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentScreen(treatments: selectedTreatments, total: _calculateTotalPrice())));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: appTheme.orange200,
+                      disabledBackgroundColor: Colors.grey[300],
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

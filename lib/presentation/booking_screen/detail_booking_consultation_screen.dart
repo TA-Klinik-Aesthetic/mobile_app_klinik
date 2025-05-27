@@ -1,11 +1,11 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'dart:convert';
 import 'package:table_calendar/table_calendar.dart';
-import '../../api/api_constant.dart';
+import 'package:mobile_app_klinik/routes/app_routes.dart';
+import 'package:mobile_app_klinik/core/app_export.dart';
+import 'package:mobile_app_klinik/api/api_constant.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -31,7 +31,7 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
   TimeOfDay? _selectedTime;
   final TextEditingController _keluhanController = TextEditingController();
   Map<String, dynamic>? _userData;
-  bool _isBookingLoading = false;
+bool _isBookingLoading = false;
 
   // Getter untuk validasi form
   bool get _isFormValid => 
@@ -257,11 +257,16 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
               content: const Text('Jadwal konsultasi Anda telah berhasil dibuat.'),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop(); // Go back to previous page
-                  },
-                  child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          AppRoutes.routes[AppRoutes.homeScreen]!(context),
+                    ),
+                        (route) => false, // This removes all previous routes
+                  );
+                },
+                child: const Text('OK'),
                 ),
               ],
             );
