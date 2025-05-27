@@ -140,7 +140,7 @@ bool _isBookingLoading = false;
     );
   }
 
-  // Fungsi untuk melakukan booking konsultasi
+// Fungsi untuk melakukan booking konsultasi
   Future<void> _bookingKonsultasi() async {
     if (!_isFormValid) return;
 
@@ -151,7 +151,6 @@ bool _isBookingLoading = false;
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final String? token = prefs.getString('token');
-      // Get user ID directly from SharedPreferences instead of _userData
       final int? userId = prefs.getInt('id_user');
 
       if (token == null) {
@@ -190,9 +189,7 @@ bool _isBookingLoading = false;
           '${konsultasiDate.hour.toString().padLeft(2, '0')}:'
           '${konsultasiDate.minute.toString().padLeft(2, '0')}:00';
 
-      print('Creating consultation with user ID: $userId');
-
-      // Create the consultation
+      // Create the consultation with keluhan_pelanggan included directly
       final response = await http.post(
         Uri.parse(ApiConstants.bookingKonsultasi),
         headers: {
@@ -204,50 +201,13 @@ bool _isBookingLoading = false;
           'id_dokter': widget.dokter['id_dokter'],
           'id_user': userId,
           'waktu_konsultasi': formattedDate,
+          'keluhan_pelanggan': _keluhanController.text.trim(), // Include complaint directly
         }),
       );
 
       print('Consultation response: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
-
-        // Extract konsultasi ID properly from the response
-        int? konsultasiId;
-        if (responseData['data'] != null && responseData['data']['id_konsultasi'] != null) {
-          konsultasiId = responseData['data']['id_konsultasi'];
-        } else if (responseData['id_konsultasi'] != null) {
-          konsultasiId = responseData['id_konsultasi'];
-        }
-
-        print('Extracted konsultasiId: $konsultasiId');
-
-        if (konsultasiId != null) {
-          // Create consultation details with patient complaint
-          print('Creating detail consultation with ID: $konsultasiId');
-
-          final detailResponse = await http.post(
-            Uri.parse(ApiConstants.detailBookingKonsultasi),
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'id_konsultasi': konsultasiId,
-              'keluhan_pelanggan': _keluhanController.text.trim(),
-            }),
-          );
-
-          print('Detail consultation response: ${detailResponse.body}');
-
-          if (detailResponse.statusCode != 200 && detailResponse.statusCode != 201) {
-            print('Failed to create consultation details: ${detailResponse.body}');
-          }
-        } else {
-          print('No konsultasiId found in response');
-        }
-
         // Show success dialog
         showDialog(
           context: context,
@@ -257,16 +217,16 @@ bool _isBookingLoading = false;
               content: const Text('Jadwal konsultasi Anda telah berhasil dibuat.'),
               actions: [
                 TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AppRoutes.routes[AppRoutes.homeScreen]!(context),
-                    ),
-                        (route) => false, // This removes all previous routes
-                  );
-                },
-                child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AppRoutes.routes[AppRoutes.homeScreen]!(context),
+                      ),
+                          (route) => false, // This removes all previous routes
+                    );
+                  },
+                  child: const Text('OK'),
                 ),
               ],
             );

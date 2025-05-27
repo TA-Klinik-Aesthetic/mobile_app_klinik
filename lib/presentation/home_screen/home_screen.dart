@@ -14,6 +14,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? namaUser;
   late PersistentTabController _controller;
   bool _isLoading = true;
+  int _notificationCount = 0; // Add notification counter
 
   @override
   void initState() {
@@ -21,6 +22,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _controller = PersistentTabController(initialIndex: 0);
     WidgetsBinding.instance.addObserver(this);
     _loadUserName();
+    _fetchNotificationCount(); // Load notification count
+  }
+
+  // Add method to fetch notification count
+  Future<void> _fetchNotificationCount() async {
+    // This would typically come from an API call
+    // For now, we'll simulate with a fake count
+    setState(() {
+      _notificationCount = 5; // Example count - replace with actual API data
+    });
   }
 
   @override
@@ -179,47 +190,92 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
           )
               : Text.rich(
-            TextSpan(
-              children: [
-                if (namaUser == null || namaUser == "Guest")
-                  const TextSpan(
-                    text: "Masuk / Daftar",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+              TextSpan(
+                children: [
+                  if (namaUser == null || namaUser == "Guest")
+                    const TextSpan(
+                      text: "Masuk / Daftar",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    )
+                  else ...[
+                    const TextSpan(
+                      text: "Halo, ",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
-                  )
-                else ...[
-                  const TextSpan(
-                    text: "Halo, ",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                    TextSpan(
+                      text: namaUser,
+                      style: TextStyle(
+                        color: appTheme.black900,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: namaUser,
-                    style: TextStyle(
-                      color: appTheme.black900,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                    const TextSpan(
+                      text: "!",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                  const TextSpan(
-                    text: "!",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
+          actions: [
+          // Notification bell with badge
+          Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.notifications,
+                color: appTheme.black900,
+                size: 36,
+              ),
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.notificationScreen)
+                    .then((_) => _fetchNotificationCount());
+              },
+            ),
+            if (_notificationCount > 0)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Text(
+                    _notificationCount > 99 ? '99+' : _notificationCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
         ),
+        const SizedBox(width: 12),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadUserName,
