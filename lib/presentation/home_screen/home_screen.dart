@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
-        title: "Products",
+        title: "Product",
         activeColorPrimary: appTheme.lightBadge100,
         inactiveColorPrimary: appTheme.whiteA700,
       ),
@@ -254,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: appTheme.darkCherry,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   constraints: const BoxConstraints(
@@ -282,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         color: appTheme.lightGreen,
         backgroundColor: Colors.white,
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(), // Penting: memungkinkan scroll meskipun konten tidak penuh
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 height: 75,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: appTheme.lightGreen,
+                  color: appTheme.lightBadge100,
                   borderRadius: BorderRadius.circular(24.0),
                   border: Border.all(color: Colors.black, width: 2),
                 ),
@@ -362,14 +362,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   onTap: () {
                     Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
                   },
-                  child: const Center(
-                    child: Text(
-                      "Calender Jadwal Dokter",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
+                  child: Center(
+                    child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Calender Jadwal Dokter",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: appTheme.black900,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.calendar_today,
+                          color: appTheme.black900,
+                          size: 24,
+                        ),
+                      ],
                     ),
                   ),
                 ),

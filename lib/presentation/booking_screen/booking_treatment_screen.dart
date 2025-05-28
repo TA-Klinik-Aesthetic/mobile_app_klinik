@@ -18,7 +18,7 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
   String? error;
   // Store selected treatments at parent level to persist across category changes
   List<Map<String, dynamic>> _selectedTreatments = [];
-  final int maxSelections = 3;
+  final int maxSelections = 10;
 
   @override
   void initState() {
