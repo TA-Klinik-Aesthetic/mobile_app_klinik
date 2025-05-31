@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../api/api_constant.dart';
 import 'model/promo_model.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_app_klinik/routes/app_routes.dart';
 
 class DetailBookingTreatmentScreen extends StatefulWidget {
   final List<Map<String, dynamic>> selectedTreatments;
@@ -18,12 +25,55 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
   bool _isLoadingPromos = false;
   final PromoService _promoService = PromoService();
 
+  // New variables for date and time selection
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  TimeOfDay? _selectedTime;
+  bool _isBookingLoading = false;
+  Map<String, dynamic>? _userData;
+
+  // Getter for form validation
+  bool get _isFormValid =>
+      _selectedDay != null &&
+          _selectedTime != null;
+
   @override
   void initState() {
     super.initState();
     // Create a copy of the list to avoid modifying the original
     _treatments = List.from(widget.selectedTreatments);
     _fetchPromos();
+    _getUserData();
+  }
+
+  // Get user data from shared preferences
+  Future<void> _getUserData() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+
+      if (token != null) {
+        final response = await http.get(
+          Uri.parse(ApiConstants.profile),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            _userData = jsonDecode(response.body);
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal memuat data pengguna')),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
   }
 
   Future<void> _fetchPromos() async {
@@ -45,6 +95,206 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     }
   }
 
+  void _showTimePicker() {
+    // Round the current time to the nearest 15 minutes
+    final DateTime now = DateTime.now();
+    const int minuteInterval = 15;
+    final int minutes = ((now.minute + minuteInterval ~/ 2) ~/ minuteInterval) * minuteInterval;
+    final DateTime initialDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        now.hour,
+        minutes
+    );
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 280,
+          padding: const EdgeInsets.only(top: 6.0),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          color: CupertinoColors.systemBackground.resolveFrom(context),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      child: const Text('Batal'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    CupertinoButton(
+                      child: const Text('Selesai'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    initialDateTime: initialDateTime,
+                    minuteInterval: minuteInterval,
+                    onDateTimeChanged: (DateTime newTime) {
+                      setState(() {
+                        _selectedTime = TimeOfDay(
+                            hour: newTime.hour,
+                            minute: newTime.minute
+                        );
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Booking treatment function
+  Future<void> _bookTreatment() async {
+    if (!_isFormValid) return;
+
+    setState(() {
+      _isBookingLoading = true;
+    });
+
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Silakan login untuk melakukan booking')),
+        );
+        setState(() {
+          _isBookingLoading = false;
+        });
+        return;
+      }
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User ID tidak ditemukan, silakan login ulang')),
+        );
+        setState(() {
+          _isBookingLoading = false;
+        });
+        return;
+      }
+
+      // Format waktu treatment: YYYY-MM-DD HH:MM:SS
+      final DateTime treatmentDate = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month,
+        _selectedDay!.day,
+        _selectedTime!.hour,
+        _selectedTime!.minute,
+      );
+
+      final String formattedDate =
+          '${treatmentDate.year}-'
+          '${treatmentDate.month.toString().padLeft(2, '0')}-'
+          '${treatmentDate.day.toString().padLeft(2, '0')} '
+          '${treatmentDate.hour.toString().padLeft(2, '0')}:'
+          '${treatmentDate.minute.toString().padLeft(2, '0')}:00';
+
+      // Create treatment list for request
+      final List<Map<String, dynamic>> treatmentItems = _treatments.map((treatment) {
+        return {
+          'id_treatment': treatment['id_treatment'],
+          'biaya_treatment': treatment['biaya_treatment']
+        };
+      }).toList();
+
+      // Calculate total price
+      final double totalPrice = _calculateTotalPrice();
+      final double finalPrice = _calculateFinalPrice();
+      final double discount = totalPrice - finalPrice;
+
+      // Create request body
+      Map<String, dynamic> requestBody = {
+        'id_user': userId,
+        'waktu_treatment': formattedDate,
+        'harga_total': totalPrice,
+        'treatments': treatmentItems,
+      };
+
+      // Add promo if selected
+      if (_selectedPromo != null) {
+        requestBody['id_promo'] = _selectedPromo!.idPromo;
+        requestBody['potongan_harga'] = discount;
+        requestBody['harga_akhir_treatment'] = finalPrice;
+      } else {
+        requestBody['harga_akhir_treatment'] = totalPrice;
+      }
+
+      // Send the booking request
+      final response = await http.post(
+        Uri.parse(ApiConstants.bookingTreatment),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      print('Booking treatment response: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Booking Berhasil'),
+              content: const Text('Jadwal treatment Anda telah berhasil dibuat.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AppRoutes.routes[AppRoutes.homeScreen]!(context),
+                      ),
+                          (route) => false, // This removes all previous routes
+                    );
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        final jsonData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(jsonData['message'] ?? 'Gagal membuat jadwal')),
+        );
+      }
+
+      setState(() {
+        _isBookingLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isBookingLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
   void _showDeleteConfirmation(BuildContext context, int index) {
     showDialog(
       context: context,
@@ -53,40 +303,21 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           title: const Text('Konfirmasi'),
           content: const Text('Yakin ingin menghapusnya dari cart?'),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: Text(
-                'Tidak jadi',
-                style: TextStyle(color: appTheme.lightGrey),
-              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
-                // Remove the item
                 setState(() {
                   _treatments.removeAt(index);
-                  // If all treatments removed, clear promo too
-                  if (_treatments.isEmpty) {
-                    _selectedPromo = null;
-                  }
                 });
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: appTheme.orange200,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Ya, saya ingin',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Hapus'),
             ),
           ],
         );
@@ -129,7 +360,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         } else if (t['biaya_treatment'] is String) {
           total += double.tryParse(t['biaya_treatment']) ?? 0.0;
         } else if (t['biaya_treatment'] is double) {
-          total += (t['biaya_treatment'] as double);
+          total += t['biaya_treatment'];
         }
       }
     }
@@ -186,39 +417,38 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Pilih Promo',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: appTheme.black900,
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
-              ),
+                icon: const Icon(Icons.close),
+              )
             ],
           ),
           const SizedBox(height: 8),
           if (_selectedPromo != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _selectedPromo = null;
-                  });
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.delete_outline, color: Colors.white),
-                label: const Text('Hapus Promo', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Promo ${_selectedPromo!.namaPromo} berhasil diterapkan',
+                    style: const TextStyle(color: Colors.green),
                   ),
-                ),
+                ],
               ),
             ),
           Expanded(
@@ -239,16 +469,16 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.discount_outlined,
-            size: 60,
-            color: appTheme.lightGrey,
+            Icons.local_offer_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
           ),
           const SizedBox(height: 16),
           Text(
-            'Tidak ada promo yang tersedia saat ini',
+            'Tidak ada promo tersedia',
             style: TextStyle(
               fontSize: 16,
-              color: appTheme.black900,
+              color: Colors.grey.shade600,
             ),
           ),
         ],
@@ -267,10 +497,10 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: isSelected ? appTheme.orange200 : Colors.grey.shade300,
-              width: isSelected ? 2 : 1,
+              color: isSelected ? appTheme.orange200 : Colors.transparent,
+              width: 2,
             ),
           ),
           child: InkWell(
@@ -288,27 +518,19 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Text(
-                          promo.namaPromo ?? 'Promo',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      Text(
+                        promo.namaPromo ?? 'Promo',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
+                      Text(
+                        promo.formatPromoValue(),
+                        style: TextStyle(
+                          fontSize: 16,
                           color: appTheme.orange200,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          promo.formatPromoValue(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
@@ -320,7 +542,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      color: appTheme.black900.withOpacity(0.7),
+                      color: Colors.grey.shade600,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -351,44 +573,21 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.discount_outlined,
-              color: appTheme.orange200,
-              size: 24,
-            ),
+            Icon(Icons.discount_outlined, color: appTheme.orange200),
             const SizedBox(width: 12),
             Expanded(
-              child: _selectedPromo != null
-                  ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Promo diterapkan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    _selectedPromo!.namaPromo ?? 'Promo',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: appTheme.black900.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              )
-                  : const Text(
-                'Gunakan Promo',
+              child: Text(
+                _selectedPromo != null
+                    ? 'Promo ${_selectedPromo!.namaPromo} diterapkan'
+                    : 'Gunakan Promo',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  color: _selectedPromo != null ? appTheme.black900 : Colors.grey.shade600,
                 ),
               ),
             ),
             Icon(
-              Icons.chevron_right,
-              color: appTheme.lightGrey,
+              Icons.keyboard_arrow_right,
+              color: Colors.grey.shade600,
             ),
           ],
         ),
@@ -404,7 +603,6 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           'Ringkasan Booking',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 24,
           ),
         ),
         backgroundColor: appTheme.whiteA700,
@@ -425,93 +623,316 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
             child: ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
-                // Show treatments
-                ...List.generate(_treatments.length, (index) {
-                  final treatment = _treatments[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // Selected treatments list
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _treatments.length,
+                  itemBuilder: (context, index) {
+                    final treatment = _treatments[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 2,
+                      child: Column(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: treatment['gambar_treatment'] != null &&
-                                treatment['gambar_treatment'].toString().isNotEmpty
-                                ? Image.network(
-                              treatment['gambar_treatment'],
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 80,
-                                  height: 80,
+                          Stack(
+                            children: [
+                              // Treatment image
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                child: treatment['gambar_treatment'] != null
+                                    ? Image.network(
+                                  treatment['gambar_treatment'],
+                                  width: double.infinity,
+                                  height: 150,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      width: double.infinity,
+                                      height: 150,
+                                      color: Colors.grey[200],
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: double.infinity,
+                                      height: 150,
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                    );
+                                  },
+                                )
+                                    : Container(
+                                  width: double.infinity,
+                                  height: 150,
                                   color: Colors.grey[200],
-                                  child: const Icon(Icons.image_not_supported),
-                                );
-                              },
-                            )
-                                : Container(
-                              width: 80,
-                              height: 80,
-                              color: Colors.grey[200],
-                              child: const Icon(Icons.image_not_supported),
-                            ),
+                                  child: const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+                                ),
+                              ),
+                              // Duration badge
+                              Positioned(
+                                bottom: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: appTheme.lightGrey.withOpacity(0.7),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.access_time, color: Colors.white, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _formatEstimasi(treatment['estimasi_treatment'] ?? '00:00:00'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Delete button
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: InkWell(
+                                  onTap: () => _showDeleteConfirmation(context, index),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.8),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 20, color: Colors.black),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
+                          Padding(
+                            padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   treatment['nama_treatment'] ?? 'Unnamed Treatment',
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 8),
                                 Text(
-                                  'Rp ${_formatPrice(treatment['biaya_treatment'])}',
+                                  treatment['deskripsi_treatment'] ?? '',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    color: appTheme.orange200,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: appTheme.black900.withOpacity(0.7),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Durasi: ${_formatEstimasi(treatment['estimasi_treatment'] ?? '00:00:00')}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: appTheme.lightGrey,
-                                  ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Harga:',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Rp ${_formatPrice(treatment['biaya_treatment'])}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: appTheme.orange200,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.delete_outline_rounded, color: appTheme.lightGrey),
-                            onPressed: () => _showDeleteConfirmation(context, index),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // Calendar section
+                const Text(
+                  "Pilih Tanggal Treatment",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Calendar widget
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Month selector
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "${_focusedDay.month}/${_focusedDay.year}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back_ios, size: 16),
+                                onPressed: () {
+                                  setState(() {
+                                    _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
+                                  });
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onPressed: () {
+                                  setState(() {
+                                    _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                  );
-                }),
 
-                // Add promo button
+                      // Calendar
+                      TableCalendar(
+                        firstDay: DateTime.now(),
+                        lastDay: DateTime(2030),
+                        focusedDay: _focusedDay,
+                        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        calendarFormat: CalendarFormat.month,
+                        headerVisible: false,
+                        calendarStyle: CalendarStyle(
+                          selectedDecoration: BoxDecoration(
+                            color: appTheme.orange200,
+                            shape: BoxShape.circle,
+                          ),
+                          selectedTextStyle: const TextStyle(color: Colors.white),
+                          todayDecoration: BoxDecoration(
+                            color: appTheme.orange200.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          todayTextStyle: TextStyle(color: appTheme.black900, fontWeight: FontWeight.bold),
+                          defaultTextStyle: TextStyle(color: appTheme.black900),
+                          outsideTextStyle: const TextStyle(color: Colors.grey),
+                          outsideDaysVisible: false,
+                          weekendTextStyle: TextStyle(color: appTheme.orange200),
+                        ),
+                        daysOfWeekStyle: DaysOfWeekStyle(
+                          weekdayStyle: TextStyle(
+                            color: appTheme.black900,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                          weekendStyle: TextStyle(
+                            color: appTheme.orange200,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Time picker section
+                const Text(
+                  "Pilih Jam Treatment",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _showTimePicker,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedTime == null
+                              ? "Pilih jam treatment"
+                              : "Jam ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}",
+                          style: TextStyle(
+                            color: _selectedTime == null
+                                ? appTheme.black900.withOpacity(0.5)
+                                : appTheme.black900,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Icon(Icons.access_time, color: appTheme.black900),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Promo section
+                const Text(
+                  "Promo",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _buildPromoButton(),
               ],
             ),
           ),
+          // Payment summary
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -536,11 +957,15 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     children: [
                       const Text(
                         'Subtotal:',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
                       ),
                       Text(
                         'Rp ${_formatPrice(_calculateTotalPrice())}',
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -550,23 +975,25 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            'Diskon:',
-                            style: TextStyle(fontSize: 16),
+                          Text(
+                            'Diskon',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: appTheme.orange200,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: appTheme.orange200.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              _selectedPromo!.namaPromo ?? 'Promo',
+                              _selectedPromo!.namaPromo ?? '',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: appTheme.orange200,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -575,8 +1002,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                       Text(
                         '- Rp ${_formatPrice(_selectedPromo!.calculateDiscount(_calculateTotalPrice()))}',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
                           color: appTheme.orange200,
                         ),
                       ),
@@ -592,7 +1018,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     Text(
                       'Total Pembayaran:',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: appTheme.black900,
                       ),
@@ -600,7 +1026,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     Text(
                       'Rp ${_formatPrice(_calculateFinalPrice())}',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: appTheme.orange200,
                       ),
@@ -611,25 +1037,34 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _treatments.isEmpty ? null : () {
-                      // Implement final booking process here
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Melanjutkan ke proses pembayaran...')),
-                      );
-                    },
+                    onPressed: _isFormValid
+                        ? _isBookingLoading
+                        ? null
+                        : _bookTreatment
+                        : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: appTheme.orange200,
-                      disabledBackgroundColor: Colors.grey[300],
+                      backgroundColor: _isFormValid
+                          ? appTheme.orange200
+                          : Colors.grey[300],
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: _isBookingLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Text(
                       'Konfirmasi dan Bayar',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
