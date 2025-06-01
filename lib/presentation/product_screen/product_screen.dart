@@ -245,7 +245,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 right: -5,
                 top: -10,
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: appTheme.darkCherry,
                     shape: BoxShape.circle,
