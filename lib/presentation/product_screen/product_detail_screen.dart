@@ -198,8 +198,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Divider
+
               // Item counter and Add to Cart
+              Text(
+                "Tambahkan ke Keranjang",
+                style: TextStyle(
+                  color: appTheme.black900,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               Row(
                 children: [
                   Container(

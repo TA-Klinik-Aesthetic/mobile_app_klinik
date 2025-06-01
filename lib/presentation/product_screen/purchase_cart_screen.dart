@@ -489,7 +489,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: appTheme.lightGrey, width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -525,7 +525,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
           'Keranjang Belanja',
           style: TextStyle(
             color: appTheme.orange200,
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -616,13 +616,13 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               product['gambar_produk'] ?? '',
-                              width: 70,
-                              height: 70,
+                              width: 100,
+                              height: 100,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
-                                  width: 70,
-                                  height: 70,
+                                  width: 100,
+                                  height: 100,
                                   color: Colors.grey[300],
                                   child: const Icon(Icons.image_not_supported, color: Colors.grey),
                                 );
@@ -636,58 +636,53 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Product name and delete button on same row
+                                // Product name and delete button in a row
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Kolom teks nama produk dan harga
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              // Nama produk
-                                              Text(
-                                                product['nama_produk'] ?? '',
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              // Harga produk
-                                              Text(
-                                                'Rp ${_formatPrice(price)}',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: appTheme.orange200,
-                                                ),
-                                              ),
-                                            ],
+                                    // Kolom teks nama produk dan harga
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Nama produk
+                                          Text(
+                                            product['nama_produk'] ?? '',
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
+                                          const SizedBox(height: 4),
+                                          // Harga produk
+                                          Text(
+                                            'Rp ${_formatPrice(price)}',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: appTheme.orange200,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
 
-                                        // Tombol delete
-                                        IconButton(
-                                          onPressed: () => _showDeleteConfirmation(context, cartId),
-                                          icon: Icon(
-                                            Icons.delete_outline,
-                                            color: appTheme.darkCherry,
-                                            size: 24,
-                                          ),
-                                          constraints: const BoxConstraints(),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                      ],
+                                    // Tombol delete
+                                    IconButton(
+                                      onPressed: () => _showDeleteConfirmation(context, cartId),
+                                      icon: Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red[400],
+                                        size: 24,
+                                      ),
+                                      constraints: const BoxConstraints(),
+                                      padding: EdgeInsets.zero,
                                     ),
                                   ],
                                 ),
+
 
                                 const SizedBox(height: 8),
 
@@ -696,57 +691,75 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    // Quantity input
+                                    // Quantity controls
                                     Row(
                                       children: [
-                                        // Quantity (+)(-) field
-                                        Container(
-                                          width: 40,
-                                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                                        Text(
+                                          'Jumlah: ',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 50,
+                                          height: 30,
                                           child: TextField(
                                             controller: quantityControllers[cartId],
                                             keyboardType: TextInputType.number,
                                             textAlign: TextAlign.center,
-                                            onChanged: (value) {
-                                              final newQty = int.tryParse(value) ?? 0;
-                                              if (newQty > 0) {
-                                                updateQuantity(cartId, newQty, maxStock);
-                                              }
-                                            },
                                             decoration: InputDecoration(
-                                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                                              border: const OutlineInputBorder(),
+                                              contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(4),
+                                                borderSide: BorderSide(color: appTheme.lightGrey), // warna abu-abu default
+                                              ),
                                               enabledBorder: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(4),
                                                 borderSide: BorderSide(color: appTheme.lightGrey), // warna abu-abu saat tidak fokus
                                               ),
                                               focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: appTheme.lightGrey, width: 2.0), // warna abu-abu saat fokus
+                                                borderRadius: BorderRadius.circular(4),
+                                                borderSide: BorderSide(color: appTheme.lightGrey, width: 2), // warna abu-abu saat fokus
                                               ),
                                             ),
+
+                                            style: const TextStyle(fontSize: 13),
+                                            onSubmitted: (value) {
+                                              int? newQty = int.tryParse(value);
+                                              if (newQty != null) {
+                                                updateQuantity(cartId, newQty, maxStock);
+                                              }
+                                            },
                                           ),
                                         ),
-
-                                        InkWell(
-                                          onTap: () {
-                                            final currentQty = int.tryParse(quantityControllers[cartId]?.text ?? "1") ?? 1;
-                                            if (currentQty < maxStock) {
-                                              quantityControllers[cartId]?.text = (currentQty + 1).toString();
-                                              updateQuantity(cartId, currentQty + 1, maxStock);
+                                        const SizedBox(width: 8),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            int? newQty = int.tryParse(quantityControllers[cartId]!.text);
+                                            if (newQty != null) {
+                                              updateQuantity(cartId, newQty, maxStock);
                                             }
                                           },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              border: Border.all(color: Colors.grey.shade300),
-                                              borderRadius: BorderRadius.circular(4),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: appTheme.orange200, // Tetap gunakan warna utama
+                                            minimumSize: const Size(30, 30),
+                                            padding: const EdgeInsets.all(0),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(6),
                                             ),
-                                            child: const Icon(Icons.add, size: 16),
+                                          ),
+                                          child: Icon(
+                                            Icons.save_as,
+                                            color: appTheme.whiteA700,
+                                            size: 20,
                                           ),
                                         ),
                                       ],
                                     ),
 
-                                    // Subtotal aligned with quantity
+                                    // Subtotal aligned with quantity input
                                     Text(
                                       'Rp ${_formatPrice(price * quantity)}',
                                       style: TextStyle(

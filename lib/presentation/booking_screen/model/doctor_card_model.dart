@@ -73,7 +73,7 @@ class _DoctorCardState extends State<DoctorCard> {
         decoration: BoxDecoration(
           color: appTheme.lightBadge100, 
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: appTheme.black900, width: 1),
+          border: Border.all(color: appTheme.black900, width: 1.5),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -128,7 +128,7 @@ class _DoctorCardState extends State<DoctorCard> {
                       ),
                       child: const Text(
                         '± 5 Tahun Pengalaman',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 14),
                       ),
                     ),
                     const SizedBox(height: 8),

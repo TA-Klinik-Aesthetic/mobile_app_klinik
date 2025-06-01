@@ -21,7 +21,7 @@ class ProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: appTheme.lightBadge100,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: appTheme.lightGrey, width: 1.0),
+          border: Border.all(color: appTheme.black900, width: 1.5),
         ),
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -32,10 +32,11 @@ class ProductCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF979797).withOpacity(0.1),
+                  border: Border.all(color: Colors.black, width: 1.0),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                   child: Image.network(
                     product['gambar_produk'],
                     fit: BoxFit.cover,
@@ -56,7 +57,7 @@ class ProductCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "Rp ${product['harga_produk']}",
+              "Rp ${_formatPrice(product['harga_produk'])}",
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -67,5 +68,31 @@ class ProductCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatPrice(dynamic price) {
+    if (price == null) return '0';
+    double priceDouble;
+    if (price is int) {
+      priceDouble = price.toDouble();
+    } else if (price is String) {
+      priceDouble = double.tryParse(price) ?? 0.0;
+    } else if (price is double) {
+      priceDouble = price;
+    } else {
+      return '0';
+    }
+
+    final String priceString = priceDouble.toStringAsFixed(0);
+    final StringBuffer formattedPrice = StringBuffer();
+    int count = 0;
+    for (int i = priceString.length - 1; i >= 0; i--) {
+      formattedPrice.write(priceString[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        formattedPrice.write('.');
+      }
+    }
+    return formattedPrice.toString().split('').reversed.join('');
   }
 }

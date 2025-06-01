@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'dart:convert';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:mobile_app_klinik/routes/app_routes.dart';
 import 'package:mobile_app_klinik/core/app_export.dart';
 import 'package:mobile_app_klinik/api/api_constant.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -900,7 +898,7 @@ Future<void> fetchDoctorDetails() async {
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _isFormValid 
-                              ? appTheme.lightGreen
+                              ? appTheme.orange200
                               : appTheme.lightGrey, // Abu-abu jika tidak valid
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
