@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_klinik/presentation/product_screen/product_detail_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'purchase_cart_screen.dart';
 
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
@@ -17,11 +19,13 @@ class _ProductScreenState extends State<ProductScreen> {
   List<dynamic> products = [];
   List<dynamic> filteredProducts = [];
   TextEditingController searchController = TextEditingController();
+  int cartItemCount = 0; // Added missing variable declaration
 
   @override
   void initState() {
     super.initState();
     fetchProducts();
+    fetchCartCount();
     searchController.addListener(_filterProducts);
   }
 
@@ -38,11 +42,37 @@ class _ProductScreenState extends State<ProductScreen> {
         filteredProducts = products;
       } else {
         filteredProducts = products.where((product) {
-          return product['nama_produk'].toString().toLowerCase().contains(
-              query);
+          return product['nama_produk'].toString().toLowerCase().contains(query);
         }).toList();
       }
     });
+  }
+
+  Future<void> fetchCartCount() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token != null && userId != null) {
+        final response = await http.get(
+          Uri.parse(ApiConstants.cartSum.replaceAll('{id_user}', userId.toString())),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          setState(() {
+            cartItemCount = int.tryParse(data['total_produk'].toString()) ?? 0;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching cart count: $e');
+    }
   }
 
   Future<void> fetchProducts() async {
@@ -52,8 +82,7 @@ class _ProductScreenState extends State<ProductScreen> {
       final data = jsonDecode(response.body);
       setState(() {
         products = data['data'];
-        filteredProducts =
-            products; // Initialize filtered list with all products
+        filteredProducts = products; // Initialize filtered list with all products
       });
     } else {
       debugPrint('Failed to load products');
@@ -163,6 +192,53 @@ class _ProductScreenState extends State<ProductScreen> {
           ),
         ),
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(right: 60),
+        child: FloatingActionButton(
+          backgroundColor: appTheme.orange200,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PurchaseCartScreen(),
+              ),
+            ).then((_) => fetchCartCount());
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(Icons.shopping_cart, color: Colors.white),
+              if (cartItemCount > 0)
+                Positioned(
+                  right: -5,
+                  top: -5,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: appTheme.darkCherry,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Center(
+                      child: Text(
+                        cartItemCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 }
