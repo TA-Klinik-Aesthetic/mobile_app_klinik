@@ -59,7 +59,6 @@ final Map<String, String> enUs = {
   "lbl_login": "Login",
   "lbl_logo": "Logo",
   "lbl_navya_hub": "NAVYA Hub!",
-  "lbl_password": "Password",
   "lbl_register": "Register",
   "lbl_welcome_to": "Welcome to \n",
   "msg_v0_0_0_beta_copyright": "v0.0.0 Beta\nCopyright Aesthetic Clinic",

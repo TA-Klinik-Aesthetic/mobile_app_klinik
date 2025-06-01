@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/app_export.dart';
+
+
+class ProductCard extends StatelessWidget {
+  const ProductCard({
+    super.key,
+    required this.product,
+    required this.onPress,
+  });
+
+  final Map<String, dynamic> product;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPress,
+      child: Container(
+        decoration: BoxDecoration(
+          color: appTheme.lightBadge100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: appTheme.lightGrey, width: 1.0),
+        ),
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 1.02,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF979797).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    product['gambar_produk'],
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              product['nama_produk'],
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: appTheme.black900,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Rp ${product['harga_produk']}",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: appTheme.orange200,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
