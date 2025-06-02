@@ -143,7 +143,16 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
 
   String _formatDate(String dateString) {
     final dateTime = DateTime.parse(dateString);
-    return '${dateTime.day}-${dateTime.month}-${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final String monthName = _getIndonesianMonth(dateTime.month);
+    return '${dateTime.day} $monthName ${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _getIndonesianMonth(int month) {
+    const List<String> months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return months[month - 1]; // Arrays are 0-indexed but months are 1-indexed
   }
 
   Widget _buildPurchaseDetails() {
@@ -155,8 +164,9 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: appTheme.whiteA700,
+            color: appTheme.lightBadge100,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: appTheme.black900, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -172,9 +182,9 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'ID Pembelian: #${purchaseData['id_penjualan_produk']}',
+                    'Detail Pembelian',
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -201,10 +211,18 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               ),
               const SizedBox(height: 8),
               Text(
+                'ID Pembelian: #PURCH${purchaseData['id_penjualan_produk']}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: appTheme.black900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 'Tanggal: ${_formatDate(purchaseData['tanggal_pembelian'])}',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: appTheme.black900,
                 ),
               ),
             ],
@@ -218,8 +236,9 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: appTheme.whiteA700,
+            color: appTheme.lightBadge100,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: appTheme.black900, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -234,7 +253,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               const Text(
                 'Detail Produk',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -300,13 +319,14 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                             Text(
                               'Rp ${_formatPrice(price)} x ${item['jumlah_produk']}',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: Colors.grey.shade600,
                               ),
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(width: 12),
 
                       // Subtotal
                       Text(
@@ -315,28 +335,6 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: appTheme.orange200,
-                        ),
-                      ),
-
-                      const SizedBox(width: 8),
-
-                      // Quantity indicator
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: appTheme.orange200.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${item['jumlah_produk']}x',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: appTheme.orange200,
-                            ),
-                          ),
                         ),
                       ),
                     ],
@@ -354,8 +352,9 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: appTheme.whiteA700,
+            color: appTheme.lightBadge100,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: appTheme.black900, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -383,7 +382,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                     'Subtotal',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade600,
+                      color: appTheme.black900,
                     ),
                   ),
                   Text(
@@ -459,7 +458,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           'Detail Pembelian',
           style: TextStyle(
             color: appTheme.orange200,
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
