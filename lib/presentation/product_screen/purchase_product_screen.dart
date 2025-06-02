@@ -18,6 +18,7 @@ class PurchaseProductScreen extends StatefulWidget {
 class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
   bool isLoading = true;
   Map<String, dynamic> purchaseData = {};
+  Map<int, Map<String, dynamic>> productsData = {}; // To store product details
 
   @override
   void initState() {
@@ -54,6 +55,16 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
         final data = jsonDecode(response.body);
         setState(() {
           purchaseData = data;
+        });
+
+        // Fetch product details for each item
+        List<dynamic> detailPembelian = data['detail_pembelian'] ?? [];
+        for (var item in detailPembelian) {
+          int productId = item['id_produk'];
+          await fetchProductDetails(productId);
+        }
+
+        setState(() {
           isLoading = false;
         });
       } else {
@@ -67,6 +78,34 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> fetchProductDetails(int productId) async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+
+      if (token == null) return;
+
+      final response = await http.get(
+        Uri.parse('${ApiConstants.product}/$productId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['data'] != null) {
+          setState(() {
+            productsData[productId] = responseData['data'];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching product $productId: $e');
     }
   }
 
@@ -135,7 +174,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                   Text(
                     'ID Pembelian: #${purchaseData['id_penjualan_produk']}',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -195,7 +234,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               const Text(
                 'Detail Produk',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -206,12 +245,82 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                 final price = double.tryParse(item['harga_penjualan_produk'].toString()) ?? 0;
                 final quantity = item['jumlah_produk'] ?? 0;
                 final subtotal = price * quantity;
+                final productId = item['id_produk'];
+                final productData = productsData[productId];
+                final imageUrl = productData?['gambar_produk'] ?? '';
+                final productName = productData?['nama_produk'] ?? 'Produk #$productId';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Product image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          imageUrl,
+                          width: 75,
+                          height: 75,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 75,
+                              height: 75,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey[400],
+                                size: 20,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Product details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              productName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Rp ${_formatPrice(price)} x ${item['jumlah_produk']}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Subtotal
+                      Text(
+                        'Rp ${_formatPrice(subtotal)}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: appTheme.orange200,
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // Quantity indicator
                       Container(
                         width: 40,
                         height: 40,
@@ -228,37 +337,6 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                               color: appTheme.orange200,
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Produk #${item['id_produk']}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Rp ${_formatPrice(price)} x ${item['jumlah_produk']}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        'Rp ${_formatPrice(subtotal)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.orange200,
                         ),
                       ),
                     ],
