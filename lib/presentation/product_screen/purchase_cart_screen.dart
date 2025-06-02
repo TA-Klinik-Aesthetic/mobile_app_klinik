@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -133,7 +134,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
 
   double _calculateFinalPrice() {
     double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
-    return totalPrice - discount;
+    return max(totalPrice - discount, 0.0);
   }
 
   Future<void> updateQuantity(int cartId, int newQuantity, int maxStock) async {
@@ -363,11 +364,11 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: appTheme.lightGreen),
+                  Icon(Icons.check_circle, color: Colors.green),
                   const SizedBox(width: 8),
                   Text(
                     'Promo ${_selectedPromo!.namaPromo} berhasil diterapkan',
-                    style: TextStyle(color: appTheme.lightGreen),
+                    style: TextStyle(color: Colors.green),
                   ),
                 ],
               ),
