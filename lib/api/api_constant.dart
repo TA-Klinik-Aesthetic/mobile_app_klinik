@@ -10,6 +10,7 @@ class ApiConstants {
   static const String cart = "$baseUrl/keranjang";
   static const String cartUser = "$baseUrl/keranjang/user/{id_user}";
   static const String cartSum = "$baseUrl/keranjang/user/{id_user}/total";
+  static const String penjualanProduk = "$baseUrl/penjualan-produk";
   static const String jadwalDokter = "$baseUrl/jadwal-dokter"; 
   static const String bookingKonsultasi = "$baseUrl/konsultasi";
   static const String detailBookingKonsultasi = "$baseUrl/detail-konsultasi";

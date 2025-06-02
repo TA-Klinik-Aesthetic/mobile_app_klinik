@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/presentation/product_screen/purchase_product_screen.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -889,9 +890,75 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: cartItems.isNotEmpty ? () {
-                      // Navigate to checkout or handle payment
-                      _showMessage('Fitur checkout belum tersedia');
+                    onPressed: cartItems.isNotEmpty ? () async {
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        final SharedPreferences prefs = await SharedPreferences.getInstance();
+                        final String? token = prefs.getString('token');
+                        final int? userId = prefs.getInt('id_user');
+
+                        if (token == null || userId == null) {
+                          _showMessage('Silakan login terlebih dahulu');
+                          setState(() {
+                            isLoading = false;
+                          });
+                          return;
+                        }
+
+                        // Prepare request body
+                        Map<String, dynamic> requestBody = {
+                          'id_user': userId,
+                          'harga_total': totalPrice,
+                        };
+
+                        // Add promo if selected
+                        if (_selectedPromo != null) {
+                          requestBody['id_promo'] = _selectedPromo!.idPromo;
+                        }
+
+                        final response = await http.post(
+                          Uri.parse(ApiConstants.penjualanProduk),
+                          headers: {
+                            'Authorization': 'Bearer $token',
+                            'Content-Type': 'application/json',
+                          },
+                          body: jsonEncode(requestBody),
+                        );
+
+                        if (response.statusCode == 200 || response.statusCode == 201) {
+                          final responseData = jsonDecode(response.body);
+
+                          if (responseData['success'] == true) {
+                            // Navigate to purchase product screen
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PurchaseProductScreen(
+                                  purchaseId: responseData['data']['id_penjualan_produk'],
+                                ),
+                              ),
+                            );
+                          } else {
+                            setState(() {
+                              isLoading = false;
+                            });
+                            _showMessage('Gagal melakukan checkout: ${responseData['message']}');
+                          }
+                        } else {
+                          setState(() {
+                            isLoading = false;
+                          });
+                          _showMessage('Gagal melakukan checkout. Silakan coba lagi.');
+                        }
+                      } catch (e) {
+                        setState(() {
+                          isLoading = false;
+                        });
+                        _showMessage('Error: $e');
+                      }
                     } : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: appTheme.orange200,
@@ -900,7 +967,14 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: isLoading ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ) : const Text(
                       'Checkout',
                       style: TextStyle(
                         fontSize: 16,
