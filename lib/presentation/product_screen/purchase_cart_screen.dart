@@ -518,6 +518,32 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
     );
   }
 
+  Future<void> _clearCart(String token, int userId) async {
+    try {
+      // Store cart IDs before clearing them
+      List<int> cartIds = cartItems.map<int>((item) => item['id_keranjang_pembelian'] as int).toList();
+
+      // Delete each item from the cart
+      for (int cartId in cartIds) {
+        await http.delete(
+          Uri.parse('${ApiConstants.cart}/$cartId'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+      }
+
+      // Clear local cart data
+      setState(() {
+        cartItems.clear();
+        calculateTotal();
+      });
+    } catch (e) {
+      print('Error clearing cart: $e');
+      // Continue with checkout even if cart clearing fails
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -908,10 +934,18 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           return;
                         }
 
+                        // Format products array from cart items
+                        List<Map<String, dynamic>> products = cartItems.map((item) {
+                          return {
+                            "id_produk": item['produk']['id_produk'],
+                            "jumlah_produk": int.parse(item['jumlah'].toString())
+                          };
+                        }).toList();
+
                         // Prepare request body
                         Map<String, dynamic> requestBody = {
                           'id_user': userId,
-                          'harga_total': totalPrice,
+                          'produk': products,
                         };
 
                         // Add promo if selected
@@ -932,12 +966,17 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           final responseData = jsonDecode(response.body);
 
                           if (responseData['success'] == true) {
+                            int purchaseId = responseData['data']['id_penjualan_produk'];
+
+                            // Clear cart after successful checkout
+                            await _clearCart(token, userId);
+
                             // Navigate to purchase product screen
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => PurchaseProductScreen(
-                                  purchaseId: responseData['data']['id_penjualan_produk'],
+                                  purchaseId: purchaseId,
                                 ),
                               ),
                             );
