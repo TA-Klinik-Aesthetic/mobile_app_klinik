@@ -20,8 +20,16 @@ class ProductCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: appTheme.lightBadge100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: appTheme.black900, width: 1.5),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: appTheme.lightGrey, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.lightGrey.withAlpha((0.6 * 255).toInt()),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -36,7 +44,7 @@ class ProductCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   child: Image.network(
                     product['gambar_produk'],
                     fit: BoxFit.cover,
@@ -60,7 +68,7 @@ class ProductCard extends StatelessWidget {
               "Rp ${_formatPrice(product['harga_produk'])}",
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: appTheme.orange200,
               ),
             ),

@@ -73,7 +73,15 @@ class _DoctorCardState extends State<DoctorCard> {
         decoration: BoxDecoration(
           color: appTheme.lightBadge100, 
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: appTheme.black900, width: 1.5),
+          border: Border.all(color: appTheme.lightGrey, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: appTheme.lightGrey.withAlpha((0.6 * 255).toInt()),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),

@@ -7,11 +7,13 @@ class Promo {
   final int? idPromo;
   final String? namaPromo;
   final String? deskripsiPromo;
+  final String? jenisPromo;
   final dynamic potonganHarga;
   final String? tanggalMulai;
   final String? tanggalBerakhir;
   final String? gambarPromo;
   final String? statusPromo;
+  final String? minimalBelanja;
   final String? createdAt;
   final String? updatedAt;
 
@@ -19,11 +21,13 @@ class Promo {
     this.idPromo,
     this.namaPromo,
     this.deskripsiPromo,
+    this.jenisPromo,
     this.potonganHarga,
     this.tanggalMulai,
     this.tanggalBerakhir,
     this.gambarPromo,
     this.statusPromo,
+    this.minimalBelanja,
     this.createdAt,
     this.updatedAt,
   });
@@ -33,11 +37,13 @@ class Promo {
       idPromo: json['id_promo'],
       namaPromo: json['nama_promo'],
       deskripsiPromo: json['deskripsi_promo'],
+      jenisPromo: json['jenis_promo'],
       potonganHarga: json['potongan_harga'],
       tanggalMulai: json['tanggal_mulai'],
       tanggalBerakhir: json['tanggal_berakhir'],
       gambarPromo: json['gambar_promo'],
       statusPromo: json['status_promo'],
+      minimalBelanja: json['minimal_belanja'],
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
     );

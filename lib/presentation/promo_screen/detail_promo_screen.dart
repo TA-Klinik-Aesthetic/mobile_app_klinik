@@ -160,28 +160,13 @@ class DetailPromoScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-                  // Status indicator
-                  Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: promo['status_promo'] == 'Aktif'
-                              ? appTheme.lightGreenOld
-                              : appTheme.darkCherry,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Status: ${promo['status_promo']}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  // Minimal Transaction indicator
+                  Text(
+                    'Minimal Transaksi: ${_formatPrice(promo['minimal_belanja'])}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -190,6 +175,32 @@ class DetailPromoScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatPrice(dynamic price) {
+    if (price == null) return '0';
+    double priceDouble;
+    if (price is int) {
+      priceDouble = price.toDouble();
+    } else if (price is String) {
+      priceDouble = double.tryParse(price) ?? 0.0;
+    } else if (price is double) {
+      priceDouble = price;
+    } else {
+      return '0';
+    }
+
+    final String priceString = priceDouble.toStringAsFixed(0);
+    final StringBuffer formattedPrice = StringBuffer();
+    int count = 0;
+    for (int i = priceString.length - 1; i >= 0; i--) {
+      formattedPrice.write(priceString[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        formattedPrice.write('.');
+      }
+    }
+    return formattedPrice.toString().split('').reversed.join('');
   }
 
   String _formatDate(String dateString) {

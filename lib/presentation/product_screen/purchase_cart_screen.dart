@@ -54,7 +54,8 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
     try {
       final promos = await _promoService.fetchPromos();
       setState(() {
-        _promos = promos;
+        // Filter promos to only include "Produk" type
+        _promos = promos.where((promo) => promo.jenisPromo == "Produk").toList();
         _isLoadingPromos = false;
       });
     } catch (e) {
@@ -63,6 +64,124 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
       });
       print('Error fetching promos: $e');
     }
+  }
+
+  Widget _buildPromoList() {
+    return ListView.builder(
+      itemCount: _promos.length,
+      itemBuilder: (context, index) {
+        final promo = _promos[index];
+        bool isSelected = _selectedPromo != null && _selectedPromo!.idPromo == promo.idPromo;
+
+        // Check if cart total meets minimum spending requirement
+        double minBelanja = double.tryParse(promo.minimalBelanja ?? '0') ?? 0;
+        bool isEligible = totalPrice >= minBelanja;
+        double amountNeeded = minBelanja - totalPrice;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSelected ? appTheme.orange200 : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: InkWell(
+            onTap: isEligible ? () {
+              setState(() {
+                _selectedPromo = promo;
+              });
+              Navigator.pop(context);
+            } : null,
+            child: Opacity(
+              opacity: isEligible ? 1.0 : 0.7,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          promo.namaPromo ?? 'Promo',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isEligible ? appTheme.black900 : Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          promo.formatPromoValue(),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isEligible ? appTheme.orange200 : Colors.grey.shade500,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      promo.deskripsiPromo ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isEligible ? Colors.grey.shade600 : Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Minimal belanja: Rp ${_formatPrice(minBelanja)}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isEligible ? appTheme.orange200 : Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          "Periode: ${promo.formatDate(promo.tanggalMulai)} - ${promo.formatDate(promo.tanggalBerakhir)}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: appTheme.lightGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Show missing amount if not eligible
+                    if (!isEligible) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Text(
+                          "Belanja Rp ${_formatPrice(amountNeeded)} lagi untuk menggunakan promo ini",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> fetchCartItems() async {
@@ -366,10 +485,13 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
               child: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.green),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Text(
-                    'Promo ${_selectedPromo!.namaPromo} berhasil diterapkan',
-                    style: TextStyle(color: Colors.green),
+                    '${_selectedPromo!.namaPromo} berhasil diterapkan',
+                    style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 8,
+                    ),
                   ),
                 ],
               ),
@@ -409,82 +531,6 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
     );
   }
 
-  Widget _buildPromoList() {
-    return ListView.builder(
-      itemCount: _promos.length,
-      itemBuilder: (context, index) {
-        final promo = _promos[index];
-        bool isSelected = _selectedPromo != null &&
-            _selectedPromo!.idPromo == promo.idPromo;
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: isSelected ? appTheme.orange200 : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _selectedPromo = promo;
-              });
-              Navigator.pop(context);
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        promo.namaPromo ?? 'Promo',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        promo.formatPromoValue(),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: appTheme.orange200,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    promo.deskripsiPromo ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "Periode: ${promo.formatDate(promo.tanggalMulai)} - ${promo.formatDate(promo.tanggalBerakhir)}",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: appTheme.lightGrey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildPromoButton() {
     return InkWell(
       onTap: _showPromoBottomSheet,
@@ -497,7 +543,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
         child: Row(
           children: [
             Icon(Icons.discount_outlined, color: appTheme.orange200),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 _selectedPromo != null
@@ -702,7 +748,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                       onPressed: () => _showDeleteConfirmation(context, cartId),
                                       icon: Icon(
                                         Icons.delete_outline,
-                                        color: Colors.red[400],
+                                        color: appTheme.darkCherry,
                                         size: 24,
                                       ),
                                       constraints: const BoxConstraints(),
