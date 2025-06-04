@@ -723,13 +723,13 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                           Text(
                                             product['nama_produk'] ?? '',
                                             style: const TextStyle(
-                                              fontSize: 15,
+                                              fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(height: 4),
+                                          const SizedBox(height: 8),
                                           // Harga produk
                                           Text(
                                             'Rp ${_formatPrice(price)}',

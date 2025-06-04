@@ -631,144 +631,120 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   itemBuilder: (context, index) {
                     final treatment = _treatments[index];
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      color: appTheme.lightBadge100,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 2,
-                      child: Column(
-                        children: [
-                          Stack(
-                            children: [
-                              // Treatment image
-                              ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                child: treatment['gambar_treatment'] != null
-                                    ? Image.network(
-                                  treatment['gambar_treatment'],
-                                  width: double.infinity,
-                                  height: 150,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      width: double.infinity,
-                                      height: 150,
-                                      color: Colors.grey[200],
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: double.infinity,
-                                      height: 150,
-                                      color: Colors.grey[200],
-                                      child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
-                                    );
-                                  },
-                                )
-                                    : Container(
-                                  width: double.infinity,
-                                  height: 150,
-                                  color: Colors.grey[200],
-                                  child: const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-                                ),
+                      elevation: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Treatment image (left side)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: treatment['gambar_treatment'] != null
+                                  ? Image.network(
+                                treatment['gambar_treatment'],
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 100,
+                                    height: 100,
+                                    color: Colors.grey[200],
+                                    child: const Icon(Icons.image_not_supported, size: 24, color: Colors.grey),
+                                  );
+                                },
+                              )
+                                  : Container(
+                                width: 100,
+                                height: 100,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image_not_supported, size: 24, color: Colors.grey),
                               ),
-                              // Duration badge
-                              Positioned(
-                                bottom: 12,
-                                right: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: appTheme.lightGrey.withOpacity(0.7),
-                                    borderRadius: BorderRadius.circular(12),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Treatment details (middle)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    treatment['nama_treatment'] ?? 'Unnamed Treatment',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  child: Row(
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    treatment['deskripsi_treatment'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: appTheme.black900.withOpacity(0.7),
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
                                     children: [
-                                      const Icon(Icons.access_time, color: Colors.white, size: 14),
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 12,
+                                        color: appTheme.lightGrey,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         _formatEstimasi(treatment['estimasi_treatment'] ?? '00:00:00'),
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
                                           fontSize: 12,
+                                          color: appTheme.lightGrey,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
+                                ],
                               ),
-                              // Delete button
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: InkWell(
+                            ),
+
+                            // Price and delete (right side)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                InkWell(
                                   onTap: () => _showDeleteConfirmation(context, index),
                                   child: Container(
-                                    padding: const EdgeInsets.all(5),
+                                    padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.8),
+                                      color: Colors.white.withOpacity(0.5),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.close, size: 20, color: Colors.black),
+                                    child: const Icon(Icons.close, size: 16, color: Colors.black),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                                const SizedBox(height: 18),
                                 Text(
-                                  treatment['nama_treatment'] ?? 'Unnamed Treatment',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  treatment['deskripsi_treatment'] ?? '',
+                                  'Rp ${_formatPrice(treatment['biaya_treatment'])}',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: appTheme.black900.withOpacity(0.7),
+                                    fontWeight: FontWeight.bold,
+                                    color: appTheme.orange200,
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'Harga:',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Rp ${_formatPrice(treatment['biaya_treatment'])}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: appTheme.orange200,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -1061,7 +1037,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                       ),
                     )
                         : const Text(
-                      'Konfirmasi dan Bayar',
+                      'Konfirmasi',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
