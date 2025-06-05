@@ -762,7 +762,7 @@ class TreatmentCard extends StatelessWidget {
                       child: Text(
                         treatment['nama_treatment'] ?? 'Unnamed Treatment',
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
@@ -778,7 +778,7 @@ class TreatmentCard extends StatelessWidget {
                         Text(
                           '4,8',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: appTheme.black900,
                           ),
@@ -791,7 +791,7 @@ class TreatmentCard extends StatelessWidget {
                 Text(
                   'Rp ${treatment['biaya_treatment'] != null ? _formatPrice(treatment['biaya_treatment']) : '0'}',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: appTheme.orange200,
                   ),

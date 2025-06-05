@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/presentation/history_screen/history_treatment_screen.dart';
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -207,35 +208,23 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           '${treatmentDate.hour.toString().padLeft(2, '0')}:'
           '${treatmentDate.minute.toString().padLeft(2, '0')}:00';
 
-      // Create treatment list for request
-      final List<Map<String, dynamic>> treatmentItems = _treatments.map((treatment) {
+      // Create treatment detail list for request
+      final List<Map<String, dynamic>> treatmentDetails = _treatments.map((treatment) {
         return {
           'id_treatment': treatment['id_treatment'],
-          'biaya_treatment': treatment['biaya_treatment']
         };
       }).toList();
 
-      // Calculate total price
-      final double totalPrice = _calculateTotalPrice();
-      final double finalPrice = _calculateFinalPrice();
-      final double discount = totalPrice - finalPrice;
-
-      // Create request body
+      // Create request body according to API format
       Map<String, dynamic> requestBody = {
         'id_user': userId,
         'waktu_treatment': formattedDate,
-        'harga_total': totalPrice,
-        'treatments': treatmentItems,
+        'id_dokter': null,
+        'id_beautician': null,
+        'status_booking_treatment': 'Verifikasi',
+        'id_promo': _selectedPromo?.idPromo,
+        'details': treatmentDetails
       };
-
-      // Add promo if selected
-      if (_selectedPromo != null) {
-        requestBody['id_promo'] = _selectedPromo!.idPromo;
-        requestBody['potongan_harga'] = discount;
-        requestBody['harga_akhir_treatment'] = finalPrice;
-      } else {
-        requestBody['harga_akhir_treatment'] = totalPrice;
-      }
 
       // Send the booking request
       final response = await http.post(
@@ -248,32 +237,17 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         body: jsonEncode(requestBody),
       );
 
-      print('Booking treatment response: ${response.body}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Show success dialog
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Booking Berhasil'),
-              content: const Text('Jadwal treatment Anda telah berhasil dibuat.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AppRoutes.routes[AppRoutes.homeScreen]!(context),
-                      ),
-                          (route) => false, // This removes all previous routes
-                    );
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
+        final responseData = jsonDecode(response.body);
+        final int bookingId = responseData['booking_treatment']['id_booking_treatment'];
+
+        // Navigate to history treatment screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HistoryTreatmentScreen(bookingId: bookingId,
+            ),
+          ),
         );
       } else {
         final jsonData = jsonDecode(response.body);
@@ -648,21 +622,21 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                               child: treatment['gambar_treatment'] != null
                                   ? Image.network(
                                 treatment['gambar_treatment'],
-                                width: 100,
-                                height: 100,
+                                width: 80,
+                                height: 80,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
-                                    width: 100,
-                                    height: 100,
+                                    width: 80,
+                                    height: 80,
                                     color: Colors.grey[200],
                                     child: const Icon(Icons.image_not_supported, size: 24, color: Colors.grey),
                                   );
                                 },
                               )
                                   : Container(
-                                width: 100,
-                                height: 100,
+                                width: 80,
+                                height: 80,
                                 color: Colors.grey[200],
                                 child: const Icon(Icons.image_not_supported, size: 24, color: Colors.grey),
                               ),
@@ -679,7 +653,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                     treatment['nama_treatment'] ?? 'Unnamed Treatment',
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
