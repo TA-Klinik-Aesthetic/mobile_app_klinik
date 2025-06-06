@@ -676,6 +676,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
+                    color: appTheme.lightBadge100,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -742,17 +743,17 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                         ],
                                       ),
                                     ),
-
-                                    // Tombol delete
-                                    IconButton(
-                                      onPressed: () => _showDeleteConfirmation(context, cartId),
-                                      icon: Icon(
-                                        Icons.delete_outline,
-                                        color: appTheme.darkCherry,
-                                        size: 24,
+                                    // Updated delete button to match detail booking treatment style
+                                    InkWell(
+                                      onTap: () => _showDeleteConfirmation(context, cartId),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.close, size: 16, color: Colors.black),
                                       ),
-                                      constraints: const BoxConstraints(),
-                                      padding: EdgeInsets.zero,
                                     ),
                                   ],
                                 ),
