@@ -85,7 +85,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     try {
       final promos = await _promoService.fetchPromos();
       setState(() {
-        _promos = promos;
+        // Filter promos to only include "Treatment" type
+        _promos = promos.where((promo) => promo.jenisPromo == "Treatment").toList();
         _isLoadingPromos = false;
       });
     } catch (e) {
@@ -239,20 +240,39 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        final int bookingId = responseData['booking_treatment']['id_booking_treatment'];
 
-        // Navigate to history treatment screen
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HistoryTreatmentScreen(bookingId: bookingId,
+        // Safely access the booking ID
+        int bookingId = responseData['data']['id_booking_treatment'] ?? responseData['id_booking_treatment'];
+
+        if (responseData != null && responseData['booking_treatment'] != null) {
+          bookingId = responseData['booking_treatment']['id_booking_treatment'];
+        } else if (responseData != null && responseData.containsKey('id_booking_treatment')) {
+          // Alternative location if the structure is different
+          bookingId = responseData['id_booking_treatment'];
+        } else if (responseData != null && responseData.containsKey('id')) {
+          // Check if ID is directly in the response
+          bookingId = responseData['id'];
+        }
+
+        if (bookingId != null) {
+          // Navigate to history treatment screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HistoryTreatmentScreen(bookingId: bookingId),
             ),
-          ),
-        );
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking berhasil, tapi ID tidak ditemukan')),
+          );
+          // Navigate back
+          Navigator.pop(context);
+        }
       } else {
-        final jsonData = jsonDecode(response.body);
+        final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(jsonData['message'] ?? 'Gagal membuat jadwal')),
+          SnackBar(content: Text(errorData['message'] ?? 'Gagal membuat jadwal')),
         );
       }
 
@@ -542,6 +562,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
+          color: appTheme.lightBadge100,
           border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -739,7 +760,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                 // Calendar widget
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: appTheme.lightBadge100,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.grey.shade300),
                   ),
@@ -842,7 +863,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   onTap: _showTimePicker,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: appTheme.lightBadge100,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
