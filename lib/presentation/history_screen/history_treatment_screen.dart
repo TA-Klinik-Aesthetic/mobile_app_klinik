@@ -35,6 +35,15 @@ class _HistoryTreatmentScreenState extends State<HistoryTreatmentScreen> {
     });
 
     try {
+      // Check if bookingId is null
+      if (widget.bookingId == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'ID booking tidak valid';
+        });
+        return;
+      }
+
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final String? token = prefs.getString('token');
 
