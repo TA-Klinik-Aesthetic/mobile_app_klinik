@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app_klinik/presentation/history_screen/history_treatment_screen.dart';
+import 'package:mobile_app_klinik/presentation/booking_screen/detail_history_treatment_screen.dart';
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -259,7 +259,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => HistoryTreatmentScreen(bookingId: bookingId),
+              builder: (context) => DetailHistoryTreatmentScreen(bookingId: bookingId),
             ),
           );
         } else {

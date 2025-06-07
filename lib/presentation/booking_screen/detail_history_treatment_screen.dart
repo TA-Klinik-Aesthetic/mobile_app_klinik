@@ -5,19 +5,19 @@ import 'dart:convert';
 import '../../api/api_constant.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class HistoryTreatmentScreen extends StatefulWidget {
+class DetailHistoryTreatmentScreen extends StatefulWidget {
   final int bookingId;
 
-  const HistoryTreatmentScreen({
+  const DetailHistoryTreatmentScreen({
     super.key,
     required this.bookingId,
   });
 
   @override
-  State<HistoryTreatmentScreen> createState() => _HistoryTreatmentScreenState();
+  State<DetailHistoryTreatmentScreen> createState() => _DetailHistoryTreatmentScreenState();
 }
 
-class _HistoryTreatmentScreenState extends State<HistoryTreatmentScreen> {
+class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _bookingData;
   String? _errorMessage;

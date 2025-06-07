@@ -230,7 +230,12 @@ class _UserScreenState extends State<UserScreen> {
                 _buildMenuOption(
                   title: 'Histori Pembelian',
                   onTap: () {
-                    // Navigate to purchase history screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AppRoutes.routes[AppRoutes.historyPurchaseScreen]!(context),
+                      ),
+                    );
                   },
                 ),
                 _buildMenuOption(
