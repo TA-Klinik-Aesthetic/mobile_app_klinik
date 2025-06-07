@@ -184,7 +184,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                   Text(
                     'Detail Pembelian',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -209,6 +209,8 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              const Divider(),
               const SizedBox(height: 8),
               Text(
                 'ID Pembelian: #PURCH${purchaseData['id_penjualan_produk']}',
@@ -253,11 +255,13 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               const Text(
                 'Detail Produk',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
+              const Divider(),
+              const SizedBox(height: 6),
 
               // List of purchased items
               ...((purchaseData['detail_pembelian'] as List<dynamic>?) ?? []).map((item) {
@@ -369,12 +373,13 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               const Text(
                 'Ringkasan Pembayaran',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
-
+              const SizedBox(height: 6),
+              const Divider(),
+              const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

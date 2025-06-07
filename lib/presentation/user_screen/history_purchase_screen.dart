@@ -313,13 +313,6 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                           ],
                         ),
                       ),
-
-                      // Arrow indicator
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: appTheme.black900,
-                      ),
                     ],
                   ),
                 ),
