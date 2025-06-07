@@ -196,125 +196,219 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
             final String total = _formatPrice(purchase['harga_akhir']);
             final String status = purchase['status_pembayaran'];
 
-            // Get first product image for thumbnail
+            // Get first product details
             String thumbnailUrl = '';
+            String productName = '';
+            int firstProductQuantity = 0;
+            int totalProducts = 0;
+            int totalItems = 0;
+
             if (purchase['detail_pembelian'] != null &&
-                purchase['detail_pembelian'].isNotEmpty &&
-                purchase['detail_pembelian'][0]['produk'] != null) {
-              thumbnailUrl = purchase['detail_pembelian'][0]['produk']['gambar_produk'] ?? '';
+                purchase['detail_pembelian'] is List &&
+                purchase['detail_pembelian'].isNotEmpty) {
+
+              final detailPembelian = purchase['detail_pembelian'] as List;
+              totalProducts = detailPembelian.length;
+
+              // Get first product details
+              if (detailPembelian[0]['produk'] != null) {
+                thumbnailUrl = detailPembelian[0]['produk']['gambar_produk'] ?? '';
+                productName = detailPembelian[0]['produk']['nama_produk'] ?? '';
+                firstProductQuantity = detailPembelian[0]['jumlah_produk'] ?? 0;
+              }
+
+              // Calculate total items
+              for (var item in detailPembelian) {
+                totalItems += (item['jumlah_produk'] ?? 0) as int;
+              }
             }
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PurchaseProductScreen(
-                        purchaseId: purchase['id_penjualan_produk'],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: appTheme.lightBadge100,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: appTheme.black900, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header row with Pembelian title and status
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Pembelian',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(status).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: _getStatusColor(status),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Date
+                    Text(
+                      date,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
                       ),
                     ),
-                  ).then((_) => fetchPurchaseHistory()); // Refresh on return
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: appTheme.lightBadge100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: appTheme.black900, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 5,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Thumbnail
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: thumbnailUrl.isNotEmpty
-                            ? Image.network(
-                          thumbnailUrl,
-                          width: 70,
-                          height: 70,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 70,
-                              height: 70,
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.image_not_supported),
-                            );
-                          },
-                        )
-                            : Container(
-                          width: 70,
-                          height: 70,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.shopping_bag),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
 
-                      // Purchase details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '#PURCH$purchaseId',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: _getStatusColor(status).withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    status,
-                                    style: TextStyle(
-                                      color: _getStatusColor(status),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              date,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Total: Rp $total',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: appTheme.orange200,
-                              ),
-                            ),
-                          ],
+                    const Divider(height: 24),
+
+                    // Product details row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Product image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: thumbnailUrl.isNotEmpty
+                              ? Image.network(
+                            thumbnailUrl,
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 70,
+                                height: 70,
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.image_not_supported),
+                              );
+                            },
+                          )
+                              : Container(
+                            width: 70,
+                            height: 70,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.shopping_bag),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 12),
+
+                        // Product info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                productName,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '$firstProductQuantity item',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              if (totalProducts > 1)
+                                Text(
+                                  '+ ${totalProducts - 1} produk lainnya',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const Divider(height: 24),
+
+                    // Footer with total and button
+                    Row(
+                      children: [
+                        // Total info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total $totalItems Produk',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Rp $total',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: appTheme.orange200,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Detail button
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PurchaseProductScreen(
+                                  purchaseId: purchase['id_penjualan_produk'],
+                                ),
+                              ),
+                            ).then((_) => fetchPurchaseHistory());
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: appTheme.whiteA700,
+                            foregroundColor: appTheme.orange200,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(color: appTheme.orange200),
+                            ),
+                          ),
+                          child: const Text(
+                            'Lihat Detail',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             );
