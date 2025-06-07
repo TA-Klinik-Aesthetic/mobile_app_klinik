@@ -598,6 +598,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           'Ringkasan Booking',
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
         backgroundColor: appTheme.whiteA700,

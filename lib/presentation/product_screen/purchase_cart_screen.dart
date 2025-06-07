@@ -490,7 +490,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                     '${_selectedPromo!.namaPromo} berhasil diterapkan',
                     style: TextStyle(
                         color: Colors.green,
-                        fontSize: 8,
+                        fontSize: 12,
                     ),
                   ),
                 ],
@@ -599,7 +599,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
           'Keranjang Belanja',
           style: TextStyle(
             color: appTheme.orange200,
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -785,6 +785,8 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                             keyboardType: TextInputType.number,
                                             textAlign: TextAlign.center,
                                             decoration: InputDecoration(
+                                              filled: true,
+                                              fillColor: Colors.white,
                                               contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
                                               border: OutlineInputBorder(
                                                 borderRadius: BorderRadius.circular(4),
@@ -796,7 +798,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                               ),
                                               focusedBorder: OutlineInputBorder(
                                                 borderRadius: BorderRadius.circular(4),
-                                                borderSide: BorderSide(color: appTheme.lightGrey, width: 2), // warna abu-abu saat fokus
+                                                borderSide: BorderSide(color: appTheme.orange200, width: 2), // warna abu-abu saat fokus
                                               ),
                                             ),
 
@@ -818,7 +820,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                             }
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: appTheme.orange200, // Tetap gunakan warna utama
+                                            backgroundColor: appTheme.orange200,
                                             minimumSize: const Size(30, 30),
                                             padding: const EdgeInsets.all(0),
                                             shape: RoundedRectangleBorder(

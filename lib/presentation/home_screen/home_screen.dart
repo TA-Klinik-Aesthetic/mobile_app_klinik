@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // This would typically come from an API call
     // For now, we'll simulate with a fake count
     setState(() {
-      _notificationCount = 5; // Example count - replace with actual API data
+      _notificationCount = 0; // Example count - replace with actual API data
     });
   }
 

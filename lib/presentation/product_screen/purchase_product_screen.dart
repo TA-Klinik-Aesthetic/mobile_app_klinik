@@ -458,7 +458,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           'Detail Pembelian',
           style: TextStyle(
             color: appTheme.orange200,
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
