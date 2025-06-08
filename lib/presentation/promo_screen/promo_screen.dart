@@ -214,6 +214,7 @@ class _PromoScreenState extends State<PromoScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),

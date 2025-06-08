@@ -124,8 +124,11 @@ class DetailPromoScreen extends StatelessWidget {
                       color: appTheme.lightGreen,
                       borderRadius: BorderRadius.circular(4),
                     ),
+                    // Display discount or price reduction
                     child: Text(
-                      "Potongan Rp${_formatCurrency(promo['potongan_harga'])}",
+                      promo['tipe_potongan'] == "Diskon"
+                          ? "Diskon ${double.parse(promo['potongan_harga'].toString()).toStringAsFixed(0)}%"
+                          : "Potongan Rp${_formatCurrency(promo['potongan_harga'])}",
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

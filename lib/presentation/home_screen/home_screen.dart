@@ -1,7 +1,13 @@
+import 'dart:convert';
+import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:mobile_app_klinik/core/app_export.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../api/api_constant.dart';
+import '../promo_screen/detail_promo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +21,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late PersistentTabController _controller;
   bool _isLoading = true;
   int _notificationCount = 0; // Add notification counter
+  List<Map<String, dynamic>> _promos = [];
+  bool _isLoadingPromos = true;
 
   @override
   void initState() {
@@ -23,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadUserName();
     _fetchNotificationCount(); // Load notification count
+    _fetchPromos();  // Fetch promos data
   }
 
   // Add method to fetch notification count
@@ -32,6 +41,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _notificationCount = 0; // Example count - replace with actual API data
     });
+  }
+
+  Future<void> _fetchPromos() async {
+    setState(() {
+      _isLoadingPromos = true;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(ApiConstants.promo));
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+
+        if (jsonResponse['success'] == true) {
+          final List<dynamic> data = jsonResponse['data'];
+          final activePromos = data.where((promo) =>
+          promo['status_promo'] == 'Aktif').toList();
+
+          setState(() {
+            _promos = List<Map<String, dynamic>>.from(activePromos);
+            _isLoadingPromos = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load promos');
+      }
+    } catch (e) {
+      print('Error fetching promos: $e');
+      setState(() {
+        _isLoadingPromos = false;
+      });
+    }
+  }
+
+  String _formatCurrency(dynamic price) {
+    try {
+      double numericPrice = double.parse(price.toString());
+      return numericPrice.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+              (Match m) => '${m[1]}.');
+    } catch (e) {
+      return price.toString();
+    }
   }
 
   @override
@@ -315,27 +367,114 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ],
                 ),
               ),
-              Container(
-                height: 250,
+              _isLoadingPromos
+                  ? Container(
+                height: 200,
+                alignment: Alignment.center,
+                child: CircularProgressIndicator(),
+              )
+                  : _promos.isEmpty
+                  ? Container(
+                height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: appTheme.lightBadge100,
                   borderRadius: BorderRadius.circular(24.0),
                   border: Border.all(color: Colors.black, width: 2),
                 ),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.productScreen);
-                  },
-                  child: const Center(
-                    child: Text(
-                      "Promo Content",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
+                child: const Center(
+                  child: Text(
+                    "No promotions available",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
+                  ),
+                ),
+              )
+                  : SizedBox(
+                height: 250,
+                child: Swiper(
+                  itemBuilder: (BuildContext context, int index) {
+                    final promo = _promos[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailPromoScreen(promo: promo),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.black, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              spreadRadius: 1,
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                          image: DecorationImage(
+                            image: NetworkImage(promo['gambar_promo']),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(
+                              Colors.black.withOpacity(0.3),
+                              BlendMode.darken,
+                            ),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                promo['nama_promo'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                promo['deskripsi_promo'] ?? '',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  itemCount: _promos.length,
+                  viewportFraction: 0.8,
+                  scale: 0.9,
+                  autoplay: _promos.length > 1,
+                  autoplayDelay: 2500,
+                  fade: 1.0,
+                  curve: Curves.easeInOut,
+                  pagination: SwiperPagination(
+                    margin: const EdgeInsets.only(bottom: 5),
+                    builder: DotSwiperPaginationBuilder(
+                      activeColor: appTheme.lightGreenOld,
+                      color: appTheme.whiteA700,
+                    ),
+                  ),
+                  control: SwiperControl(
+                    color: appTheme.orange200,
                   ),
                 ),
               ),
@@ -351,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               Container(
-                height: 75,
+                height: 70,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: appTheme.lightBadge100,
