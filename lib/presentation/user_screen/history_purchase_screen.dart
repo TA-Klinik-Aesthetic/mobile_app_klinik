@@ -292,21 +292,21 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                           child: thumbnailUrl.isNotEmpty
                               ? Image.network(
                             thumbnailUrl,
-                            width: 70,
-                            height: 70,
+                            width: 75,
+                            height: 75,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                width: 70,
-                                height: 70,
+                                width: 75,
+                                height: 75,
                                 color: Colors.grey[300],
                                 child: const Icon(Icons.image_not_supported),
                               );
                             },
                           )
                               : Container(
-                            width: 70,
-                            height: 70,
+                            width: 75,
+                            height: 75,
                             color: Colors.grey[300],
                             child: const Icon(Icons.shopping_bag),
                           ),
@@ -331,7 +331,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                               Text(
                                 '$firstProductQuantity item',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   color: Colors.grey[600],
                                 ),
                               ),
@@ -339,7 +339,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                                 Text(
                                   '+ ${totalProducts - 1} produk lainnya',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 14,
                                     color: Colors.grey[600],
                                     fontStyle: FontStyle.italic,
                                   ),
