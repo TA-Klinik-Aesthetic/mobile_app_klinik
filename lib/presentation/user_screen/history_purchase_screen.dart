@@ -393,12 +393,11 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                             ).then((_) => fetchPurchaseHistory());
                           },
                           style: TextButton.styleFrom(
-                            backgroundColor: appTheme.whiteA700,
-                            foregroundColor: appTheme.orange200,
+                            backgroundColor: appTheme.orange200,
+                            foregroundColor: appTheme.whiteA700,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(color: appTheme.orange200),
                             ),
                           ),
                           child: const Text(
