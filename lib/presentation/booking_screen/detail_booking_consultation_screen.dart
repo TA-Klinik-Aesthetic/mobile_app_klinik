@@ -404,7 +404,7 @@ Future<void> fetchDoctorDetails() async {
                     // Information box (Experience, Rating, Price)
                     Container(
                       decoration: BoxDecoration(
-                        color: appTheme.lightBadge100,
+                        color: appTheme.whiteA700,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: appTheme.black900, width: 1),
                       ),
@@ -530,7 +530,7 @@ Future<void> fetchDoctorDetails() async {
                         ? Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: appTheme.lightBadge100,
+                              color: appTheme.whiteA700,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: appTheme.black900, width: 1),
                             ),
@@ -612,7 +612,7 @@ Future<void> fetchDoctorDetails() async {
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: appTheme.lightBadge100,
+                                  color: appTheme.whiteA700,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: appTheme.black900, width: 1),
                                 ),
@@ -703,7 +703,7 @@ Future<void> fetchDoctorDetails() async {
                     // Calendar
                     Container(
                       decoration: BoxDecoration(
-                        color: appTheme.lightBadge100,
+                        color: appTheme.whiteA700,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: appTheme.black900, width: 1),
                       ),
@@ -822,7 +822,7 @@ Future<void> fetchDoctorDetails() async {
                       onTap: _showTimePicker,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: appTheme.lightBadge100,
+                          color: appTheme.whiteA700,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: appTheme.black900, width: 1),
                         ),
@@ -859,7 +859,7 @@ Future<void> fetchDoctorDetails() async {
                     const SizedBox(height: 16),
                     Container(
                       decoration: BoxDecoration(
-                        color: appTheme.lightBadge100,
+                        color: appTheme.whiteA700,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: appTheme.black900, width: 1),
                       ),

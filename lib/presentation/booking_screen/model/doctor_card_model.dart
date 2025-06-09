@@ -71,7 +71,7 @@ class _DoctorCardState extends State<DoctorCard> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: appTheme.lightBadge100, 
+          color: appTheme.whiteA700,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: appTheme.lightGrey, width: 1),
           boxShadow: [
@@ -118,7 +118,7 @@ class _DoctorCardState extends State<DoctorCard> {
                     Text(
                       '${widget.doctor['nama_dokter']}',
                       style: const TextStyle(
-                        fontSize: 16, 
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 2,

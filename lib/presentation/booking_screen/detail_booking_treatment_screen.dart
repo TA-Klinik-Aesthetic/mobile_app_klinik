@@ -562,8 +562,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: appTheme.lightBadge100,
-          border: Border.all(color: Colors.grey.shade300),
+          color: appTheme.whiteA700,
+          border: Border.all(color: appTheme.black900, width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -628,7 +628,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     final treatment = _treatments[index];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
-                      color: appTheme.lightBadge100,
+                      color: appTheme.whiteA700,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -696,14 +696,14 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                       Icon(
                                         Icons.access_time,
                                         size: 12,
-                                        color: appTheme.lightGrey,
+                                        color: appTheme.black900,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
                                         _formatEstimasi(treatment['estimasi_treatment'] ?? '00:00:00'),
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: appTheme.lightGrey,
+                                          color: appTheme.black900,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -761,9 +761,9 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                 // Calendar widget
                 Container(
                   decoration: BoxDecoration(
-                    color: appTheme.lightBadge100,
+                    color: appTheme.whiteA700,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: appTheme.black900, width: 1),
                   ),
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -864,9 +864,9 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   onTap: _showTimePicker,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: appTheme.lightBadge100,
+                      color: appTheme.whiteA700,
+                      border: Border.all(color: appTheme.black900, width: 1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
                     ),
                     padding: const EdgeInsets.all(16),
                     child: Row(

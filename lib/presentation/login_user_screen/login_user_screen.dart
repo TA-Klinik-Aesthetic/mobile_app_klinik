@@ -167,7 +167,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
 
   Widget buildLoginForm() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 34),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 36),
       decoration: BoxDecoration(
         color: appTheme.whiteA700,
         borderRadius: BorderRadius.circular(40),
@@ -206,7 +206,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : buildLoginButton(),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

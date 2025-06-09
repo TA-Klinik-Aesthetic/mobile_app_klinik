@@ -142,8 +142,9 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
           ],
         ),
       )
-          : RefreshIndicator(
+        : RefreshIndicator(
         onRefresh: _refreshData,
+        color: appTheme.orange200,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -294,7 +295,7 @@ class TreatmentCategoryCard extends StatelessWidget {
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: appTheme.lightBadge100,
+          color: appTheme.whiteA700,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -634,7 +635,7 @@ class TreatmentCard extends StatelessWidget {
             ? BorderSide(color: appTheme.orange200, width: 2)
             : BorderSide.none,
       ),
-      color: isSelected ? appTheme.lightBadge100 : appTheme.whiteA700,
+      color: isSelected ? Colors.grey.shade200 : appTheme.whiteA700,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

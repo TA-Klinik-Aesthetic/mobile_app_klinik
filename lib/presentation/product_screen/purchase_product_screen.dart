@@ -164,7 +164,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: appTheme.lightBadge100,
+            color: appTheme.whiteA700,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: appTheme.black900, width: 1.5),
             boxShadow: [
@@ -238,7 +238,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: appTheme.lightBadge100,
+            color: appTheme.whiteA700,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: appTheme.black900, width: 1.5),
             boxShadow: [
@@ -356,7 +356,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: appTheme.lightBadge100,
+            color: appTheme.whiteA700,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: appTheme.black900, width: 1.5),
             boxShadow: [

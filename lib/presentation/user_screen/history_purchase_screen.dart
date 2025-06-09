@@ -141,6 +141,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: fetchPurchaseHistory,
+        color: appTheme.orange200,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null

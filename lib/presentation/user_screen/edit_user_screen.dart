@@ -551,7 +551,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: appTheme.lightGreen,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: _isSaving
@@ -564,11 +564,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   ),
                                 )
                               : Text(
-                                  'Simpan Perubahan',
+                                  'SIMPAN PERUBAHAN',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: appTheme.lightGreenOld,
+                                    color: appTheme.whiteA700,
                                   ),
                                 ),
                         ),

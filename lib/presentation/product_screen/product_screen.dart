@@ -181,6 +181,7 @@ class _ProductScreenState extends State<ProductScreen> {
               await fetchProducts();
               await fetchCartCount(); // Tambahkan ini
             },
+            color: appTheme.orange200,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
