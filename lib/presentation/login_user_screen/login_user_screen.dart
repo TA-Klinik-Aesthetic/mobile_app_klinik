@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,7 +103,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           icon: const Icon(Icons.check_circle, color: Colors.white),
         );
 
-        // Navigasi ke HomeScreen dan hapus halaman login dari stack
+        // Navigate to HomeScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -135,98 +136,122 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 120),
-                  buildLoginForm(),
-                  const SizedBox(height: 150),
-                  Text(
-                    "v$appVersion © 2024",
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  Text(
-                    "Copyright By NESH Navya",
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
+        body: Stack(
+          children: [
+            // Background image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background_auth.jpg',
+                fit: BoxFit.cover,
               ),
             ),
-          ),
+            // Content
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 120),
+                      buildLoginForm(),
+                      const SizedBox(height: 120),
+                      Text(
+                        "v$appVersion © 2024",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        "Copyright By NESH Navya",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget buildLoginForm() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 36),
-      decoration: BoxDecoration(
-        color: appTheme.whiteA700,
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: theme.colorScheme.primary, width: 2),
-      ),
-      child: Column(
-        children: [
-          buildLogo(),
-          const SizedBox(height: 24),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text("Email", style: theme.textTheme.bodySmall),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(40),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 36),
+          decoration: BoxDecoration(
+            color: appTheme.whiteA700.withAlpha((0.5 * 255).toInt()),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: theme.colorScheme.primary, width: 2),
           ),
-          buildEmailInput(),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text("lbl_password".tr, style: theme.textTheme.bodySmall),
-            ),
-          ),
-          buildPasswordInput(),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text("msg_forgot_password".tr, style: theme.textTheme.bodySmall),
-            ),
-          ),
-          const SizedBox(height: 24),
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : buildLoginButton(),
-          SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
             children: [
-              Text("msg_don_t_have_an_account".tr, style: theme.textTheme.bodyMedium),
-              const SizedBox(width: 2),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.registerUserScreen);
-                },
-                child: Text(
-                  "lbl_register".tr,
-                  style: TextStyle(
-                    color: appTheme.orange400,
-                    fontWeight: FontWeight.bold,
-                  ),
+              buildLogo(),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text("Email", style: theme.textTheme.bodySmall),
                 ),
+              ),
+              buildEmailInput(),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text("lbl_password".tr, style: theme.textTheme.bodySmall),
+                ),
+              ),
+              buildPasswordInput(),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text("msg_forgot_password".tr, style: theme.textTheme.bodySmall),
+                ),
+              ),
+              const SizedBox(height: 24),
+              isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : buildLoginButton(),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("msg_don_t_have_an_account".tr, style: theme.textTheme.bodyMedium),
+                  const SizedBox(width: 2),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.registerUserScreen);
+                    },
+                    child: Text(
+                      "lbl_register".tr,
+                      style: TextStyle(
+                        color: appTheme.orange400,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

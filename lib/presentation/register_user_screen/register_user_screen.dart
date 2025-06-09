@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:toastification/toastification.dart';
@@ -123,114 +125,122 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   }
 
   Widget _buildRegisterForm() {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 14.h,
-        vertical: 34.h,
-      ),
-      decoration: BoxDecoration(
-        color: appTheme.whiteA700,
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(
-          color: theme.colorScheme.primary,
-          width: 1.h,
-        ),
-      ),
-      child: Column(
-        children: [
-          _buildLogo(),
-          SizedBox(height: 24.h),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "lbl_username".tr,
-                style: theme.textTheme.bodySmall,
-              ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(40),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: 14.h,
+            vertical: 34.h,
+          ),
+          decoration: BoxDecoration(
+            color: appTheme.whiteA700.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(
+              color: theme.colorScheme.primary,
+              width: 1.h,
             ),
           ),
-          CustomTextFormField(
-            controller: _usernameController,
-            hintText: "User Name",
-            textInputType: TextInputType.name,
-          ),
-          SizedBox(height: 16.h),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "lbl_phone_number".tr,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-          CustomTextFormField(
-            controller: _phoneController,
-            hintText: "lbl_hint_phonum".tr,
-            textInputType: TextInputType.phone,
-          ),
-          SizedBox(height: 16.h),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "lbl_enter_the_email".tr,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-          _buildEmailInput(),
-          SizedBox(height: 16.h),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "msg_enter_the_password".tr,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-          _buildPasswordInput(),
-          SizedBox(height: 16.h),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Text(
-                "msg_re_type_password".tr,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-          _buildRetypePasswordInput(),
-          SizedBox(height: 48.h),
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _buildRegisterButton(),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
             children: [
-              Text("lbl_have_account".tr),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.loginUserScreen);
-                },
-                child: Text(
-                  "btn_login".tr,
-                  style: TextStyle(
-                    color: appTheme.orange200,
-                    fontWeight: FontWeight.bold,
+              // Rest of the form content remains the same
+              _buildLogo(),
+              SizedBox(height: 24.h),
+              // ... existing form fields
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text(
+                    "lbl_username".tr,
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
               ),
+              CustomTextFormField(
+                controller: _usernameController,
+                hintText: "User Name",
+                textInputType: TextInputType.name,
+              ),
+              SizedBox(height: 16.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text(
+                    "lbl_phone_number".tr,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+              CustomTextFormField(
+                controller: _phoneController,
+                hintText: "lbl_hint_phonum".tr,
+                textInputType: TextInputType.phone,
+              ),
+              SizedBox(height: 16.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text(
+                    "lbl_enter_the_email".tr,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+              _buildEmailInput(),
+              SizedBox(height: 16.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text(
+                    "msg_enter_the_password".tr,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+              _buildPasswordInput(),
+              SizedBox(height: 16.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text(
+                    "msg_re_type_password".tr,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+              _buildRetypePasswordInput(),
+              SizedBox(height: 48.h),
+              isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildRegisterButton(),
+              SizedBox(height: 16.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("lbl_have_account".tr),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.loginUserScreen);
+                    },
+                    child: Text(
+                      "btn_login".tr,
+                      style: TextStyle(
+                        color: appTheme.orange200,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -239,23 +249,32 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(24.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 24.h),
-                _buildRegisterForm(),
-                SizedBox(height: 36.h),
-                Text(
-                  "v0.0.0 Beta © 2024",
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
+        body: Stack(
+          children: [
+            // Background image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background_auth.jpg',
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
+            // Content
+            SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(24.h),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 24.h),
+                      _buildRegisterForm(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
