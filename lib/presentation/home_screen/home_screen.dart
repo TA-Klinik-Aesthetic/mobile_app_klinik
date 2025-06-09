@@ -163,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       resizeToAvoidBottomInset: true,
       stateManagement: true,
       navBarStyle: NavBarStyle.style9,
+      backgroundColor: appTheme.lightGreen,
     );
   }
 
@@ -199,26 +200,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home),
         title: "Home",
-        activeColorPrimary: appTheme.orange50,
-        inactiveColorPrimary: appTheme.lightGreen,
+        activeColorPrimary: appTheme.lightGreenOld,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
         title: "Product",
-        activeColorPrimary: appTheme.orange50,
-        inactiveColorPrimary: appTheme.lightGreen,
+        activeColorPrimary: appTheme.lightGreenOld,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.chat),
         title: "Booking",
-        activeColorPrimary: appTheme.orange50,
-        inactiveColorPrimary: appTheme.lightGreen,
+        activeColorPrimary: appTheme.lightGreenOld,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person),
         title: "User",
-        activeColorPrimary: appTheme.orange50,
-        inactiveColorPrimary: appTheme.lightGreen,
+        activeColorPrimary: appTheme.lightGreenOld,
+        inactiveColorPrimary: appTheme.whiteA700,
       ),
     ];
   }
