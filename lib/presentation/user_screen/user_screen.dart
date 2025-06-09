@@ -156,7 +156,7 @@ class _UserScreenState extends State<UserScreen> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: appTheme.lightBadge100,
+                      color: appTheme.whiteA700,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: appTheme.black900, width: 1),
                     ),
@@ -257,7 +257,8 @@ class _UserScreenState extends State<UserScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: appTheme.lightBadge100,
+                    color: appTheme.whiteA700,
+                    border: Border.all(color: appTheme.black900, width: 1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -283,7 +284,7 @@ class _UserScreenState extends State<UserScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -326,7 +327,7 @@ class _UserScreenState extends State<UserScreen> {
                     backgroundColor: isLoggedIn ? appTheme.orange400 : appTheme.lightGreen,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(16),
                       side: const BorderSide(color: Colors.black, width: 1.0),
                     ),
                   ),
@@ -352,7 +353,7 @@ class _UserScreenState extends State<UserScreen> {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF1D7),
+          color: appTheme.whiteA700,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: appTheme.black900, width: 1),
         ),

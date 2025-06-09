@@ -67,13 +67,13 @@ class TextThemes {
   static TextTheme textTheme(ColorScheme colorScheme) => TextTheme(
         bodyMedium: TextStyle(
           color: colorScheme.onPrimary,
-          fontSize: 14.fSize,
+          fontSize: 16.fSize,
           fontFamily: 'Lato',
           fontWeight: FontWeight.w400,
         ),
         bodySmall: TextStyle(
           color: colorScheme.primary,
-          fontSize: 12.fSize,
+          fontSize: 14.fSize,
           fontFamily: 'Lato',
           fontWeight: FontWeight.w400,
         ),
@@ -85,13 +85,13 @@ class TextThemes {
         ),
         labelLarge: TextStyle(
           color: colorScheme.primary,
-          fontSize: 12.fSize,
+          fontSize: 14.fSize,
           fontFamily: 'Lato',
           fontWeight: FontWeight.w600,
         ),
         titleLarge: TextStyle(
           color: colorScheme.primary,
-          fontSize: 20.fSize,
+          fontSize: 24.fSize,
           fontFamily: 'Lato',
           fontWeight: FontWeight.w400,
         ),
@@ -116,13 +116,14 @@ class LightCodeColors {
   // BlueGray
   Color get blueGray100 => const Color(0XFFD9D9D9);
   // Light Badge
-  Color get lightBadge100 => const Color(0xFFFFF1DD);
+  Color get lightBadge100 => const Color(0XFFFFF1DD);
   // Orange
+  Color get orange50 => const Color(0XFFFAC2A7);
   Color get orange200 => const Color(0XFFED9267);
   Color get orange400 => const Color(0XFFDC7646);
   // Light Green
   Color get lightGreen => const Color(0xFFB4CBB4);
-  Color get lightGreenOld => const Color(0xFFA5B68D);
+  Color get lightGreenOld => const Color(0xFF0F7934);
   // Light Blue
   Color get lightBlue => const Color(0x00aaccff);
   // Light Yellow

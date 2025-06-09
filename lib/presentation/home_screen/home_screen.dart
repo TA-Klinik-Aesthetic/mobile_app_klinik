@@ -158,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       controller: _controller,
       screens: _buildScreens(context),
       items: _navBarsItems(),
-      backgroundColor: appTheme.lightGreenOld,
       confineToSafeArea: true,
       handleAndroidBackButtonPress: true,
       resizeToAvoidBottomInset: true,
@@ -200,26 +199,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home),
         title: "Home",
-        activeColorPrimary: appTheme.lightBadge100,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange50,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
         title: "Product",
-        activeColorPrimary: appTheme.lightBadge100,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange50,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.chat),
         title: "Booking",
-        activeColorPrimary: appTheme.lightBadge100,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange50,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person),
         title: "User",
-        activeColorPrimary: appTheme.lightBadge100,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange50,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
     ];
   }
@@ -331,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
       body: RefreshIndicator(
         onRefresh: _loadUserName,
-        color: appTheme.lightGreen,
+        color: appTheme.orange200,
         backgroundColor: Colors.white,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -469,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   pagination: SwiperPagination(
                     margin: const EdgeInsets.only(bottom: 5),
                     builder: DotSwiperPaginationBuilder(
-                      activeColor: appTheme.lightGreenOld,
+                      activeColor: appTheme.orange200,
                       color: appTheme.whiteA700,
                     ),
                   ),
@@ -493,9 +492,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 height: 70,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: appTheme.lightBadge100,
+                  color: appTheme.lightGreen,
                   borderRadius: BorderRadius.circular(24.0),
-                  border: Border.all(color: Colors.black, width: 2),
+                  border: Border.all(color: appTheme.lightGreenOld, width: 2),
                 ),
                 child: GestureDetector(
                   onTap: () {
@@ -510,13 +509,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: appTheme.black900,
+                            color: appTheme.lightGreenOld,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Icon(
                           Icons.calendar_today,
-                          color: appTheme.black900,
+                          color: appTheme.lightGreenOld,
                           size: 24,
                         ),
                       ],

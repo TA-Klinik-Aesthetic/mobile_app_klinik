@@ -227,7 +227,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Container(
                 decoration: BoxDecoration(
-                  color: appTheme.lightBadge100,
+                  color: appTheme.whiteA700,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: appTheme.black900, width: 1.5),
                   boxShadow: [
@@ -363,7 +363,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                               Text(
                                 'Total $totalItems Produk',
                                 style: const TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -371,7 +371,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                               Text(
                                 'Rp $total',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: appTheme.orange200,
                                 ),

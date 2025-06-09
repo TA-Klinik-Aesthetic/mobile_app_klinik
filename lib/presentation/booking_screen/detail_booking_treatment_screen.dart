@@ -439,7 +439,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   const Icon(Icons.check_circle, color: Colors.green),
                   const SizedBox(width: 8),
                   Text(
-                    'Promo ${_selectedPromo!.namaPromo} berhasil diterapkan',
+                    '${_selectedPromo!.namaPromo} berhasil diterapkan',
                     style: const TextStyle(color: Colors.green),
                   ),
                 ],
@@ -573,7 +573,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
             Expanded(
               child: Text(
                 _selectedPromo != null
-                    ? 'Promo ${_selectedPromo!.namaPromo} diterapkan'
+                    ? '${_selectedPromo!.namaPromo} diterapkan'
                     : 'Gunakan Promo',
                 style: TextStyle(
                   color: _selectedPromo != null ? appTheme.black900 : Colors.grey.shade600,

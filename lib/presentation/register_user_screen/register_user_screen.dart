@@ -129,7 +129,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
         vertical: 34.h,
       ),
       decoration: BoxDecoration(
-        color: appTheme.lightBadge100,
+        color: appTheme.whiteA700,
         borderRadius: BorderRadius.circular(40),
         border: Border.all(
           color: theme.colorScheme.primary,

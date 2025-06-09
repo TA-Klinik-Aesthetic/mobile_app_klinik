@@ -676,7 +676,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
-                    color: appTheme.lightBadge100,
+                    color: appTheme.whiteA700,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -743,16 +743,17 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                         ],
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
                                     // Updated delete button to match detail booking treatment style
                                     InkWell(
                                       onTap: () => _showDeleteConfirmation(context, cartId),
                                       child: Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.5),
+                                          color: appTheme.darkCherry.withAlpha((0.6 * 255).toInt()),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.close, size: 16, color: Colors.black),
+                                        child: Icon(Icons.close, size: 16, color: appTheme.whiteA700),
                                       ),
                                     ),
                                   ],

@@ -139,7 +139,7 @@ class _ProductScreenState extends State<ProductScreen> {
                         decoration: BoxDecoration(
                           color: appTheme.whiteA700,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: appTheme.black900, width: 1),
+                          border: Border.all(color: appTheme.lightGrey, width: 2),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: TextField(
@@ -163,7 +163,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
               ),
               backgroundColor: innerBoxIsScrolled
-                  ? appTheme.lightGreenOld
+                  ? appTheme.lightGreen
                   : appTheme.whiteA700,
               elevation: 0.0,
               centerTitle: true,

@@ -19,7 +19,7 @@ class ProductCard extends StatelessWidget {
       onTap: onPress,
       child: Container(
         decoration: BoxDecoration(
-          color: appTheme.lightBadge100,
+          color: appTheme.whiteA700,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: appTheme.lightGrey, width: 1),
           boxShadow: [

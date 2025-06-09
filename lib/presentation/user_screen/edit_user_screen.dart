@@ -450,14 +450,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF1D7),
+                                  color: appTheme.orange200,
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.white, width: 2),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.edit,
                                   size: 20,
-                                  color: Color(0xFFF8A44C),
+                                  color: appTheme.whiteA700,
                                 ),
                               ),
                             ),
@@ -490,7 +490,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: _inputDecoration(
                           hintText: 'Enter your email',
-                          suffixIcon: Icons.edit,
+                          suffixIcon: Icons.email_rounded,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -512,7 +512,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: _inputDecoration(
                           hintText: 'Enter your phone number',
                           prefixText: '+62 ',
-                          suffixIcon: Icons.edit,
+                          suffixIcon: Icons.phone_callback,
                         ),
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
@@ -549,9 +549,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: ElevatedButton(
                           onPressed: _isSaving ? null : _saveProfile,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF8A44C),
+                            backgroundColor: appTheme.lightGreen,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(24),
                             ),
                           ),
                           child: _isSaving
@@ -563,12 +563,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text(
-                                  'SIMPAN PERUBAHAN',
+                              : Text(
+                                  'Simpan Perubahan',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: appTheme.lightGreenOld,
                                   ),
                                 ),
                         ),

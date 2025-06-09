@@ -116,7 +116,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           title: const Text('Login Failed'),
           description: Text(errorMessage),
           autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.lightYellow,
+          backgroundColor: appTheme.darkCherry,
           icon: const Icon(Icons.error, color: Colors.white),
         );
       }
@@ -169,9 +169,9 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 34),
       decoration: BoxDecoration(
-        color: appTheme.lightBadge100,
+        color: appTheme.whiteA700,
         borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: theme.colorScheme.primary, width: 1),
+        border: Border.all(color: theme.colorScheme.primary, width: 2),
       ),
       child: Column(
         children: [
@@ -211,6 +211,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("msg_don_t_have_an_account".tr, style: theme.textTheme.bodyMedium),
+              const SizedBox(width: 2),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.registerUserScreen);
@@ -242,8 +243,8 @@ class LoginUserScreenState extends State<LoginUserScreen> {
       children: [
         SvgPicture.asset(
           'assets/images/login_illustration_app.svg',
-          height: 120,
-          width: 120,
+          height: 150,
+          width: 150,
           fit: BoxFit.contain,
         ),
         const SizedBox(height: 14),
