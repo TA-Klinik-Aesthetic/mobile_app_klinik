@@ -335,66 +335,80 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         backgroundColor: Colors.white,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Section dengan padding horizontal
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Latest Promo",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.promoScreen);
-                      },
-                      child: Text(
-                        "See More",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: appTheme.orange200,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Latest Promo",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.promoScreen);
+                            },
+                            child: Text(
+                              "See More",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: appTheme.orange200,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // Section Swiper (tanpa padding horizontal)
               _isLoadingPromos
                   ? Container(
-                height: 200,
+                height: 250,
                 alignment: Alignment.center,
                 child: CircularProgressIndicator(),
               )
                   : _promos.isEmpty
-                  ? Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: appTheme.lightBadge100,
-                  borderRadius: BorderRadius.circular(24.0),
-                  border: Border.all(color: Colors.black, width: 2),
-                ),
-                child: const Center(
-                  child: Text(
-                    "No promotions available",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                  ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  height: 250,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: appTheme.lightBadge100,
+                    borderRadius: BorderRadius.circular(24.0),
+                    border: Border.all(color: Colors.black, width: 2),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "No promotions available",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
               )
                   : SizedBox(
                 height: 250,
+                width: double.infinity,
                 child: Swiper(
                   itemBuilder: (BuildContext context, int index) {
                     final promo = _promos[index];
@@ -408,12 +422,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         );
                       },
                       child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: Colors.black, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withAlpha((0.2 * 255).toInt()),
                               spreadRadius: 1,
                               blurRadius: 6,
                               offset: const Offset(0, 3),
@@ -423,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             image: NetworkImage(promo['gambar_promo']),
                             fit: BoxFit.cover,
                             colorFilter: ColorFilter.mode(
-                              Colors.black.withOpacity(0.3),
+                              Colors.black.withAlpha((0.3 * 255).toInt()),
                               BlendMode.darken,
                             ),
                           ),
@@ -452,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 24),
                             ],
                           ),
                         ),
@@ -467,20 +482,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   fade: 1.0,
                   curve: Curves.easeInOut,
                   pagination: SwiperPagination(
-                    margin: const EdgeInsets.only(bottom: 5),
+                    alignment: Alignment.bottomCenter,
+                    margin: const EdgeInsets.only(bottom: 16),
                     builder: DotSwiperPaginationBuilder(
                       activeColor: appTheme.orange200,
-                      color: appTheme.whiteA700,
+                      color: appTheme.lightGrey,
+                      size: 8.0,
+                      activeSize: 10.0,
+                      space: 4.0,
                     ),
-                  ),
-                  control: SwiperControl(
-                    color: appTheme.orange200,
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
+
+              // Jadwal Doctor dengan padding
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16.0),
                 child: Text(
                   "Jadwal Doctor",
                   style: TextStyle(
@@ -489,37 +508,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-              Container(
-                height: 70,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: appTheme.lightGreen,
-                  borderRadius: BorderRadius.circular(24.0),
-                  border: Border.all(color: appTheme.lightGreenOld, width: 2),
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
-                  },
-                  child: Center(
-                    child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Calender Jadwal Dokter",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: appTheme.lightGreenOld,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  height: 70,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: appTheme.lightGreen,
+                    borderRadius: BorderRadius.circular(24.0),
+                    border: Border.all(color: appTheme.lightGreenOld, width: 2),
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
+                    },
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Calender Jadwal Dokter",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: appTheme.lightGreenOld,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.calendar_today,
-                          color: appTheme.lightGreenOld,
-                          size: 24,
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.calendar_today,
+                            color: appTheme.lightGreenOld,
+                            size: 24,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
