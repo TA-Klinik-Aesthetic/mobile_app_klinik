@@ -394,16 +394,17 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                             ).then((_) => fetchPurchaseHistory());
                           },
                           style: TextButton.styleFrom(
-                            backgroundColor: appTheme.orange200,
-                            foregroundColor: appTheme.whiteA700,
+                            backgroundColor: appTheme.lightGreen,
+                            foregroundColor: appTheme.black900,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Lihat Detail',
-                            style: TextStyle(fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w500),
                           ),
                         ),
                       ],

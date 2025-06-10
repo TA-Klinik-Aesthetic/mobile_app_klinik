@@ -509,7 +509,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   decoration: BoxDecoration(
                     color: appTheme.lightGreen,
                     borderRadius: BorderRadius.circular(24.0),
-                    border: Border.all(color: appTheme.lightGreenOld, width: 2),
+                    border: Border.all(color: appTheme.black900, width: 2),
                   ),
                   child: GestureDetector(
                     onTap: () {
@@ -524,13 +524,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: appTheme.lightGreenOld,
+                              color: appTheme.black900,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Icon(
                             Icons.calendar_today,
-                            color: appTheme.lightGreenOld,
+                            color: appTheme.black900,
                             size: 24,
                           ),
                         ],
