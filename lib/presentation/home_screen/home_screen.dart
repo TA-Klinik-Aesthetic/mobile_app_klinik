@@ -75,17 +75,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  String _formatCurrency(dynamic price) {
-    try {
-      double numericPrice = double.parse(price.toString());
-      return numericPrice.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-              (Match m) => '${m[1]}.');
-    } catch (e) {
-      return price.toString();
-    }
-  }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -162,8 +151,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       handleAndroidBackButtonPress: true,
       resizeToAvoidBottomInset: true,
       stateManagement: true,
-      navBarStyle: NavBarStyle.style9,
-      backgroundColor: appTheme.lightGreen,
+      navBarStyle: NavBarStyle.style7,
+      backgroundColor: appTheme.whiteA700,
     );
   }
 
@@ -200,26 +189,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home),
         title: "Home",
-        activeColorPrimary: appTheme.lightGreenOld,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange200,
+        activeColorSecondary: appTheme.whiteA700,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
         title: "Product",
-        activeColorPrimary: appTheme.lightGreenOld,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange200,
+        activeColorSecondary: appTheme.whiteA700,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.chat),
         title: "Booking",
-        activeColorPrimary: appTheme.lightGreenOld,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange200,
+        activeColorSecondary: appTheme.whiteA700,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person),
         title: "User",
-        activeColorPrimary: appTheme.lightGreenOld,
-        inactiveColorPrimary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.orange200,
+        activeColorSecondary: appTheme.whiteA700,
+        inactiveColorPrimary: appTheme.lightGreen,
       ),
     ];
   }
@@ -361,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               Navigator.pushNamed(context, AppRoutes.promoScreen);
                             },
                             child: Text(
-                              "See More",
+                              "See List",
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
