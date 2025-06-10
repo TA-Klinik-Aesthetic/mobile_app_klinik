@@ -193,9 +193,9 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
           itemBuilder: (context, index) {
             final purchase = _purchases[index];
             final String purchaseId = purchase['id_penjualan_produk'].toString();
-            final String date = _formatDate(purchase['tanggal_pembelian']);
+            final String date = purchase['tanggal_pembelian']?.toString() ?? '';
             final String total = _formatPrice(purchase['harga_akhir']);
-            final String status = purchase['status_pembayaran'];
+            final String status = purchase['status_pembayaran']?.toString() ?? '';
 
             // Get first product details
             String thumbnailUrl = '';
@@ -399,6 +399,10 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: appTheme.lightGreenOld,
+                                width: 1,
+                              ),
                             ),
                           ),
                           child: Text(

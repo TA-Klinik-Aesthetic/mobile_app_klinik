@@ -268,6 +268,9 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                 final price = double.tryParse(item['harga_penjualan_produk'].toString()) ?? 0;
                 final quantity = item['jumlah_produk'] ?? 0;
                 final subtotal = price * quantity;
+                final discount = double.tryParse(purchaseData['potongan_harga']?.toString() ?? '0') ?? 0.0;
+                final afterDiscount = subtotal - discount;
+                final tax = (afterDiscount * 0.10).clamp(0, double.infinity);
                 final productId = item['id_produk'];
                 final productData = productsData[productId];
                 final imageUrl = productData?['gambar_produk'] ?? '';
@@ -418,6 +421,18 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                         fontSize: 14,
                         color: appTheme.orange200,
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // In the payment summary section, add a row for tax:
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Pajak 10%', style: TextStyle(fontSize: 14)),
+                    Text(
+                      '+ Rp ${_formatPrice(purchaseData['tax'])}',
+                      style: TextStyle(fontSize: 14, color: appTheme.darkCherry),
                     ),
                   ],
                 ),

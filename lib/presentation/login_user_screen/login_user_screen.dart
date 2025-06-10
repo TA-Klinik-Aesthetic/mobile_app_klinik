@@ -192,7 +192,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 36),
           decoration: BoxDecoration(
-            color: appTheme.whiteA700.withAlpha((0.5 * 255).toInt()),
+            color: appTheme.whiteA700.withAlpha((0.6 * 255).toInt()),
             borderRadius: BorderRadius.circular(40),
             border: Border.all(color: theme.colorScheme.primary, width: 2),
           ),

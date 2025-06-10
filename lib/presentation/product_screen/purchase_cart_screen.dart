@@ -252,10 +252,20 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
     });
   }
 
+  double _calculateTax() {
+    double pajakPercent = 10.0; // or from promo if dynamic
+    double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
+    double afterDiscount = totalPrice - discount;
+    return afterDiscount * pajakPercent / 100.0;
+  }
+
   double _calculateFinalPrice() {
     double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
-    return max(totalPrice - discount, 0.0);
+    double afterDiscount = totalPrice - discount;
+    double tax = _calculateTax();
+    return max(afterDiscount + tax, 0.0);
   }
+
 
   Future<void> updateQuantity(int cartId, int newQuantity, int maxStock) async {
     if (newQuantity < 1 || newQuantity > maxStock) {
@@ -880,21 +890,17 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                 _buildPromoButton(),
                 const SizedBox(height: 16),
 
-                // Price details
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Subtotal:', style: TextStyle(fontSize: 14)),
+                    Text(
+                      'Rp ${_formatPrice(totalPrice)}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
                 if (_selectedPromo != null) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Subtotal:',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                      Text(
-                        'Rp ${_formatPrice(totalPrice)}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -934,10 +940,21 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Divider(),
                 ],
-
+                const SizedBox(height: 8),
+                // Always show tax row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Pajak 10%', style: TextStyle(fontSize: 14)),
+                    Text(
+                      '+ Rp ${_formatPrice(_calculateTax())}',
+                      style: TextStyle(fontSize: 14, color: appTheme.darkCherry),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
                 // Total
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1050,7 +1067,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                       }
                     } : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: appTheme.orange200,
+                      backgroundColor: appTheme.lightGreen,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1063,12 +1080,12 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
-                    ) : const Text(
-                      'Checkout',
+                    ) : Text(
+                      'CHECKOUT',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: appTheme.black900,
                       ),
                     ),
                   ),

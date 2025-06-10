@@ -11,6 +11,7 @@ class Promo {
   final String? deskripsiPromo;
   final String? tipePotongan;
   final String? potonganHarga;
+  final String? pajak;
   final String? minimalBelanja;
   final String? tanggalMulai;
   final String? tanggalBerakhir;
@@ -24,6 +25,7 @@ class Promo {
     this.deskripsiPromo,
     this.tipePotongan,
     this.potonganHarga,
+    this.pajak,
     this.minimalBelanja,
     this.tanggalMulai,
     this.tanggalBerakhir,

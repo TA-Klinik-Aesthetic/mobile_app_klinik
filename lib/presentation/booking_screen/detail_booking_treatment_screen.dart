@@ -440,7 +440,9 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   const SizedBox(width: 8),
                   Text(
                     '${_selectedPromo!.namaPromo} berhasil diterapkan',
-                    style: const TextStyle(color: Colors.green),
+                    style: const TextStyle(
+                        color: Colors.green,
+                        fontSize: 12,),
                   ),
                 ],
               ),
@@ -722,10 +724,10 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.5),
+                                      color: appTheme.darkCherry.withAlpha((0.6 * 255).toInt()),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.close, size: 16, color: Colors.black),
+                                    child: Icon(Icons.close, size: 16, color: appTheme.whiteA700),
                                   ),
                                 ),
                                 const SizedBox(height: 18),
