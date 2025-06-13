@@ -253,10 +253,10 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
   }
 
   double _calculateTax() {
-    double pajakPercent = 10.0; // or from promo if dynamic
     double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
     double afterDiscount = totalPrice - discount;
-    return afterDiscount * pajakPercent / 100.0;
+    double besaranPajak = (afterDiscount * 0.10).clamp(0, double.infinity);
+    return besaranPajak;
   }
 
   double _calculateFinalPrice() {
@@ -1009,10 +1009,13 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           };
                         }).toList();
 
+                        double besaranPajak = _calculateTax();
+                        
                         // Prepare request body
                         Map<String, dynamic> requestBody = {
                           'id_user': userId,
                           'produk': products,
+                          'besaran_pajak': besaranPajak.toStringAsFixed(2),
                         };
 
                         // Add promo if selected

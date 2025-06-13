@@ -431,7 +431,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                   children: [
                     const Text('Pajak 10%', style: TextStyle(fontSize: 14)),
                     Text(
-                      '+ Rp ${_formatPrice(purchaseData['tax'])}',
+                      '+ Rp ${_formatPrice(purchaseData['besaran_pajak'])}',
                       style: TextStyle(fontSize: 14, color: appTheme.darkCherry),
                     ),
                   ],
