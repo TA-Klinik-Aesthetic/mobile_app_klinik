@@ -1009,12 +1009,14 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           };
                         }).toList();
 
+                        double potonganHarga = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
                         double besaranPajak = _calculateTax();
-                        
+
                         // Prepare request body
                         Map<String, dynamic> requestBody = {
                           'id_user': userId,
                           'produk': products,
+                          'potongan_harga': potonganHarga.toStringAsFixed(2),
                           'besaran_pajak': besaranPajak.toStringAsFixed(2),
                         };
 

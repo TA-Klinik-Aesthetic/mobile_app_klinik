@@ -189,29 +189,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home),
         title: "Home",
-        activeColorPrimary: appTheme.orange200,
-        activeColorSecondary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.lightGreen,
+        activeColorSecondary: appTheme.lightGreenOld,
         inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.shopping_bag),
         title: "Product",
-        activeColorPrimary: appTheme.orange200,
-        activeColorSecondary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.lightGreen,
+        activeColorSecondary: appTheme.lightGreenOld,
         inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.chat),
         title: "Booking",
-        activeColorPrimary: appTheme.orange200,
-        activeColorSecondary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.lightGreen,
+        activeColorSecondary: appTheme.lightGreenOld,
         inactiveColorPrimary: appTheme.lightGreen,
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person),
         title: "User",
-        activeColorPrimary: appTheme.orange200,
-        activeColorSecondary: appTheme.whiteA700,
+        activeColorPrimary: appTheme.lightGreen,
+        activeColorSecondary: appTheme.lightGreenOld,
         inactiveColorPrimary: appTheme.lightGreen,
       ),
     ];
@@ -238,12 +238,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               TextSpan(
                 children: [
                   if (namaUser == null || namaUser == "Guest")
-                    const TextSpan(
+                    TextSpan(
                       text: "Masuk / Daftar",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        color: appTheme.orange200,
                       ),
                     )
                   else ...[
@@ -258,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     TextSpan(
                       text: namaUser,
                       style: TextStyle(
-                        color: appTheme.black900,
+                        color: appTheme.orange200,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),

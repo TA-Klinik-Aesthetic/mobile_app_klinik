@@ -294,8 +294,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Konfirmasi'),
-          content: const Text('Yakin ingin menghapusnya dari cart?'),
+          title: const Text('Konfirmasi Penghapusan'),
+          content: const Text('Yakin anda ingin menghapusnya dari cart?'),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

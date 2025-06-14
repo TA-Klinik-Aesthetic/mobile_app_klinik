@@ -12,11 +12,12 @@ class ApiConstants {
   static const String cartSum = "$baseUrl/keranjang/user/{id_user}/total";
   static const String penjualanProduk = "$baseUrl/penjualan-produk";
   static const String penjualanProdukUser = "$baseUrl/penjualan-produk/user/{id_user}";
+  static const String pembayaranProduk = "$baseUrl/pembayaran-produk";
   static const String jadwalDokter = "$baseUrl/jadwal-dokter"; 
   static const String bookingKonsultasi = "$baseUrl/konsultasi";
   static const String detailBookingKonsultasi = "$baseUrl/detail-konsultasi";
   static const String feedbackKonsultasi = "$baseUrl/feedbacks";  
-  static const String bookingTreatment = "$baseUrl/bookingTreatments";
+  static const String bookingTreatment = "$baseUrl/detailBookingTreatments";
   static const String detailBookingTreatment = "$baseUrl/detailBookingTreatments";
   static const String dokter = "$baseUrl/dokters";
   static const String jenisTreatment = "$baseUrl/jenisTreatments";
