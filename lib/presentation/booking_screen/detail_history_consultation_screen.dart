@@ -401,7 +401,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                     // ID Booking
                     _buildInfoRow(
                         'ID Booking',
-                        '#${_consultationData?['id_konsultasi'] ?? '-'}'
+                        '#CONS${_consultationData?['id_konsultasi'] ?? '-'}'
                     ),
                     const SizedBox(height: 12),
 

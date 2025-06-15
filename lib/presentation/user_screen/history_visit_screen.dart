@@ -89,13 +89,13 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
     switch (status) {
       case 'Verifikasi':
-        badgeColor = Colors.blue;
+        badgeColor = appTheme.lightBlue;
         break;
       case 'Selesai':
-        badgeColor = Colors.green;
+        badgeColor = appTheme.lightGreen;
         break;
       case 'Batal':
-        badgeColor = Colors.red;
+        badgeColor = appTheme.darkCherry;
         break;
       case 'Konfirmasi':
         badgeColor = Colors.orange;
@@ -118,7 +118,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         style: TextStyle(
           color: badgeColor,
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 14,
         ),
       ),
     );
@@ -267,7 +267,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
                               consultation['dokter']['nama_dokter'] ?? 'Unknown Doctor',
                               style: const TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.bold,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
