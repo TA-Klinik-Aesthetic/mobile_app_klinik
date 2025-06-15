@@ -209,6 +209,13 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           '${treatmentDate.hour.toString().padLeft(2, '0')}:'
           '${treatmentDate.minute.toString().padLeft(2, '0')}:00';
 
+      // Calculate prices and discount
+      double totalPrice = _calculateTotalPrice();
+      double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
+      double tax = _calculateTax();
+      double finalPrice = totalPrice - discount + tax;
+      if (finalPrice < 0) finalPrice = 0.0;
+
       // Create treatment detail list for request
       final List<Map<String, dynamic>> treatmentDetails = _treatments.map((treatment) {
         return {
@@ -224,7 +231,11 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         'id_beautician': null,
         'status_booking_treatment': 'Verifikasi',
         'id_promo': _selectedPromo?.idPromo,
-        'details': treatmentDetails
+        'potongan_harga': discount.toStringAsFixed(2),
+        'besaran_pajak': tax.toStringAsFixed(2), // Add tax to request body
+        'harga_total': totalPrice.toStringAsFixed(2),
+        'harga_akhir_treatment': finalPrice.toStringAsFixed(2),
+        'details': treatmentDetails,
       };
 
       // Send the booking request
@@ -242,20 +253,12 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         final responseData = jsonDecode(response.body);
 
         // Safely access the booking ID
-        int bookingId = responseData['data']['id_booking_treatment'] ?? responseData['id_booking_treatment'];
-
-        if (responseData != null && responseData['booking_treatment'] != null) {
-          bookingId = responseData['booking_treatment']['id_booking_treatment'];
-        } else if (responseData != null && responseData.containsKey('id_booking_treatment')) {
-          // Alternative location if the structure is different
-          bookingId = responseData['id_booking_treatment'];
-        } else if (responseData != null && responseData.containsKey('id')) {
-          // Check if ID is directly in the response
-          bookingId = responseData['id'];
-        }
+        int bookingId = responseData['data']?['id_booking_treatment'] ??
+            responseData['booking_treatment']?['id_booking_treatment'] ??
+            responseData['id_booking_treatment'] ??
+            responseData['id'];
 
         if (bookingId != null) {
-          // Navigate to history treatment screen
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -266,7 +269,6 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Booking berhasil, tapi ID tidak ditemukan')),
           );
-          // Navigate back
           Navigator.pop(context);
         }
       } else {
@@ -361,10 +363,19 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     return total;
   }
 
+  double _calculateTax() {
+    double totalPrice = _calculateTotalPrice();
+    double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
+    double afterDiscount = totalPrice - discount;
+    return (afterDiscount * 0.10).clamp(0, double.infinity);
+  }
+
   double _calculateFinalPrice() {
     double totalPrice = _calculateTotalPrice();
     double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
-    return totalPrice - discount;
+    double afterDiscount = totalPrice - discount;
+    double tax = _calculateTax();
+    return (afterDiscount + tax).clamp(0, double.infinity);
   }
 
   String _formatEstimasi(String estimasi) {
@@ -929,18 +940,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Subtotal:',
-                        style: TextStyle(
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        'Rp ${_formatPrice(_calculateTotalPrice())}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                        ),
-                      ),
+                      const Text('Subtotal:', style: TextStyle(fontSize: 14)),
+                      Text('Rp ${_formatPrice(_calculateTotalPrice())}', style: const TextStyle(fontSize: 14)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -983,6 +984,15 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // Tax row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Pajak (10%):', style: TextStyle(fontSize: 14)),
+                      Text('Rp ${_formatPrice(_calculateTax())}', style: const TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   const Divider(),
                 ],
                 const SizedBox(height: 8),
@@ -991,19 +1001,11 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   children: [
                     Text(
                       'Total Pembayaran:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: appTheme.black900,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: appTheme.black900),
                     ),
                     Text(
                       'Rp ${_formatPrice(_calculateFinalPrice())}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: appTheme.orange200,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: appTheme.orange200),
                     ),
                   ],
                 ),
@@ -1038,7 +1040,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                       'Konfirmasi',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
