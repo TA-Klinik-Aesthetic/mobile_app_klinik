@@ -241,7 +241,12 @@ class _UserScreenState extends State<UserScreen> {
                 _buildMenuOption(
                   title: 'Histori Kunjungan',
                   onTap: () {
-                    // Navigate to visit history screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AppRoutes.routes[AppRoutes.historyConsultationScreen]!(context),
+                      ),
+                    );
                   },
                 ),
                 _buildMenuOption(

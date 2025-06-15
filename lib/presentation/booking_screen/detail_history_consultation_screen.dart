@@ -4,9 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../../../api/api_constant.dart';
-import '../../../theme/app_decoration.dart';
-import '../../../theme/custom_text_style.dart';
-import '../../../theme/theme_helper.dart';
+import '../../core/app_export.dart';
 
 class DetailHistoryConsultationScreen extends StatefulWidget {
   final int consultationId;
@@ -60,6 +58,9 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
         return;
       }
 
+      // Debug print
+      print('Fetching consultation with ID: ${widget.consultationId}');
+
       // Fetch consultation details
       final response = await http.get(
         Uri.parse('${ApiConstants.bookingKonsultasi}/${widget.consultationId}'),
@@ -69,14 +70,23 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
         },
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final responseData = json.decode(response.body);
+
+        // Check if the data is nested inside a data field
+        final consultationData = responseData['data'] ?? responseData;
+
         setState(() {
-          _consultationData = data;
+          _consultationData = consultationData;
         });
 
         // Fetch treatments data for recommendations
-        if (_consultationData?['detail_konsultasi'] != null) {
+        if (_consultationData?['detail_konsultasi'] != null &&
+            _consultationData!['detail_konsultasi'] is List &&
+            _consultationData!['detail_konsultasi'].isNotEmpty) {
           for (var detail in _consultationData!['detail_konsultasi']) {
             if (detail['id_treatment'] != null) {
               await fetchTreatmentData(detail['id_treatment']);
@@ -85,16 +95,18 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
         }
 
         // Fetch doctor ratings if doctor exists
-        if (_consultationData?['dokter'] != null) {
+        if (_consultationData?['dokter'] != null &&
+            _consultationData!['dokter']['id_dokter'] != null) {
           await fetchDoctorRatings(_consultationData!['dokter']['id_dokter']);
         }
 
       } else {
         setState(() {
-          _errorMessage = 'Failed to load consultation data. Please try again.';
+          _errorMessage = 'Failed to load consultation data. Please try again. Status: ${response.statusCode}';
         });
       }
     } catch (e) {
+      print('Error in fetchConsultationDetails: $e');
       setState(() {
         _errorMessage = 'An error occurred: $e';
       });
@@ -688,7 +700,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                           hintText: 'Jelaskan Pengalaman Anda',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: appTheme.gray300),
+                            borderSide: BorderSide(color: appTheme.lightGrey),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),

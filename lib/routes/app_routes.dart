@@ -9,6 +9,7 @@ import 'package:mobile_app_klinik/presentation/promo_screen/promo_screen.dart';
 import 'package:mobile_app_klinik/presentation/register_user_screen/register_user_screen.dart';
 import 'package:mobile_app_klinik/presentation/home_screen/home_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/history_purchase_screen.dart';
+import 'package:mobile_app_klinik/presentation/user_screen/history_visit_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/user_screen.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/product_screen.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/product_detail_screen.dart';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String productScreen = '/product_screen';
   static const String productDetailScreen = '/product_detail_screen';
   static const String historyPurchaseScreen = '/history_purchase_screen';
+  static const String historyConsultationScreen = '/history_visit_screen';
   static const String doctorScheduleScreen = '/doctor_schedule_screen';
   static const String bookingScreen = '/booking_screen';
   static const String bookingConsultationScreen = '/booking_consultation_screen';
@@ -38,7 +40,8 @@ class AppRoutes {
     loginUserScreen: (context) => const LoginUserScreen(),
     registerUserScreen: (context) => const RegisterUserScreen(),
     productScreen: (context) => const ProductScreen(),
-    historyPurchaseScreen: (context) => const HistoryPurchaseScreen(),
+    historyPurchaseScreen: (context) => const HistoryVisitScreen(),
+    historyConsultationScreen: (context) => const HistoryPurchaseScreen(),
     promoScreen: (context) => const PromoScreen(),
     doctorScheduleScreen: (context) => const DoctorScheduleScreen(),
     bookingScreen: (context) => const BookingScreen(),
