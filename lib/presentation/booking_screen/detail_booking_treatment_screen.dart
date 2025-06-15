@@ -576,7 +576,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           color: appTheme.whiteA700,
-          border: Border.all(color: appTheme.black900, width: 1),
+          border: Border.all(color: appTheme.lightGrey, width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -776,7 +776,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   decoration: BoxDecoration(
                     color: appTheme.whiteA700,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: appTheme.black900, width: 1),
+                    border: Border.all(color: appTheme.lightGrey, width: 1),
                   ),
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -878,7 +878,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   child: Container(
                     decoration: BoxDecoration(
                       color: appTheme.whiteA700,
-                      border: Border.all(color: appTheme.black900, width: 1),
+                      border: Border.all(color: appTheme.lightGrey, width: 1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: const EdgeInsets.all(16),
