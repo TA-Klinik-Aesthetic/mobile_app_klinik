@@ -431,9 +431,13 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
       appBar: AppBar(
         title: Text(
           widget.categoryName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
         ),
-        elevation: 0,
+        elevation: 0.0,
+        centerTitle: true,
         backgroundColor: appTheme.whiteA700,
         foregroundColor: appTheme.black900,
       ),

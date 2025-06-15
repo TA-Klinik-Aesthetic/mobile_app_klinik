@@ -268,7 +268,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
       decoration: BoxDecoration(
         color: badgeColor.withOpacity(0.15),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: badgeColor, width: 1),
+        border: Border.all(color: appTheme.whiteA700, width: 1),
       ),
       child: Text(
         status,
@@ -496,7 +496,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                   children: [
                                     Icon(
                                       Icons.star,
-                                      size: 18,
+                                      size: 20,
                                       color: appTheme.orange200,
                                     ),
                                     const SizedBox(width: 4),
@@ -591,6 +591,10 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                             margin: const EdgeInsets.only(bottom: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: appTheme.lightGrey,
+                                width: 1,
+                              ),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(12),

@@ -759,38 +759,21 @@ Future<void> fetchDoctorDetails() async {
                             calendarFormat: CalendarFormat.month,
                             headerVisible: false,
                             calendarStyle: CalendarStyle(
-                              // Warna untuk hari yang dipilih
                               selectedDecoration: BoxDecoration(
-                                color: appTheme.darkCherry,
+                                color: appTheme.orange200,
                                 shape: BoxShape.circle,
                               ),
                               selectedTextStyle: const TextStyle(color: Colors.white),
-                              
-                              // Warna untuk hari ini
                               todayDecoration: BoxDecoration(
-                                color: appTheme.darkCherry.withOpacity(0.3),
+                                color: appTheme.orange200.withOpacity(0.3),
                                 shape: BoxShape.circle,
                               ),
                               todayTextStyle: TextStyle(color: appTheme.black900, fontWeight: FontWeight.bold),
-                              
-                              // Warna default untuk tanggal
                               defaultTextStyle: TextStyle(color: appTheme.black900),
-                              
-                              // Warna untuk hari di luar bulan
                               outsideTextStyle: const TextStyle(color: Colors.grey),
                               outsideDaysVisible: false,
-                              
-                              // Warna untuk hari weekend
-                              weekendTextStyle: TextStyle(color: appTheme.darkCherry),
-
-                              // Marker yang mungkin menunjukkan jadwal
-                              markerDecoration: BoxDecoration(
-                                color: appTheme.darkCherry,
-                                shape: BoxShape.circle,
-                              ),
+                              weekendTextStyle: TextStyle(color: appTheme.orange200),
                             ),
-                            
-                            // Style untuk hari dalam seminggu (Mon, Tue, Wed, dll)
                             daysOfWeekStyle: DaysOfWeekStyle(
                               weekdayStyle: TextStyle(
                                 color: appTheme.black900,
@@ -798,7 +781,7 @@ Future<void> fetchDoctorDetails() async {
                                 fontSize: 12,
                               ),
                               weekendStyle: TextStyle(
-                                color: appTheme.darkCherry,
+                                color: appTheme.orange200,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),

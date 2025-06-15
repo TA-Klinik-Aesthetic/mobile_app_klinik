@@ -555,6 +555,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
       )
           : RefreshIndicator(
         onRefresh: fetchAllHistory,
+        color: appTheme.orange200,
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: _combinedHistory.length,

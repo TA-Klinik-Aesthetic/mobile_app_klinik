@@ -155,13 +155,13 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Verifikasi':
-        return appTheme.lightBlue;
+        return Colors.blueAccent;
       case 'Dikonfirmasi':
-        return appTheme.lightGreen;
+        return Colors.green;
       case 'Selesai':
-        return appTheme.lightGreenOld;
+        return Colors.greenAccent;
       case 'Dibatalkan':
-        return appTheme.darkCherry;
+        return Colors.red;
       default:
         return appTheme.lightGrey;
     }
