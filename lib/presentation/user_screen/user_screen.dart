@@ -228,23 +228,23 @@ class _UserScreenState extends State<UserScreen> {
                   },
                 ),
                 _buildMenuOption(
-                  title: 'Histori Pembelian',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AppRoutes.routes[AppRoutes.historyPurchaseScreen]!(context),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuOption(
                   title: 'Histori Kunjungan',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => AppRoutes.routes[AppRoutes.historyConsultationScreen]!(context),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuOption(
+                  title: 'Histori Pembelian',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AppRoutes.routes[AppRoutes.historyPurchaseScreen]!(context),
                       ),
                     );
                   },
@@ -329,7 +329,7 @@ class _UserScreenState extends State<UserScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isLoggedIn ? appTheme.orange400 : appTheme.lightGreen,
+                    backgroundColor: isLoggedIn ? appTheme.lightGreen : appTheme.lightGreen,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

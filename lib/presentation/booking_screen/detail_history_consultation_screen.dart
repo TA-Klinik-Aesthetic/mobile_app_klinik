@@ -313,10 +313,12 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Detail Konsultasi',
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: appTheme.orange200,
           ),
         ),
         backgroundColor: appTheme.whiteA700,
@@ -369,6 +371,10 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: appTheme.lightGrey,
+                  width: 1,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -423,6 +429,10 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: appTheme.lightGrey,
+                  width: 1,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -519,6 +529,10 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: appTheme.lightGrey,
+                  width: 1,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
