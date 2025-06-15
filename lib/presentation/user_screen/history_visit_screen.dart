@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -89,10 +90,10 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
     switch (status) {
       case 'Verifikasi':
-        badgeColor = appTheme.lightBlue;
+        badgeColor = Colors.blueAccent;
         break;
       case 'Selesai':
-        badgeColor = appTheme.lightGreen;
+        badgeColor = CupertinoColors.systemGreen;
         break;
       case 'Batal':
         badgeColor = appTheme.darkCherry;
@@ -106,7 +107,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
     return Container(
       constraints: const BoxConstraints(minWidth: 80),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: badgeColor.withOpacity(0.15),
         borderRadius: BorderRadius.circular(50),
@@ -128,11 +129,12 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Riwayat Konsultasi',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
+            color: appTheme.orange200,
           ),
         ),
         backgroundColor: appTheme.whiteA700,
@@ -248,12 +250,12 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               consultation['dokter']['foto_dokter'] ?? '',
-                              width: 60,
-                              height: 60,
+                              width: 80,
+                              height: 80,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => Container(
-                                width: 60,
-                                height: 60,
+                                width: 80,
+                                height: 80,
                                 color: Colors.grey[200],
                                 child: const Icon(Icons.person, color: Colors.grey),
                               ),

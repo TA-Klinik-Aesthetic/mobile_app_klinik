@@ -550,9 +550,20 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                     const Divider(height: 24),
 
                     // Keluhan Pelanggan
-                    _buildInfoRow(
-                        'Keluhan Pelanggan',
-                        _consultationData?['keluhan_pelanggan'] ?? '-'
+                    Text(
+                      'Keluhan Pelanggan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: appTheme.black900.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _consultationData?['keluhan_pelanggan'] ?? '-',
+                      style: const TextStyle(
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 16),
 

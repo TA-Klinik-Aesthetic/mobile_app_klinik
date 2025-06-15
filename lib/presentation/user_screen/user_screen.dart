@@ -228,23 +228,23 @@ class _UserScreenState extends State<UserScreen> {
                   },
                 ),
                 _buildMenuOption(
-                  title: 'Histori Kunjungan',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AppRoutes.routes[AppRoutes.historyConsultationScreen]!(context),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuOption(
-                  title: 'Histori Pembelian',
+                  title: 'Riwayat Pembelian',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => AppRoutes.routes[AppRoutes.historyPurchaseScreen]!(context),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuOption(
+                  title: 'Riwayat Kunjungan',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AppRoutes.routes[AppRoutes.historyConsultationScreen]!(context),
                       ),
                     );
                   },
