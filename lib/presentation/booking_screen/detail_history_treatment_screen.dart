@@ -220,11 +220,12 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Detail Treatment',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
+            color: appTheme.orange200, // Orange color
           ),
         ),
         backgroundColor: appTheme.whiteA700,
@@ -317,19 +318,19 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                     ),
                     const Divider(height: 24),
 
-                    // Jadwal Treatment
-                    _buildInfoRow(
-                        'Jadwal Treatment',
-                        '${_formatDate(_bookingData?['waktu_treatment'] ?? '')} ${_formatTime(_bookingData?['waktu_treatment'] ?? '')}'
-                    ),
-                    const SizedBox(height: 12),
-
                     // Waktu Booking
                     _buildInfoRow(
                         'Waktu Booking',
                         _formatDate(_bookingData?['created_at'] ?? '') +
                             ' ' +
                             _formatTime(_bookingData?['created_at'] ?? '')
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Jadwal Treatment
+                    _buildInfoRow(
+                        'Jadwal Treatment',
+                        '${_formatDate(_bookingData?['waktu_treatment'] ?? '')} ${_formatTime(_bookingData?['waktu_treatment'] ?? '')}'
                     ),
                     const SizedBox(height: 12),
 
@@ -394,13 +395,13 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                           child: treatment['gambar_treatment'] != null
                               ? Image.network(
                             treatment['gambar_treatment'],
-                            width: 70,
-                            height: 70,
+                            width: 80,
+                            height: 80,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                width: 70,
-                                height: 70,
+                                width: 80,
+                                height: 80,
                                 color: Colors.grey[200],
                                 child: const Icon(Icons.image_not_supported, size: 24, color: Colors.grey),
                               );
