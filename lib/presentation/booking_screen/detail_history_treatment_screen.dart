@@ -155,20 +155,21 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Verifikasi':
-        return Colors.blue;
+        return appTheme.lightBlue;
       case 'Dikonfirmasi':
-        return Colors.green;
+        return appTheme.lightGreen;
       case 'Selesai':
-        return appTheme.orange200;
+        return appTheme.lightGreenOld;
       case 'Dibatalkan':
-        return Colors.red;
+        return appTheme.darkCherry;
       default:
-        return Colors.grey;
+        return appTheme.lightGrey;
     }
   }
 
   Widget _buildStatusBadge(String status) {
     return Container(
+      constraints: const BoxConstraints(minWidth: 80), // Add minimum width
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: _getStatusColor(status).withOpacity(0.15),
@@ -177,6 +178,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
       ),
       child: Text(
         status,
+        textAlign: TextAlign.center, // Center the text
         style: TextStyle(
           color: _getStatusColor(status),
           fontWeight: FontWeight.bold,
@@ -222,12 +224,26 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
           'Detail Treatment',
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
         backgroundColor: appTheme.whiteA700,
         elevation: 0.0,
         centerTitle: true,
         foregroundColor: appTheme.black900,
+        actions: [
+          // Support icon only shown if status is "Selesai"
+          if (_bookingData?['status_booking_treatment'] == 'Selesai')
+            IconButton(
+              icon: Icon(
+                Icons.support_agent_rounded,
+                color: appTheme.darkCherry, // Dark cherry color
+              ),
+              onPressed: () {
+                // Handle support action
+              },
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -269,26 +285,14 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with booking number and status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Booking #${_bookingData?['id_booking_treatment'] ?? '-'}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                _buildStatusBadge(_bookingData?['status_booking_treatment'] ?? 'Unknown'),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Date and time
+            // CONTAINER 1: Booking Details
             Card(
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: appTheme.lightGrey,
+                  width: 1,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Padding(
@@ -296,59 +300,63 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Jadwal Treatment',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: appTheme.black900,
-                      ),
+                    // Detail Booking and Status
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Detail Booking',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: appTheme.black900,
+                          ),
+                        ),
+                        _buildStatusBadge(_bookingData?['status_booking_treatment'] ?? 'Unknown'),
+                      ],
+                    ),
+                    const Divider(height: 24),
+
+                    // Jadwal Treatment
+                    _buildInfoRow(
+                        'Jadwal Treatment',
+                        '${_formatDate(_bookingData?['waktu_treatment'] ?? '')} ${_formatTime(_bookingData?['waktu_treatment'] ?? '')}'
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16,
-                          color: appTheme.orange200,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Tanggal: ${_formatDate(_bookingData?['waktu_treatment'] ?? '')}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+
+                    // Waktu Booking
+                    _buildInfoRow(
+                        'Waktu Booking',
+                        _formatDate(_bookingData?['created_at'] ?? '') +
+                            ' ' +
+                            _formatTime(_bookingData?['created_at'] ?? '')
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 16,
-                          color: appTheme.orange200,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Jam: ${_formatTime(_bookingData?['waktu_treatment'] ?? '')}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+
+                    // Nama Dokter
+                    _buildInfoRow(
+                        'Nama Dokter',
+                        _bookingData?['dokter']?['nama_dokter'] ?? '-'
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Nama Beautician
+                    _buildInfoRow(
+                        'Nama Beautician',
+                        _bookingData?['beautician']?['nama_beautician'] ?? '-'
                     ),
                   ],
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
 
-            // Treatment list header
+            // CONTAINER 2: Treatment List
             Text(
               'Rincian Treatment',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: appTheme.black900,
               ),
@@ -366,8 +374,12 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
-                  color: appTheme.lightBadge100,
+                  color: appTheme.whiteA700,
                   shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      color: appTheme.lightGrey,
+                      width: 1,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 1,
@@ -376,7 +388,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Treatment image (left side)
+                        // Treatment image
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: treatment['gambar_treatment'] != null
@@ -403,7 +415,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                         ),
                         const SizedBox(width: 12),
 
-                        // Treatment details (middle)
+                        // Treatment details
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,19 +478,25 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                 );
               },
             ),
+
             const SizedBox(height: 16),
 
-            // Payment details
+            // CONTAINER 3: Payment Information
             Card(
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: appTheme.lightGrey,
+                  width: 1,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Payment info header and status
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -490,7 +508,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                             color: appTheme.black900,
                           ),
                         ),
-                        _buildPaymentStatusBadge(_bookingData?['status_pembayaran'] ?? 'Unknown'),
+                        _buildPaymentStatusBadge(_bookingData?['status_pembayaran'] ?? 'Belum Dibayar'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -499,22 +517,12 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Subtotal:',
-                          style: TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          'Rp ${_formatPrice(_bookingData?['harga_total'])}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
+                        const Text('Subtotal:', style: TextStyle(fontSize: 14)),
+                        Text('Rp ${_formatPrice(_bookingData?['harga_total'])}', style: const TextStyle(fontSize: 14)),
                       ],
                     ),
 
-                    // Show discount if applicable
+                    // Discount if applicable
                     if (_bookingData?['id_promo'] != null) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -523,41 +531,28 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                           Row(
                             children: [
                               Text(
-                                'Diskon',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: appTheme.orange200,
-                                ),
+                                'Potongan Harga',
+                                style: TextStyle(fontSize: 14, color: appTheme.black900),
                               ),
-                              if (_bookingData?['promo'] != null) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: appTheme.orange200.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    _bookingData?['promo']['nama_promo'] ?? '',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: appTheme.orange200,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                           Text(
                             '- Rp ${_formatPrice(_bookingData?['potongan_harga'])}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: appTheme.orange200,
-                            ),
+                            style: TextStyle(fontSize: 14, color: appTheme.black900),
                           ),
                         ],
                       ),
                     ],
+
+                    // Tax row
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Pajak (10%):', style: TextStyle(fontSize: 14)),
+                        Text('Rp ${_formatPrice(_bookingData?['besaran_pajak'])}', style: const TextStyle(fontSize: 14)),
+                      ],
+                    ),
 
                     const SizedBox(height: 12),
                     const Divider(),
@@ -568,7 +563,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Total:',
+                          'Total Pembayaran:',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -589,90 +584,32 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                 ),
               ),
             ),
-
-            // User information
-            if (_bookingData?['user'] != null) ...[
-              const SizedBox(height: 16),
-              Card(
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Informasi Pelanggan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: appTheme.black900,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(25),
-                            child: Image.network(
-                              _bookingData?['user']['foto_profil'] ?? '',
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.person, color: Colors.white, size: 30),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _bookingData?['user']['nama_user'] ?? '-',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(Icons.phone, size: 14, color: appTheme.lightGrey),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _bookingData?['user']['no_telp'] ?? '-',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: appTheme.lightGrey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
+    );
+  }
+
+  // Helper method to build info rows
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: appTheme.black900.withOpacity(0.7),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }
