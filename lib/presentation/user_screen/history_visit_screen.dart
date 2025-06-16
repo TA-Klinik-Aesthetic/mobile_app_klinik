@@ -144,16 +144,16 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
     switch (status) {
       case 'Verifikasi':
-        badgeColor = Colors.blueAccent;
+        badgeColor = Colors.orangeAccent;
         break;
       case 'Selesai':
-        badgeColor = CupertinoColors.systemGreen;
+        badgeColor = Colors.green;
         break;
-      case 'Batal':
+      case 'Dibatalkan':
         badgeColor = appTheme.darkCherry;
         break;
-      case 'Konfirmasi':
-        badgeColor = Colors.orange;
+      case 'Berhasil dibooking':
+        badgeColor = Colors.blueAccent;
         break;
       default:
         badgeColor = Colors.grey;

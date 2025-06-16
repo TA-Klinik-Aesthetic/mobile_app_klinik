@@ -247,16 +247,16 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
 
     switch (status) {
       case 'Verifikasi':
-        badgeColor = Colors.blue;
+        badgeColor = Colors.orangeAccent;
         break;
       case 'Selesai':
         badgeColor = Colors.green;
         break;
-      case 'Batal':
-        badgeColor = Colors.red;
+      case 'Dibatalkan':
+        badgeColor = appTheme.darkCherry;
         break;
-      case 'Konfirmasi':
-        badgeColor = Colors.orange;
+      case 'Berhasil dibooking':
+        badgeColor = Colors.blueAccent;
         break;
       default:
         badgeColor = Colors.grey;
@@ -608,10 +608,11 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                       children: [
                                         const TextSpan(
                                           text: 'Diagnosis: ',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                         ),
                                         TextSpan(
                                           text: detail['diagnosis'] ?? '-',
+                                          style: const TextStyle(fontSize: 14),
                                         ),
                                       ],
                                     ),
@@ -625,10 +626,11 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                       children: [
                                         const TextSpan(
                                           text: 'Saran Tindakan: ',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                         ),
                                         TextSpan(
                                           text: detail['saran_tindakan'] ?? '-',
+                                          style: const TextStyle(fontSize: 14),
                                         ),
                                       ],
                                     ),
@@ -643,10 +645,11 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                         children: [
                                           const TextSpan(
                                             text: 'Rekomendasi Treatment: ',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                           ),
                                           TextSpan(
                                             text: _treatmentData?['nama_treatment'] ?? 'Loading...',
+                                            style: const TextStyle(fontSize: 14),
                                           ),
                                         ],
                                       ),
@@ -672,6 +675,10 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                 margin: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: appTheme.lightGrey,
+                    width: 1,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -696,8 +703,8 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                           direction: Axis.horizontal,
                           allowHalfRating: false,
                           itemCount: 5,
-                          itemSize: 36,
-                          itemPadding: const EdgeInsets.symmetric(horizontal: 4),
+                          itemSize: 48,
+                          itemPadding: const EdgeInsets.symmetric(horizontal: 8),
                           itemBuilder: (context, _) => Icon(
                             Icons.star,
                             color: appTheme.orange200,
