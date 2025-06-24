@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mobile_app_klinik/api/api_constant.dart';
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'detail_booking_treatment_screen.dart';
 
 class BookingTreatmentScreen extends StatefulWidget {
@@ -355,6 +356,9 @@ class TreatmentListScreen extends StatefulWidget {
 }
 
 class _TreatmentListScreenState extends State<TreatmentListScreen> {
+
+  Map<int, bool> treatmentFavoriteStatus = {};
+
   List<dynamic> treatments = [];
   bool _isLoading = true;
   String? error;
@@ -364,6 +368,7 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
   void initState() {
     super.initState();
     fetchTreatmentsByCategory();
+    checkFavoriteTreatments();
   }
 
   @override
@@ -387,6 +392,90 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
       );
     }
   }
+
+  // Check favorite status for all treatments
+  Future<void> checkFavoriteTreatments() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) return;
+
+      final response = await http.get(
+        Uri.parse(ApiConstants.viewTreatmentFavorite.replaceAll('{id_user}', userId.toString())),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        final List<dynamic> favoriteTreatments = jsonData['data'] ?? [];
+
+        setState(() {
+          treatmentFavoriteStatus.clear();
+          for (var treatment in favoriteTreatments) {
+            treatmentFavoriteStatus[treatment['id_treatment']] = true;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error checking favorite treatments: $e');
+    }
+  }
+
+  // Toggle favorite status
+  Future<void> toggleTreatmentFavorite(int treatmentId) async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Silakan login untuk menambahkan favorit')),
+        );
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiConstants.addTreatmentFavorite),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'id_user': userId,
+          'id_treatment': treatmentId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        setState(() {
+          treatmentFavoriteStatus[treatmentId] = jsonData['is_favorited'] ??
+              !(treatmentFavoriteStatus[treatmentId] ?? false);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(jsonData['message'] ?? 'Status favorit diperbarui')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memperbarui status favorit')),
+        );
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
 
   Future<void> fetchTreatmentsByCategory() async {
     try {
@@ -483,6 +572,9 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
             itemBuilder: (context, index) {
               final treatment = treatments[index];
               final isSelected = _isTreatmentSelected(treatment);
+              final int treatmentId = treatment['id_treatment'];
+              final bool isFavorite = treatmentFavoriteStatus[treatmentId] ?? false;
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: InkWell(
@@ -493,6 +585,8 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
                   child: TreatmentCard(
                     treatment: treatment,
                     isSelected: isSelected,
+                    isFavorite: isFavorite,
+                    onFavoriteToggle: toggleTreatmentFavorite,
                   ),
                 ),
               );
@@ -622,11 +716,15 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
 class TreatmentCard extends StatelessWidget {
   final Map<String, dynamic> treatment;
   final bool isSelected;
+  final bool isFavorite;
+  final Function(int) onFavoriteToggle;
 
   const TreatmentCard({
     super.key,
     required this.treatment,
     this.isSelected = false,
+    this.isFavorite = false,
+    required this.onFavoriteToggle,
   });
 
   @override
@@ -697,6 +795,28 @@ class TreatmentCard extends StatelessWidget {
                   ),
                 ),
               ),
+
+              Positioned(
+                top: 16,
+                left: 16,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? appTheme.darkCherry : appTheme.black900,
+                      size: 24,
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                    onPressed: () => onFavoriteToggle(treatment['id_treatment']),
+                  ),
+                ),
+              ),
+
               Positioned(
                 bottom: 16,
                 right: 16,
