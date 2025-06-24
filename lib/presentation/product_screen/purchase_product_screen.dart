@@ -98,11 +98,14 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
+        print('Product data for $productId: ${responseData['data']}'); // Debug line
         if (responseData['data'] != null) {
           setState(() {
             productsData[productId] = responseData['data'];
           });
         }
+      } else {
+        print('Failed to fetch product $productId: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching product $productId: $e');
@@ -153,6 +156,28 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return months[month - 1]; // Arrays are 0-indexed but months are 1-indexed
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: appTheme.black900.withOpacity(0.7),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildPurchaseDetails() {
@@ -212,21 +237,18 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               const SizedBox(height: 8),
               const Divider(),
               const SizedBox(height: 8),
-              Text(
-                'ID Pembelian: #PURCH${purchaseData['id_penjualan_produk']}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: appTheme.black900,
-                ),
+              // ID Booking
+              _buildInfoRow(
+                  'ID Booking',
+                  '#PURCH${purchaseData['id_penjualan_produk']}'
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Tanggal: ${_formatDate(purchaseData['tanggal_pembelian'])}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: appTheme.black900,
-                ),
+              const SizedBox(height: 12),
+              // Waktu Booking
+              _buildInfoRow(
+                  'Waktu Pembelian',
+                  '${_formatDate(purchaseData['tanggal_pembelian'])}'
               ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -266,12 +288,14 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               // List of purchased items
               ...((purchaseData['detail_pembelian'] as List<dynamic>?) ?? []).map((item) {
                 final price = double.tryParse(item['harga_penjualan_produk'].toString()) ?? 0;
-                final quantity = item['jumlah_produk'] ?? 0;
+                final quantity = int.tryParse(item['jumlah_produk']?.toString() ?? '0') ?? 0;
                 final subtotal = price * quantity;
                 final discount = double.tryParse(purchaseData['potongan_harga']?.toString() ?? '0') ?? 0.0;
                 final afterDiscount = subtotal - discount;
                 final tax = (afterDiscount * 0.10).clamp(0, double.infinity);
-                final productId = item['id_produk'];
+
+                // Convert product ID to integer
+                final productId = int.tryParse(item['id_produk'].toString()) ?? 0;
                 final productData = productsData[productId];
                 final imageUrl = productData?['gambar_produk'] ?? '';
                 final productName = productData?['nama_produk'] ?? 'Produk #$productId';
