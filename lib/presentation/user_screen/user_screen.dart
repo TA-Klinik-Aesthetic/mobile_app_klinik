@@ -171,11 +171,38 @@ class _UserScreenState extends State<UserScreen> {
                             shape: BoxShape.circle,
                             color: appTheme.lightGrey,
                             border: Border.all(color: Colors.black, width: 1),
-                            image: DecorationImage(
-                              image: userProfilePhoto.isNotEmpty
-                                  ? NetworkImage(userProfilePhoto) as ImageProvider
-                                  : const AssetImage('assets/images/profile_placeholder.png'),
+                          ),
+                          child: ClipOval(
+                            child: userProfilePhoto.isNotEmpty
+                                ? Image.network(
+                              userProfilePhoto,
+                              width: 60,
+                              height: 60,
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: appTheme.black900.withOpacity(0.6),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              },
+                            )
+                                : Icon(
+                              Icons.person,
+                              size: 40,
+                              color: appTheme.black900.withOpacity(0.6),
                             ),
                           ),
                         ),
