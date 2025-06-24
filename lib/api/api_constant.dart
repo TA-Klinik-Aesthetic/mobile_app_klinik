@@ -1,5 +1,6 @@
 class ApiConstants {
-  static const String baseUrl = "http://10.0.2.2:8000/api"; // Ganti dengan URL server Anda jika sudah online.
+  // static const String baseUrl = "https://klinikneshnavya.com/api/public/api";
+  static const String baseUrl = "http://10.0.2.2:8000/api";
   static const String register = "$baseUrl/register";
   static const String login = "$baseUrl/login";
   static const String logout = "$baseUrl/logout";
@@ -23,4 +24,7 @@ class ApiConstants {
   static const String jenisTreatment = "$baseUrl/jenisTreatments";
   static const String beautician = "$baseUrl/beauticians";
   static const String treatment = "$baseUrl/treatments";
+  static const String addDoctorFavorite = "$baseUrl/doctors/toggle-favorite";
+  static const String addProductFavorite = "$baseUrl/products/toggle-favorite";
+  static const String viewDoctorFavorite = "$baseUrl/favorites/user/{id_user}/doctors";
 }

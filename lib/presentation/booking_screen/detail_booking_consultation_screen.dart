@@ -42,6 +42,7 @@ bool _isBookingLoading = false;
     super.initState();
     fetchDoctorDetails();
     _getUserData();
+    checkFavoriteStatus();
   }
   
   // Fungsi untuk mendapatkan data user dari session token
@@ -250,77 +251,161 @@ bool _isBookingLoading = false;
     }
   }
 
-Future<void> fetchDoctorDetails() async {
-  try {
-    // Fetch doctor's feedback
-    final response = await http.get(
-      Uri.parse('${ApiConstants.feedbackKonsultasi}?id_dokter=${widget.dokter['id_dokter']}'),
-    );
+  Future<void> fetchDoctorDetails() async {
+    try {
+      // Fetch doctor's feedback
+      final response = await http.get(
+        Uri.parse('${ApiConstants.feedbackKonsultasi}?id_dokter=${widget.dokter['id_dokter']}'),
+      );
 
-    if (response.statusCode == 200) {
-      final jsonData = jsonDecode(response.body);
-      final feedbackList = jsonData['data'] as List;
-      
-      if (feedbackList.isNotEmpty) {
-        double totalRating = 0;
-        for (var feedback in feedbackList) {
-          totalRating += feedback['rating'];
-          
-          // Fetch user info for each feedback
-          try {
-            final int userId = feedback['konsultasi']['id_user'];
-            final userResponse = await http.get(
-              Uri.parse('${ApiConstants.profile}/$userId'),
-            );
-            
-            if (userResponse.statusCode == 200) {
-              final userData = jsonDecode(userResponse.body);
-              feedback['user_name'] = userData['nama_user'] ?? 'Unknown User';
-            } else {
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        final feedbackList = jsonData['data'] as List;
+
+        if (feedbackList.isNotEmpty) {
+          double totalRating = 0;
+          for (var feedback in feedbackList) {
+            totalRating += feedback['rating'];
+
+            // Fetch user info for each feedback
+            try {
+              final int userId = feedback['konsultasi']['id_user'];
+              final userResponse = await http.get(
+                Uri.parse('${ApiConstants.profile}/$userId'),
+              );
+
+              if (userResponse.statusCode == 200) {
+                final userData = jsonDecode(userResponse.body);
+                feedback['user_name'] = userData['nama_user'] ?? 'Unknown User';
+              } else {
+                feedback['user_name'] = 'Unknown User';
+              }
+            } catch (e) {
               feedback['user_name'] = 'Unknown User';
+              print('Error fetching user info: $e');
             }
-          } catch (e) {
-            feedback['user_name'] = 'Unknown User';
-            print('Error fetching user info: $e');
           }
+
+          // Sort by created_at to get the latest feedbacks
+          feedbackList.sort((a, b) {
+            return DateTime.parse(b['created_at']).compareTo(DateTime.parse(a['created_at']));
+          });
+
+          // Take the top 3 or less if there are fewer feedbacks
+          final topFeedbacksCount = feedbackList.length > 3 ? 3 : feedbackList.length;
+          final List<Map<String, dynamic>> topFeedbacksList = [];
+
+          for (var i = 0; i < topFeedbacksCount; i++) {
+            topFeedbacksList.add(Map<String, dynamic>.from(feedbackList[i]));
+          }
+
+          setState(() {
+            averageRating = totalRating / feedbackList.length;
+            reviewCount = feedbackList.length;
+            topFeedbacks = topFeedbacksList;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
         }
-        
-        // Sort by created_at to get the latest feedbacks
-        feedbackList.sort((a, b) {
-          return DateTime.parse(b['created_at']).compareTo(DateTime.parse(a['created_at']));
-        });
-        
-        // Take the top 3 or less if there are fewer feedbacks
-        final topFeedbacksCount = feedbackList.length > 3 ? 3 : feedbackList.length;
-        final List<Map<String, dynamic>> topFeedbacksList = [];
-        
-        for (var i = 0; i < topFeedbacksCount; i++) {
-          topFeedbacksList.add(Map<String, dynamic>.from(feedbackList[i]));
-        }
-        
-        setState(() {
-          averageRating = totalRating / feedbackList.length;
-          reviewCount = feedbackList.length;
-          topFeedbacks = topFeedbacksList;
-          _isLoading = false;
-        });
       } else {
         setState(() {
           _isLoading = false;
         });
       }
-    } else {
+    } catch (e) {
+      print('Error fetching doctor details: $e');
       setState(() {
         _isLoading = false;
       });
     }
-  } catch (e) {
-    print('Error fetching doctor details: $e');
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
+
+  // Check if doctor is already favorited
+  Future<void> checkFavoriteStatus() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) return;
+
+      // Fetch favorite doctors
+      final response = await http.get(
+        Uri.parse(ApiConstants.viewDoctorFavorite.replaceAll('{id_user}', userId.toString())),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        final List<dynamic> favoriteDoctors = jsonData['data'] ?? [];
+
+        // Check if current doctor is in favorites
+        setState(() {
+          isFavorite = favoriteDoctors.any(
+                  (doctor) => doctor['id_dokter'].toString() == widget.dokter['id_dokter'].toString()
+          );
+        });
+      }
+    } catch (e) {
+      print('Error checking favorite status: $e');
+    }
+  }
+
+  // Toggle favorite status
+  Future<void> toggleFavorite() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Silakan login untuk menambahkan favorit')),
+        );
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiConstants.addDoctorFavorite),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'id_user': userId,
+          'id_dokter': widget.dokter['id_dokter'],
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        setState(() {
+          isFavorite = jsonData['is_favorited'] ?? !isFavorite;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(jsonData['message'] ?? 'Status favorit diperbarui')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memperbarui status favorit')),
+        );
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -347,12 +432,8 @@ Future<void> fetchDoctorDetails() async {
               color: isFavorite ? appTheme.darkCherry : appTheme.black900,
               size: 35, // Membesarkan ukuran ikon favorite
             ),
-            onPressed: () {
-              setState(() {
-                isFavorite = !isFavorite;
-              });
-            },
-            padding: const EdgeInsets.all(16), // Menambahkan padding untuk area tap yang lebih besar
+            onPressed: toggleFavorite, // Update this line
+            padding: const EdgeInsets.all(16),
           ),
         ],
       ),
@@ -848,7 +929,7 @@ Future<void> fetchDoctorDetails() async {
                       ),
                       child: TextField(
                         controller: _keluhanController,
-                        maxLines: 5,
+                        maxLines: 3,
                         onChanged: (text) {
                           setState(() {}); // Refresh UI untuk validasi tombol
                         },
