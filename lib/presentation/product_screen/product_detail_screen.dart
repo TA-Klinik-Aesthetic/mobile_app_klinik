@@ -21,6 +21,89 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int quantity = 0;
   bool isLoading = false;
+  bool isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkFavoriteStatus();  // Add this line
+  }
+
+  // Check if product is already favorited
+  Future<void> checkFavoriteStatus() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) return;
+
+      // Fetch favorite products
+      final response = await http.get(
+        Uri.parse(ApiConstants.viewProductFavorite.replaceAll('{id_user}', userId.toString())),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        final List<dynamic> favoriteProducts = jsonData['data'] ?? [];
+
+        // Check if current product is in favorites
+        setState(() {
+          isFavorite = favoriteProducts.any(
+                  (product) => product['id_produk'].toString() == widget.product['id_produk'].toString()
+          );
+        });
+      }
+    } catch (e) {
+      print('Error checking favorite status: $e');
+    }
+  }
+
+  // Toggle favorite status
+  Future<void> toggleFavorite() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) {
+        _showMessage('Silakan login untuk menambahkan favorit');
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiConstants.addProductFavorite),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'id_user': userId,
+          'id_produk': widget.product['id_produk'],
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        setState(() {
+          isFavorite = jsonData['is_favorited'] ?? !isFavorite;
+        });
+
+        // Show success message
+        _showMessage(jsonData['message'] ?? 'Status favorit diperbarui');
+      } else {
+        _showMessage('Gagal memperbarui status favorit');
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      _showMessage('Error: $e');
+    }
+  }
 
   void updateQuantity(int newQuantity) {
     final stockValue = widget.product['stok_produk'];
@@ -305,7 +388,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   AppBar appBar() {
     return AppBar(
       title: Text(
-        'Product Details',
+        'Detail Produk',
         style: TextStyle(
           color: appTheme.orange200,
           fontSize: 24,
@@ -315,6 +398,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       backgroundColor: appTheme.whiteA700,
       elevation: 0.0,
       centerTitle: true,
+      actions: [
+        IconButton(
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? appTheme.darkCherry : appTheme.black900,
+            size: 35, // Membesarkan ukuran ikon favorite
+          ),
+          onPressed: toggleFavorite,
+        ),
+      ],
     );
   }
 
