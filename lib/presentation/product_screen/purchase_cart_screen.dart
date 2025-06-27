@@ -29,6 +29,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
 
   // Controllers for quantity inputs
   Map<int, TextEditingController> quantityControllers = {};
+  Map<int, int> originalQuantities = {};
 
   @override
   void initState() {
@@ -215,10 +216,11 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
         setState(() {
           cartItems = data;
 
-          // Initialize text controllers for each item
+          // Initialize quantities
           for (var item in cartItems) {
             final id = item['id_keranjang_pembelian'];
-            final qty = item['jumlah'];
+            final qty = int.tryParse(item['jumlah'].toString()) ?? 1;
+            originalQuantities[id] = qty;
             quantityControllers[id] = TextEditingController(text: qty.toString());
           }
 
@@ -238,6 +240,25 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
         isLoading = false;
       });
     }
+  }
+
+  bool _isQuantityChanged(int cartId, int currentQty) {
+    return originalQuantities[cartId] != currentQty;
+  }
+
+  void _updateItemQuantity(int cartId, int newQuantity, int maxStock) {
+    if (newQuantity < 1 || newQuantity > maxStock) return;
+
+    setState(() {
+      for (var i = 0; i < cartItems.length; i++) {
+        if (cartItems[i]['id_keranjang_pembelian'] == cartId) {
+          cartItems[i]['jumlah'] = newQuantity;
+          quantityControllers[cartId]?.text = newQuantity.toString();
+          calculateTotal();
+          break;
+        }
+      }
+    });
   }
 
   void calculateTotal() {
@@ -272,17 +293,6 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
       _showMessage(newQuantity < 1
           ? 'Jumlah minimal adalah 1'
           : 'Jumlah melebihi stok yang tersedia');
-
-      // Reset the text field to current value
-      final currentItem = cartItems.firstWhere(
-            (item) => item['id_keranjang_pembelian'] == cartId,
-        orElse: () => {},  // Return empty map instead
-      );
-
-      if (currentItem.isNotEmpty) {
-        quantityControllers[cartId]?.text = currentItem['jumlah'].toString();
-      }
-
       return;
     }
 
@@ -314,11 +324,12 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
       );
 
       if (response.statusCode == 200) {
-        // Update local data
+        // Update local data and original quantity
         setState(() {
           for (var i = 0; i < cartItems.length; i++) {
             if (cartItems[i]['id_keranjang_pembelian'] == cartId) {
               cartItems[i]['jumlah'] = newQuantity;
+              originalQuantities[cartId] = newQuantity; // Update original quantity
               break;
             }
           }
@@ -778,72 +789,86 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     // Quantity controls
+                                    // Quantity controls
                                     Row(
                                       children: [
-                                        Text(
-                                          'Jumlah: ',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[700],
+                                        // Item counter
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: Colors.grey.shade300),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.remove,
+                                                  color: quantity > 1 ? appTheme.orange200 : appTheme.lightGrey,
+                                                ),
+                                                onPressed: () {
+                                                  if (quantity > 1) {
+                                                    _updateItemQuantity(cartId, quantity - 1, maxStock);
+                                                  }
+                                                },
+                                                padding: const EdgeInsets.all(4),
+                                                constraints: const BoxConstraints(),
+                                                iconSize: 20,
+                                              ),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                child: Text(
+                                                  quantity.toString(),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: appTheme.black900,
+                                                  ),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.add,
+                                                  color: quantity < maxStock ? appTheme.orange200 : appTheme.lightGrey,
+                                                ),
+                                                onPressed: () {
+                                                  if (quantity < maxStock) {
+                                                    _updateItemQuantity(cartId, quantity + 1, maxStock);
+                                                  }
+                                                },
+                                                padding: const EdgeInsets.all(4),
+                                                constraints: const BoxConstraints(),
+                                                iconSize: 20,
+                                              ),
+                                            ],
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        SizedBox(
-                                          width: 50,
-                                          height: 30,
-                                          child: TextField(
-                                            controller: quantityControllers[cartId],
-                                            keyboardType: TextInputType.number,
-                                            textAlign: TextAlign.center,
-                                            decoration: InputDecoration(
-                                              filled: true,
-                                              fillColor: Colors.white,
-                                              contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(4),
-                                                borderSide: BorderSide(color: appTheme.lightGrey), // warna abu-abu default
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(4),
-                                                borderSide: BorderSide(color: appTheme.lightGrey), // warna abu-abu saat tidak fokus
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(4),
-                                                borderSide: BorderSide(color: appTheme.orange200, width: 2), // warna abu-abu saat fokus
-                                              ),
-                                            ),
-
-                                            style: const TextStyle(fontSize: 13),
-                                            onSubmitted: (value) {
-                                              int? newQty = int.tryParse(value);
-                                              if (newQty != null) {
-                                                updateQuantity(cartId, newQty, maxStock);
+                                        // Only show save button when quantity changed
+                                        if (_isQuantityChanged(cartId, quantity))
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              updateQuantity(cartId, quantity, maxStock);
+                                              // After successful update, update original quantity
+                                              if (originalQuantities.containsKey(cartId)) {
+                                                setState(() {
+                                                  originalQuantities[cartId] = quantity;
+                                                });
                                               }
                                             },
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            int? newQty = int.tryParse(quantityControllers[cartId]!.text);
-                                            if (newQty != null) {
-                                              updateQuantity(cartId, newQty, maxStock);
-                                            }
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: appTheme.orange200,
-                                            minimumSize: const Size(30, 30),
-                                            padding: const EdgeInsets.all(0),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(6),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: appTheme.lightGreen,
+                                              minimumSize: const Size(36, 36),
+                                              padding: const EdgeInsets.all(0),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              Icons.check,
+                                              color: appTheme.whiteA700,
+                                              size: 24,
                                             ),
                                           ),
-                                          child: Icon(
-                                            Icons.save_as,
-                                            color: appTheme.whiteA700,
-                                            size: 20,
-                                          ),
-                                        ),
                                       ],
                                     ),
 
