@@ -6,6 +6,7 @@ final Map<String, String> enUs = {
   "msg_don_t_have_an_account": "Don’t have an account? ",
   "msg_enter_your_email": "Enter your email",
   "msg_forgot_password": "Forgot Password?",
+  "msg_password_must_be_8_characters": "Password must be at least 8 characters",
   "lbl_enter_your_email": "Enter your email",
   "lbl_enter_your_password": "Enter your password",
   "msg_email_required": "Email cannot be empty",

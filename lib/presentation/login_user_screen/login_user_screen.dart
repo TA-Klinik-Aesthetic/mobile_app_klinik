@@ -75,11 +75,17 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         if (responseData['user']['role'] != "pelanggan") {
           toastification.show(
             context: context,
-            title: const Text('Akses Ditolak'),
-            description: const Text("Login hanya dengan akun pelanggan"),
+            title: const Text(
+                'Akses Ditolak',
+                style: TextStyle(color: Colors.white),),
+            description: const Text(
+                "Login hanya dengan akun pelanggan",
+                style: TextStyle(color: Colors.white),),
             autoCloseDuration: const Duration(seconds: 3),
-            backgroundColor: appTheme.darkCherry,
-            icon: const Icon(Icons.block, color: Colors.white),
+            backgroundColor: appTheme.lightYellow.withAlpha((0.8 * 255).toInt()),
+            style: ToastificationStyle.flat,
+            borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+            icon: const Icon(Icons.exit_to_app, color: Colors.white),
           );
           return;
         }
@@ -96,11 +102,17 @@ class LoginUserScreenState extends State<LoginUserScreen> {
 
         toastification.show(
           context: context,
-          title: const Text('Success!'),
-          description: Text("Login successful! Welcome, ${responseData['user']['nama_user']}"),
+          title: const Text(
+            'Success!',
+            style: TextStyle(color: Colors.white),),
+          description: Text(
+            "Login successful! Welcome, ${responseData['user']['nama_user']}",
+            style: const TextStyle(color: Colors.white),),
           autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.lightGreen,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
+          backgroundColor: appTheme.lightGreen.withAlpha((0.8 * 255).toInt()),
+          style: ToastificationStyle.flat,
+          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+          icon: Icon(Icons.check_circle, color: appTheme.whiteA700),
         );
 
         // Navigate to HomeScreen
@@ -114,11 +126,15 @@ class LoginUserScreenState extends State<LoginUserScreen> {
 
         toastification.show(
           context: context,
-          title: const Text('Login Failed'),
-          description: Text(errorMessage),
+          title: const Text('Login Failed',
+              style: TextStyle(color: Colors.white),),
+          description: Text(errorMessage,
+              style: const TextStyle(color: Colors.white),),
           autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.darkCherry,
-          icon: const Icon(Icons.error, color: Colors.white),
+          backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
+          style: ToastificationStyle.flat,
+          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+          icon: Icon(Icons.block, color: appTheme.whiteA700),
         );
       }
     } catch (e) {
