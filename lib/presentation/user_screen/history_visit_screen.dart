@@ -366,7 +366,10 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      treatmentDetails[0]['treatment']['gambar_treatment'] ?? '',
+                      treatmentDetails[0]['treatment']['gambar_treatment'] != null &&
+                      treatmentDetails[0]['treatment']['gambar_treatment'].toString().isNotEmpty
+                        ? "https://klinikneshnavya.com/${treatmentDetails[0]['treatment']['gambar_treatment']}"
+                        : '',
                       width: 75,
                       height: 75,
                       fit: BoxFit.cover,
