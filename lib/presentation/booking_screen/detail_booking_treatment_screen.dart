@@ -656,7 +656,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                               borderRadius: BorderRadius.circular(8),
                               child: treatment['gambar_treatment'] != null
                                   ? Image.network(
-                                treatment['gambar_treatment'],
+                                "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
                                 width: 80,
                                 height: 80,
                                 fit: BoxFit.cover,

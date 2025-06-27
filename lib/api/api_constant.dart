@@ -1,6 +1,6 @@
 class ApiConstants {
-  // static const String baseUrl = "https://klinikneshnavya.com/api/public/api";
-  static const String baseUrl = "http://10.0.2.2:8000/api";
+  static const String baseUrl = "https://klinikneshnavya.com/api";
+  //static const String baseUrl = "http://10.0.2.2:8000/api";
   static const String register = "$baseUrl/register";
   static const String login = "$baseUrl/login";
   static const String logout = "$baseUrl/logout";
@@ -14,6 +14,7 @@ class ApiConstants {
   static const String penjualanProduk = "$baseUrl/penjualan-produk";
   static const String penjualanProdukUser = "$baseUrl/penjualan-produk/user/{id_user}";
   static const String pembayaranProduk = "$baseUrl/pembayaran-produk";
+  static const String pembayaranMidtransProduk = "$baseUrl/midtrans/products";
   static const String jadwalDokter = "$baseUrl/jadwal-dokter"; 
   static const String bookingKonsultasi = "$baseUrl/konsultasi";
   static const String detailBookingKonsultasi = "$baseUrl/detail-konsultasi";

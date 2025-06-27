@@ -321,9 +321,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                     // Waktu Booking
                     _buildInfoRow(
                         'Waktu Booking',
-                        _formatDate(_bookingData?['created_at'] ?? '') +
-                            ' ' +
-                            _formatTime(_bookingData?['created_at'] ?? '')
+                        '${_formatDate(_bookingData?['created_at'] ?? '')} ${_formatTime(_bookingData?['created_at'] ?? '')}'
                     ),
                     const SizedBox(height: 12),
 
@@ -392,9 +390,10 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                         // Treatment image
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: treatment['gambar_treatment'] != null
+                          child: treatment['gambar_treatment'] != null &&
+                              treatment['gambar_treatment'].toString().isNotEmpty
                               ? Image.network(
-                            treatment['gambar_treatment'],
+                            "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,

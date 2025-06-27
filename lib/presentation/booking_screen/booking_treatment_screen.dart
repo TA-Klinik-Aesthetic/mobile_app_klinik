@@ -748,7 +748,7 @@ class TreatmentCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: treatment['gambar_treatment'] != null && treatment['gambar_treatment'].toString().isNotEmpty
                     ? Image.network(
-                  treatment['gambar_treatment'],
+                  "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
                   width: double.infinity,
                   height: 180,
                   fit: BoxFit.cover,
@@ -768,6 +768,7 @@ class TreatmentCard extends StatelessWidget {
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
+                    print('Error loading image: $error');
                     return Container(
                       width: double.infinity,
                       height: 180,
