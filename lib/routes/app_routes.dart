@@ -8,6 +8,7 @@ import 'package:mobile_app_klinik/presentation/login_user_screen/login_user_scre
 import 'package:mobile_app_klinik/presentation/promo_screen/promo_screen.dart';
 import 'package:mobile_app_klinik/presentation/register_user_screen/register_user_screen.dart';
 import 'package:mobile_app_klinik/presentation/home_screen/home_screen.dart';
+import 'package:mobile_app_klinik/presentation/user_screen/favorite_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/history_purchase_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/history_visit_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/user_screen.dart';
@@ -31,6 +32,7 @@ class AppRoutes {
   static const String bookingTreatmentScreen = '/booking_treatment_screen';
   static const String userScreen = '/user_screen';
   static const String promoScreen = '/promo_screen';
+  static const String favoriteUserScreen = '/favorite_screen';
   static const String appNavigationScreen = '/app_navigation_screen';
   static const String initialRoute = '/initialRoute';
 
@@ -48,6 +50,7 @@ class AppRoutes {
     bookingConsultationScreen: (context) => const BookingConsultationScreen(),
     bookingTreatmentScreen: (context) => const BookingTreatmentScreen(),
     userScreen: (context) => const UserScreen(),
+    favoriteUserScreen: (context) => const FavoriteScreen(),
     appNavigationScreen: (context) => const AppNavigationScreen(),
     initialRoute: (context) => const LoginUserScreen(),
 
