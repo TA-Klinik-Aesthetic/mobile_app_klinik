@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/presentation/product_screen/product_by_category_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -272,12 +273,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       color: appTheme.lightGreen,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      // Use the nested path with null safety
-                      widget.product['kategori']['nama_kategori'],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProductByCategoryScreen(
+                              categoryId: widget.product['kategori']['id_kategori'],
+                              categoryName: widget.product['kategori']['nama_kategori'],
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        widget.product['kategori']['nama_kategori'],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
