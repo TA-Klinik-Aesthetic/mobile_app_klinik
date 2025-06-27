@@ -215,21 +215,21 @@ class _UserScreenState extends State<UserScreen> {
                               Text(
                                 userName,
                                 style: const TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
                                 userEmail,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   color: appTheme.black900,
                                 ),
                               ),
                               Text(
                                 phoneNumber,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   color: appTheme.black900,
                                 ),
                               ),
@@ -251,7 +251,12 @@ class _UserScreenState extends State<UserScreen> {
                 _buildMenuOption(
                   title: 'Favorit',
                   onTap: () {
-                    // Navigate to favorites screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AppRoutes.routes[AppRoutes.favoriteUserScreen]!(context),
+                      ),
+                    );
                   },
                 ),
                 _buildMenuOption(
@@ -356,7 +361,7 @@ class _UserScreenState extends State<UserScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isLoggedIn ? appTheme.lightGreen : appTheme.lightGreen,
+                    backgroundColor: isLoggedIn ? appTheme.darkCherry : appTheme.lightGreen,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -397,14 +402,14 @@ class _UserScreenState extends State<UserScreen> {
             Text(
               title,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.black54,
+              color: Colors.black,
             ),
           ],
         ),
