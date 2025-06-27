@@ -429,7 +429,22 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+        backgroundColor: appTheme.orange200,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16), // 24px from bottom
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -620,7 +635,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
           'Keranjang Belanja',
           style: TextStyle(
             color: appTheme.orange200,
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1097,7 +1112,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                       }
                     } : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: appTheme.lightGreen,
+                      backgroundColor: appTheme.orange200,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1115,7 +1130,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: appTheme.black900,
+                        color: appTheme.whiteA700,
                       ),
                     ),
                   ),

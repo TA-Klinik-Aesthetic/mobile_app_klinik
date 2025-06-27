@@ -131,6 +131,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           'Favorit Saya',
           style: TextStyle(
             color: appTheme.orange200,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
