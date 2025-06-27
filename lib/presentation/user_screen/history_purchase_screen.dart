@@ -215,12 +215,14 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
               if (detailPembelian[0]['produk'] != null) {
                 thumbnailUrl = detailPembelian[0]['produk']['gambar_produk'] ?? '';
                 productName = detailPembelian[0]['produk']['nama_produk'] ?? '';
-                firstProductQuantity = detailPembelian[0]['jumlah_produk'] ?? 0;
+                // Parse to int safely
+                firstProductQuantity = int.tryParse(detailPembelian[0]['jumlah_produk']?.toString() ?? '0') ?? 0;
               }
 
               // Calculate total items
               for (var item in detailPembelian) {
-                totalItems += (item['jumlah_produk'] ?? 0) as int;
+                // Parse to int safely
+                totalItems += int.tryParse(item['jumlah_produk']?.toString() ?? '0') ?? 0;
               }
             }
 
@@ -280,7 +282,6 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                         color: Colors.grey[600],
                       ),
                     ),
-
                     const Divider(height: 24),
 
                     // Product details row

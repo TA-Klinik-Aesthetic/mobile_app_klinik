@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../theme/theme_helper.dart';
 import '../../api/api_constant.dart';
+import 'models/product_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({
@@ -22,11 +24,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int quantity = 0;
   bool isLoading = false;
   bool isFavorite = false;
+  List<Map<String, dynamic>> recommendedProducts = [];
 
   @override
   void initState() {
     super.initState();
-    checkFavoriteStatus();  // Add this line
+    checkFavoriteStatus();
+    fetchRecommendedProducts();
+  }
+
+  // Fetch recommended products
+  Future<void> fetchRecommendedProducts() async {
+    try {
+      final response = await http.get(Uri.parse(ApiConstants.product));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        List<Map<String, dynamic>> allProducts = List<Map<String, dynamic>>.from(data['data'] ?? []);
+
+        // Filter out the current product
+        allProducts.removeWhere((product) =>
+        product['id_produk'].toString() == widget.product['id_produk'].toString()
+        );
+
+        // Randomly select up to 5 products
+        if (allProducts.length > 5) {
+          allProducts.shuffle();
+          allProducts = allProducts.sublist(0, 5);
+        }
+
+        setState(() {
+          recommendedProducts = allProducts;
+        });
+      }
+    } catch (e) {
+      print('Error fetching recommended products: $e');
+    }
   }
 
   // Check if product is already favorited
@@ -168,9 +201,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  String _formatDate(String dateString) {
+    final dateTime = DateTime.parse(dateString);
+    return '${dateTime.day}-${dateTime.month}-${dateTime.year}';
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+        backgroundColor: appTheme.orange200,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16), // 24px from bottom
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -203,7 +256,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Text(
                 widget.product['nama_produk'],
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
@@ -258,90 +311,81 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   color: appTheme.orange200,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               Text(
                 "Deskripsi Produk",
                 style: TextStyle(
                   color: appTheme.black900,
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 widget.product['deskripsi_produk'] ?? 'No description available.',
-                style: const TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 18),
               ),
               const SizedBox(height: 12),
               Text(
-                "Terakhir diupdate: ${widget.product['updated_at']}",
+                "Terakhir diupdate: ${_formatDate(widget.product['updated_at'])}",
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
                 ),
               ),
+              const SizedBox(height: 12),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+              ),
               const SizedBox(height: 24),
-
-              // Item counter and Add to Cart
+              // Add recommended products section
               Text(
-                "Tambahkan ke Keranjang",
+                "Rekomendasi Produk Lainnya",
                 style: TextStyle(
                   color: appTheme.black900,
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.remove,
-                            color: quantity > 0 ? appTheme.black900 : Colors.grey.shade400,
-                          ),
-                          onPressed: () => updateQuantity(quantity - 1),
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                          iconSize: 20,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            quantity.toString(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: appTheme.black900,
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 240,
+                child: recommendedProducts.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: recommendedProducts.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      width: 160,
+                      child: ProductCard(
+                        product: recommendedProducts[index],
+                        onPress: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailScreen(
+                                product: recommendedProducts[index],
+                              ),
                             ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.add,
-                            color: quantity < maxStock ? appTheme.black900 : Colors.grey.shade400,
-                          ),
-                          onPressed: () => updateQuantity(quantity + 1),
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                          iconSize: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                          ).then((_) {
+                            // Refresh recommendations when returning to this page
+                            fetchRecommendedProducts();
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
               ),
-              const SizedBox(height: 80), // Space for floating button
+              const SizedBox(height: 36),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: quantity > 0 ? Container(
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -353,35 +397,99 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: isLoading ? null : addToCart,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: appTheme.orange200,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left side - Text
+                Text(
+                  "Tambah ke Keranjang",
+                  style: TextStyle(
+                    color: appTheme.black900,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                // Right side - Counter
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.remove,
+                          color: quantity > 0 ? appTheme.orange200 : appTheme.lightGrey,
+                        ),
+                        onPressed: () => updateQuantity(quantity - 1),
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                        iconSize: 24,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          quantity.toString(),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: appTheme.black900,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.add,
+                          color: quantity < maxStock ? appTheme.orange200 : appTheme.lightGrey,
+                        ),
+                        onPressed: () => updateQuantity(quantity + 1),
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                        iconSize: 24,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          child: isLoading
-              ? const SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          )
-              : const Text(
-            'Tambahkan ke Keranjang',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+            const SizedBox(height: 12),
+            // Button - Only show when quantity > 0
+            if (quantity > 0)
+              ElevatedButton(
+                onPressed: isLoading ? null : addToCart,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: appTheme.orange200,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                    : const Text(
+                  'TAMBAH',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
         ),
-      ) : null,
+      ),
     );
   }
 

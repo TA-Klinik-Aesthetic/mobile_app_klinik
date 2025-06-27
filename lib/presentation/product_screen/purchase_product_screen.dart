@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/presentation/payment_screen/payment_screen.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,7 +10,7 @@ import '../../api/api_constant.dart';
 class PurchaseProductScreen extends StatefulWidget {
   final int purchaseId;
 
-  const PurchaseProductScreen({Key? key, required this.purchaseId}) : super(key: key);
+  const PurchaseProductScreen({super.key, required this.purchaseId});
 
   @override
   State<PurchaseProductScreen> createState() => _PurchaseProductScreenState();
@@ -43,6 +44,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
         return;
       }
 
+      // Fetch purchase details
       final response = await http.get(
         Uri.parse('${ApiConstants.penjualanProduk}/${widget.purchaseId}'),
         headers: {
@@ -53,15 +55,59 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print('Purchase data: $data');
+
         setState(() {
           purchaseData = data;
         });
 
+        // Fetch payment details for this purchase
+        final paymentResponse = await http.get(
+          Uri.parse(ApiConstants.pembayaranProduk),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        if (paymentResponse.statusCode == 200) {
+          final List<dynamic> paymentsList = jsonDecode(paymentResponse.body);
+          print('All payment data: $paymentsList');
+
+          // Find payment for current purchase ID
+          final paymentData = paymentsList.firstWhere(
+                (payment) => payment['id_penjualan_produk'].toString() == widget.purchaseId.toString(),
+            orElse: () => {},
+          );
+
+          print('Payment data for ID ${widget.purchaseId}: $paymentData');
+          if (paymentData.isNotEmpty) {
+            setState(() {
+              // Store payment data
+              purchaseData['payment_info'] = paymentData;
+            });
+          }
+        } else {
+          print('Failed to fetch payment data: ${paymentResponse.statusCode}');
+        }
+
         // Fetch product details for each item
         List<dynamic> detailPembelian = data['detail_pembelian'] ?? [];
         for (var item in detailPembelian) {
-          int productId = item['id_produk'];
-          await fetchProductDetails(productId);
+          final dynamic rawId = item['id_produk'];
+          int? productId;
+
+          if (rawId is int) {
+            productId = rawId;
+          } else if (rawId is String) {
+            productId = int.tryParse(rawId);
+          }
+
+          if (productId != null) {
+            await fetchProductDetails(productId);
+          } else {
+            print('Invalid product ID format: $rawId');
+          }
         }
 
         setState(() {
@@ -81,6 +127,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
     }
   }
 
+  /// Fetch product details by product ID
   Future<void> fetchProductDetails(int productId) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -538,41 +585,89 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
         padding: const EdgeInsets.all(16),
         child: _buildPurchaseDetails(),
       ),
-      bottomNavigationBar: purchaseData.isNotEmpty && purchaseData['status_pembayaran'] == 'Belum Dibayar'
-          ? Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, -2),
+      bottomNavigationBar: () {
+        // Debug prints to check data structure
+        print('Payment info available: ${purchaseData['payment_info'] != null}');
+        if (purchaseData['payment_info'] != null) {
+          print('Payment status: ${purchaseData['payment_info']['status_pembayaran']}');
+        }
+
+        // Fix: Check status directly from both possible locations
+        final bool needsPayment =
+            (purchaseData['payment_info']?['status_pembayaran'] == 'Belum Dibayar') ||
+                (purchaseData['status_pembayaran'] == 'Belum Dibayar');
+
+        return purchaseData.isNotEmpty && needsPayment
+            ? Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 5,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: () {
+              // Safely convert the ID to int
+              final dynamic rawSaleId = purchaseData['id_penjualan_produk'];
+              int? saleId;
+
+              if (rawSaleId is int) {
+                saleId = rawSaleId;
+              } else if (rawSaleId is String) {
+                saleId = int.tryParse(rawSaleId);
+              }
+
+              // Product name and price logic
+              String productName = 'Produk';
+              if (purchaseData['detail_pembelian'] != null &&
+                  purchaseData['detail_pembelian'].isNotEmpty) {
+                final int? productId = int.tryParse(purchaseData['detail_pembelian'][0]['id_produk'].toString());
+                if (productId != null && productsData.containsKey(productId)) {
+                  productName = productsData[productId]?['nama_produk'] ?? 'Produk';
+                }
+              }
+
+              final double amount = double.tryParse(purchaseData['harga_akhir']?.toString() ?? '0') ?? 0.0;
+
+              if (saleId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentScreen.product(
+                      productSaleId: saleId!, // Non-null assertion is safe here
+                      name: productName,
+                      price: amount,
+                    ),
+                  ),
+                ).then((_) => fetchPurchaseDetails());
+              } else {
+                _showMessage('Data penjualan tidak ditemukan');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: appTheme.orange200,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: () {
-            _showMessage('Fitur pembayaran belum tersedia');
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: appTheme.orange200,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            child: const Text(
+              'Bayar Sekarang',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
-          child: const Text(
-            'Bayar Sekarang',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      )
-          : null,
+        )
+            : null;
+      }(),
     );
   }
 }

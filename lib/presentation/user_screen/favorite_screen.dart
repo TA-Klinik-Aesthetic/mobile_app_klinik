@@ -456,7 +456,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   Widget _buildEmptyPlaceholder(String message) {
     return Container(
-      height: 120,
+      height: 140,
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
