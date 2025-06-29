@@ -80,7 +80,7 @@ class _ProductByCategoryScreenState extends State<ProductByCategoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              widget.categoryName,
+              "\"${widget.categoryName}\"",
               style: TextStyle(
                 color: appTheme.black900,
                 fontSize: 20,

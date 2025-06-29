@@ -217,7 +217,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             fontSize: 16,
           ),
         ),
-        backgroundColor: appTheme.orange200,
+        backgroundColor: appTheme.lightGreen,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -363,7 +363,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 240,
+                height: 245,
                 child: recommendedProducts.isEmpty
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.separated(
@@ -492,7 +492,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 )
                     : const Text(
-                  'TAMBAH',
+                  'TAMBAHKAN',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

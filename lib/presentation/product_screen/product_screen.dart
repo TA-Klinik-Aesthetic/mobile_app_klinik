@@ -128,7 +128,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
               ),
               bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(120), // Reduced height since category section is removed
+                preferredSize: const Size.fromHeight(120),
                 child: Column(
                   children: [
                     // Search Box with Reset button

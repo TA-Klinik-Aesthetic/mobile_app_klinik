@@ -40,7 +40,6 @@ class ProductCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF979797).withOpacity(0.1),
-                  border: Border.all(color: Colors.black, width: 1.0),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: ClipRRect(
@@ -67,7 +66,7 @@ class ProductCard extends StatelessWidget {
             Text(
               "Rp ${_formatPrice(product['harga_produk'])}",
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: appTheme.orange200,
               ),
