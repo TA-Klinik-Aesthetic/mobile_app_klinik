@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/presentation/product_screen/product_by_category_screen.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/product_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models/product_card.dart';
@@ -19,14 +20,17 @@ class ProductScreen extends StatefulWidget {
 class _ProductScreenState extends State<ProductScreen> {
   List<dynamic> products = [];
   List<dynamic> filteredProducts = [];
+  List<dynamic> categories = [];
   TextEditingController searchController = TextEditingController();
   int cartItemCount = 0;
+  bool isLoadingCategories = true;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     fetchProducts();
+    fetchCategories();
     fetchCartCount();
     searchController.addListener(_filterProducts);
   }
@@ -53,6 +57,36 @@ class _ProductScreenState extends State<ProductScreen> {
   void _resetSearch() {
     searchController.clear();
     _filterProducts();
+  }
+
+  Future<void> fetchCategories() async {
+    setState(() {
+      isLoadingCategories = true;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(ApiConstants.kategori));
+
+      if (response.statusCode == 200) {
+        // Parse as a direct list since the response is an array
+        final List<dynamic> categoriesData = jsonDecode(response.body);
+        setState(() {
+          categories = categoriesData;
+          isLoadingCategories = false;
+        });
+        debugPrint('Categories loaded: ${categories.length}');
+      } else {
+        debugPrint('Failed to load categories: ${response.statusCode}');
+        setState(() {
+          isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+      setState(() {
+        isLoadingCategories = false;
+      });
+    }
   }
 
   Future<void> fetchCartCount() async {
@@ -169,22 +203,82 @@ class _ProductScreenState extends State<ProductScreen> {
               centerTitle: true,
               pinned: true,
               floating: true,
-              expandedHeight: 150,
+              expandedHeight: 100,
             ),
           ];
         },
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 0),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 8),
           child: RefreshIndicator(
             onRefresh: () async {
               await fetchProducts();
-              await fetchCartCount(); // Tambahkan ini
+              await fetchCartCount();
             },
             color: appTheme.orange200,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Categories list
+                  SizedBox(
+                    height: 40,
+                    child: isLoadingCategories
+                        ? const Center(child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ))
+                        : categories.isEmpty
+                        ? Center(
+                      child: Text(
+                        "Tidak ada kategori",
+                        style: TextStyle(color: appTheme.black900),
+                      ),
+                    )
+                        : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductByCategoryScreen(
+                                    categoryId: categories[index]['id_kategori'],
+                                    categoryName: categories[index]['nama_kategori'],
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: appTheme.whiteA700,
+                              side: BorderSide(color: appTheme.lightGrey, width: 1),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: Text(
+                              categories[index]['nama_kategori'],
+                              style: TextStyle(color: appTheme.black900),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Divider
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Divider(height: 1, color: appTheme.lightGrey),
+                  ),
+                  const SizedBox(height: 16),
+
                   // Product Grid
                   Expanded(
                     child: isLoading
