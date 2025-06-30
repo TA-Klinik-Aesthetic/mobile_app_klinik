@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/presentation/payment_screen/payment_on_store.dart';
+import 'package:mobile_app_klinik/presentation/payment_screen/payment_qris_screen.dart';
+import 'package:mobile_app_klinik/presentation/payment_screen/payment_va_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -252,7 +255,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           color: appTheme.orange200,
                         ),
                         const SizedBox(width: 12),
-                        const Text('Go-Pay'),
+                        const Text('Go-Pay (QRIS)'),
                       ],
                     ),
                     value: 'gopay',
@@ -272,7 +275,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           color: appTheme.orange200,
                         ),
                         const SizedBox(width: 12),
-                        const Text('ShopeePay'),
+                        const Text('ShopeePay (QRIS)'),
                       ],
                     ),
                     value: 'shopeepay',
@@ -323,7 +326,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               : const Text(
             'Konfirmasi Pembayaran',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -351,37 +354,162 @@ class _PaymentScreenState extends State<PaymentScreen> {
         return;
       }
 
-      // Prepare request body
-      Map<String, dynamic> requestBody = {
-        'id_user': userId,
-        'metode_pembayaran': paymentMethod,
-        'nominal_pembayaran': widget.price,
-      };
+      // If selected cash payment
+      if (paymentMethod == 'cash') {
+        // Process cash payment like before
+        if (widget.isProduct && widget.productSaleId != null) {
+          final checkResponse = await http.get(
+            Uri.parse('${ApiConstants.pembayaranProduk}?id_penjualan_produk=${widget.productSaleId}'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          );
 
-      // Add the specific ID based on payment type
-      if (widget.isProduct && widget.productSaleId != null) {
-        requestBody['id_penjualan_produk'] = widget.productSaleId;
-      } else if (!widget.isProduct && widget.appointmentId != null) {
-        requestBody['id_booking'] = widget.appointmentId;
-      }
+          if (checkResponse.statusCode == 200) {
+            List<dynamic> existingPayments = jsonDecode(checkResponse.body);
+            if (existingPayments.isNotEmpty) {
+              final paymentData = existingPayments[0];
+              final paymentId = paymentData['id_pembayaran']?.toString() ?? '';
+              final amount = double.tryParse(paymentData['penjualan_produk']['harga_akhir'] ?? '0') ?? widget.price;
 
-      // Make API call
-      final response = await http.post(
-        Uri.parse(ApiConstants.pembayaranProduk),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PaymentOnStoreScreen(
+                    paymentId: paymentId,
+                    amount: amount,
+                  ),
+                ),
+              );
+              return;
+            }
+          }
+        }
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _showMessage('Pembayaran berhasil dikonfirmasi');
-        Navigator.pop(context, true); // Return success
+        // Create cash payment
+        Map<String, dynamic> requestBody = {
+          'id_user': userId,
+          'metode_pembayaran': 'Tunai',
+          'nominal_pembayaran': widget.price,
+        };
+
+        if (widget.isProduct && widget.productSaleId != null) {
+          requestBody['id_penjualan_produk'] = widget.productSaleId;
+        } else if (!widget.isProduct && widget.appointmentId != null) {
+          requestBody['id_booking'] = widget.appointmentId;
+        }
+
+        final response = await http.post(
+          Uri.parse(ApiConstants.pembayaranProduk),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(requestBody),
+        );
+
+        if (widget.isProduct && widget.productSaleId != null) {
+          final getResponse = await http.get(
+            Uri.parse('${ApiConstants.pembayaranProduk}?id_penjualan_produk=${widget.productSaleId}'),
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          );
+
+          if (getResponse.statusCode == 200) {
+            List<dynamic> payments = jsonDecode(getResponse.body);
+            if (payments.isNotEmpty) {
+              final paymentData = payments[0];
+              final paymentId = paymentData['id_pembayaran']?.toString() ?? '';
+              final amount = double.tryParse(paymentData['penjualan_produk']['harga_akhir'] ?? '0') ?? widget.price;
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PaymentOnStoreScreen(
+                    paymentId: paymentId,
+                    amount: amount,
+                  ),
+                ),
+              );
+              return;
+            }
+          }
+        }
       } else {
-        _showMessage('Gagal memproses pembayaran. Silakan coba lagi.');
+        // Online payment (VA or QRIS)
+        // Create payment with Midtrans
+        final Uri uri;
+        final Map<String, dynamic> body = {
+          'payment_method': paymentMethod,
+        };
+
+        if (widget.isProduct && widget.productSaleId != null) {
+          uri = Uri.parse('${ApiConstants.baseUrl}/midtrans/product');
+          body['id_penjualan_produk'] = widget.productSaleId;
+        } else if (!widget.isProduct && widget.appointmentId != null) {
+          uri = Uri.parse('${ApiConstants.baseUrl}/midtrans/treatment');
+          body['id_booking_treatment'] = widget.appointmentId;
+        } else {
+          throw Exception('Invalid payment type');
+        }
+
+        final response = await http.post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(body),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = jsonDecode(response.body);
+
+          if (data == null || data['payment_data'] == null) {
+            throw Exception('Invalid payment data received from server');
+          }
+
+          final paymentData = data['payment_data'];
+          final paymentInfo = data['data'];
+          final orderId = paymentData['order_id'] ?? '';
+
+          // Navigate based on payment type
+          if (['bca_va', 'bni_va', 'bri_va', 'mandiri_va'].contains(paymentMethod)) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentVAScreen(
+                  paymentData: paymentData,
+                  paymentInfo: paymentInfo,
+                  paymentMethod: paymentMethod,
+                  orderId: orderId,
+                ),
+              ),
+            );
+          } else if (['gopay', 'shopeepay'].contains(paymentMethod)) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentQrisScreen(
+                  paymentData: paymentData,
+                  paymentInfo: paymentInfo,
+                  paymentMethod: paymentMethod,
+                  orderId: orderId,
+                ),
+              ),
+            );
+          } else {
+            throw Exception('Unsupported payment method');
+          }
+          return;
+        } else {
+          throw Exception('Payment creation failed: ${response.body}');
+        }
       }
     } catch (e) {
+      debugPrint('Payment processing error: $e');
       _showMessage('Error: $e');
     } finally {
       setState(() {

@@ -55,6 +55,8 @@ dependencies:
   card_swiper: ^3.0.1
   flutter_rating_bar: ^4.0.0
   midtrans_sdk: ^1.0.1
+  share_plus: ^7.0.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:

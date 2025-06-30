@@ -162,13 +162,13 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
               ),
               bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(120),
+                preferredSize: const Size.fromHeight(140),
                 child: Column(
                   children: [
                     // Search Box with Reset button
                     Padding(
                       padding: const EdgeInsets.only(
-                          left: 16, right: 16, bottom: 16, top: 24),
+                          left: 16, right: 16, bottom: 16, top: 36),
                       child: Container(
                         decoration: BoxDecoration(
                           color: appTheme.whiteA700,

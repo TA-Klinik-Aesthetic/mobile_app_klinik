@@ -29,7 +29,7 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
   TimeOfDay? _selectedTime;
   final TextEditingController _keluhanController = TextEditingController();
   Map<String, dynamic>? _userData;
-bool _isBookingLoading = false;
+  bool _isBookingLoading = false;
 
   // Getter untuk validasi form
   bool get _isFormValid => 
@@ -418,19 +418,19 @@ bool _isBookingLoading = false;
           icon: Icon(
             Icons.arrow_back,
             color: appTheme.black900,
-            size: 35, // Membesarkan ukuran ikon back
+            size: 35,
           ),
           onPressed: () {
             Navigator.pop(context);
           },
-          padding: const EdgeInsets.all(16), // Menambahkan padding untuk area tap yang lebih besar
+          padding: const EdgeInsets.all(16),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isFavorite ? Icons.favorite : Icons.favorite_border,
               color: isFavorite ? appTheme.darkCherry : appTheme.black900,
-              size: 35, // Membesarkan ukuran ikon favorite
+              size: 35,
             ),
             onPressed: toggleFavorite, // Update this line
             padding: const EdgeInsets.all(16),
@@ -796,7 +796,7 @@ bool _isBookingLoading = false;
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "${_focusedDay.month}/${_focusedDay.year}",
+                                "${_getMonthName(_focusedDay.month)} ${_focusedDay.year}",
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -804,21 +804,50 @@ bool _isBookingLoading = false;
                               ),
                               Row(
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_back_ios, size: 16),
+                                  // Previous month button
+                                  ElevatedButton(
                                     onPressed: () {
                                       setState(() {
                                         _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
+
+                                        // If selected day is in a different month, clear selection
+                                        if (_selectedDay != null &&
+                                            (_selectedDay!.month != _focusedDay.month || _selectedDay!.year != _focusedDay.year)) {
+                                          _selectedDay = null;
+                                        }
                                       });
                                     },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: appTheme.whiteA700,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.all(8),
+                                      shape: const CircleBorder(),
+                                      side: BorderSide(color: appTheme.black900.withOpacity(0.2)),
+                                    ),
+                                    child: Icon(Icons.chevron_left, color: appTheme.black900),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_forward_ios, size: 16),
+
+                                  // Next month button
+                                  ElevatedButton(
                                     onPressed: () {
                                       setState(() {
                                         _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
+
+                                        // If selected day is in a different month, clear selection
+                                        if (_selectedDay != null &&
+                                            (_selectedDay!.month != _focusedDay.month || _selectedDay!.year != _focusedDay.year)) {
+                                          _selectedDay = null;
+                                        }
                                       });
                                     },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: appTheme.whiteA700,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.all(8),
+                                      shape: const CircleBorder(),
+                                      side: BorderSide(color: appTheme.black900.withOpacity(0.2)),
+                                    ),
+                                    child: Icon(Icons.chevron_right, color: appTheme.black900),
                                   ),
                                 ],
                               ),
@@ -827,10 +856,14 @@ bool _isBookingLoading = false;
 
                           // Calendar
                           TableCalendar(
-                            firstDay: DateTime.now(),
-                            lastDay: DateTime(2030),
+                            firstDay: DateTime(DateTime.now().year - 1, 1), // Allow viewing from January of last year
+                            lastDay: DateTime(DateTime.now().year + 5, 12, 31),
                             focusedDay: _focusedDay,
                             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                            enabledDayPredicate: (day) {
+                              // Only enable dates today or in the future
+                              return !day.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+                            },
                             onDaySelected: (selectedDay, focusedDay) {
                               setState(() {
                                 _selectedDay = selectedDay;
@@ -992,6 +1025,14 @@ bool _isBookingLoading = false;
             ),
     );
   }
+}
+
+String _getMonthName(int month) {
+  final List<String> months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  return months[month - 1];
 }
 
 String _formatDate(String dateString) {
