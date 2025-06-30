@@ -508,7 +508,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
                             color: appTheme.black900,
                           ),
                         ),
-                        _buildPaymentStatusBadge(_bookingData?['status_pembayaran'] ?? 'Belum Dibayar'),
+                        _buildPaymentStatusBadge(_bookingData?['pembayaran_treatment']?['status_pembayaran'] ?? 'Belum Dibayar'),
                       ],
                     ),
                     const SizedBox(height: 16),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/app_export.dart';
 import '../../api/api_constant.dart';
@@ -276,7 +275,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
 
                     // Date
                     Text(
-                      date,
+                      _formatDate(date),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[600],
@@ -329,7 +328,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 '$firstProductQuantity item',
                                 style: TextStyle(
@@ -341,7 +340,7 @@ class _HistoryPurchaseScreenState extends State<HistoryPurchaseScreen> {
                                 Text(
                                   '+ ${totalProducts - 1} produk lainnya',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     color: Colors.grey[600],
                                     fontStyle: FontStyle.italic,
                                   ),

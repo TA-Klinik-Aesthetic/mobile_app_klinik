@@ -263,17 +263,18 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: purchaseData['status_pembayaran'] == 'Sudah Dibayar'
+                      color: (purchaseData['pembayaran_produk'] != null &&
+                          purchaseData['pembayaran_produk']['status_pembayaran'] == 'Sudah Dibayar')
                           ? Colors.green.withOpacity(0.2)
                           : Colors.orange.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      purchaseData['status_pembayaran'] ?? 'Belum Dibayar',
+                      purchaseData['pembayaran_produk']?['status_pembayaran'] ?? 'Belum Dibayar',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: purchaseData['status_pembayaran'] == 'Sudah Dibayar'
+                        color: purchaseData['pembayaran_produk']?['status_pembayaran'] == 'Sudah Dibayar'
                             ? Colors.green
                             : Colors.orange,
                       ),
@@ -286,14 +287,14 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
               const SizedBox(height: 8),
               // ID Booking
               _buildInfoRow(
-                  'ID Booking',
+                  'ID Pembelian',
                   '#PURCH${purchaseData['id_penjualan_produk']}'
               ),
               const SizedBox(height: 12),
               // Waktu Booking
               _buildInfoRow(
                   'Waktu Pembelian',
-                  '${_formatDate(purchaseData['tanggal_pembelian'])}'
+                  _formatDate(purchaseData['tanggal_pembelian'])
               ),
               const SizedBox(height: 12),
             ],
@@ -404,6 +405,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 8),
                       const SizedBox(width: 12),
 
                       // Subtotal
@@ -594,8 +596,8 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
 
         // Fix: Check status directly from both possible locations
         final bool needsPayment =
-            (purchaseData['payment_info']?['status_pembayaran'] == 'Belum Dibayar') ||
-                (purchaseData['status_pembayaran'] == 'Belum Dibayar');
+        !(purchaseData['pembayaran_produk'] != null &&
+            purchaseData['pembayaran_produk']['status_pembayaran'] == 'Sudah Dibayar');
 
         return purchaseData.isNotEmpty && needsPayment
             ? Container(
@@ -659,7 +661,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
             child: const Text(
               'Bayar Sekarang',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

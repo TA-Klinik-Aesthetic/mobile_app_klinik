@@ -78,21 +78,41 @@ class _PromoScreenState extends State<PromoScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return RefreshIndicator(
+      color: appTheme.orange200,
+      onRefresh: fetchPromos,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Icon(
-            Icons.discount_outlined,
-            size: 80,
-            color: appTheme.lightGrey,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Tidak ada promo yang tersedia saat ini',
-            style: TextStyle(
-              fontSize: 16,
-              color: appTheme.black900,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.discount_outlined,
+                    size: 80,
+                    color: appTheme.lightGrey,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tidak ada promo yang tersedia saat ini',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: appTheme.black900,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tarik ke bawah untuk memuat ulang',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: appTheme.lightGrey,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -101,13 +121,17 @@ class _PromoScreenState extends State<PromoScreen> {
   }
 
   Widget _buildPromoList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: promoList.length,
-      itemBuilder: (context, index) {
-        final promo = promoList[index];
-        return _buildPromoCard(promo);
-      },
+    return RefreshIndicator(
+      color: appTheme.orange200,
+      onRefresh: fetchPromos,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: promoList.length,
+        itemBuilder: (context, index) {
+          final promo = promoList[index];
+          return _buildPromoCard(promo);
+        },
+      ),
     );
   }
 

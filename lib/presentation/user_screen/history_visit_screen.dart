@@ -82,7 +82,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         _combinedHistory.add({
           'type': 'consultation',
           'data': consultation,
-          'date': DateTime.parse(consultation['waktu_konsultasi'] ?? DateTime.now().toString()),
+          'date': DateTime.parse(consultation['created_at'] ?? DateTime.now().toString()),
         });
       }
 
@@ -90,7 +90,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         _combinedHistory.add({
           'type': 'treatment',
           'data': treatment,
-          'date': DateTime.parse(treatment['waktu_treatment'] ?? DateTime.now().toString()),
+          'date': DateTime.parse(treatment['created_at'] ?? DateTime.now().toString()),
         });
       }
 
@@ -210,7 +210,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
             // Date below Konsultasi title
             Text(
-              _formatDate(consultation['waktu_konsultasi'] ?? ''),
+              _formatDate(consultation['created_at'] ?? ''),
               style: TextStyle(
                 fontSize: 14,
                 color: appTheme.black900.withOpacity(0.7),
@@ -349,7 +349,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
             // Date below Treatment title
             Text(
-              _formatDate(treatment['waktu_treatment'] ?? ''),
+              _formatDate(treatment['created_at'] ?? ''),
               style: TextStyle(
                 fontSize: 14,
                 color: appTheme.black900.withOpacity(0.7),
