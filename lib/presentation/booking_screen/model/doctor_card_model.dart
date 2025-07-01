@@ -27,31 +27,48 @@ class _DoctorCardState extends State<DoctorCard> {
 
   Future<void> fetchDoctorRating() async {
     try {
+      final doctorId = widget.doctor['id_dokter'].toString();
+      print('Fetching ratings for doctor ID: $doctorId');
+
+      // Get all feedbacks and filter by doctor ID manually
       final response = await http.get(
-        Uri.parse('${ApiConstants.feedbackKonsultasi}?id_dokter=${widget.doctor['id_dokter']}'),
+        Uri.parse(ApiConstants.feedbackKonsultasi),
       );
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        final feedbackList = jsonData['data'] as List;
-        
+        final allFeedbackList = jsonData['data'] as List;
+
+        // Filter feedbacks for this specific doctor
+        final feedbackList = allFeedbackList.where((feedback) {
+          // Check if konsultasi exists and its id_dokter matches our doctor ID
+          return feedback['konsultasi'] != null &&
+              feedback['konsultasi']['id_dokter'].toString() == doctorId;
+        }).toList();
+
+        print('Number of feedbacks found for this doctor: ${feedbackList.length}');
+
         if (feedbackList.isNotEmpty) {
           double totalRating = 0;
           for (var feedback in feedbackList) {
-            totalRating += feedback['rating'];
+            totalRating += double.parse(feedback['rating'].toString());
           }
-          
+
           setState(() {
             averageRating = totalRating / feedbackList.length;
             reviewCount = feedbackList.length;
             isLoading = false;
+            print('Set average rating to: $averageRating, reviews: $reviewCount');
           });
         } else {
           setState(() {
+            averageRating = 0;
+            reviewCount = 0;
             isLoading = false;
           });
         }
       } else {
+        print('API error: ${response.statusCode}, ${response.body}');
         setState(() {
           isLoading = false;
         });
@@ -147,9 +164,11 @@ class _DoctorCardState extends State<DoctorCard> {
                         Icon(Icons.star_rate_rounded, color: appTheme.orange200, size: 20),
                         const SizedBox(width: 4),
                         Text(
-                          isLoading 
-                              ? '...' 
-                              : '${averageRating.toStringAsFixed(1)} Reviews ($reviewCount)',
+                          isLoading
+                              ? 'Loading...'
+                              : reviewCount > 0
+                              ? '${averageRating.toStringAsFixed(1)} Review ($reviewCount)'
+                              : 'No reviews yet',
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],

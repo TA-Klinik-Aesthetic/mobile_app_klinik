@@ -253,23 +253,35 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
 
   Future<void> fetchDoctorDetails() async {
     try {
-      // Fetch doctor's feedback
+      // Fetch all feedbacks instead of using query parameter
       final response = await http.get(
-        Uri.parse('${ApiConstants.feedbackKonsultasi}?id_dokter=${widget.dokter['id_dokter']}'),
+        Uri.parse(ApiConstants.feedbackKonsultasi),
       );
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        final feedbackList = jsonData['data'] as List;
+        final allFeedbackList = jsonData['data'] as List;
+
+        // Filter feedbacks for this specific doctor
+        final feedbackList = allFeedbackList.where((feedback) {
+          return feedback['konsultasi'] != null &&
+              feedback['konsultasi']['id_dokter'].toString() == widget.dokter['id_dokter'].toString();
+        }).toList();
+
+        print('Found ${feedbackList.length} feedbacks for doctor ${widget.dokter['id_dokter']}');
 
         if (feedbackList.isNotEmpty) {
           double totalRating = 0;
           for (var feedback in feedbackList) {
-            totalRating += feedback['rating'];
+            // Convert string rating to double and store as numeric value
+            double numericRating = double.parse(feedback['rating'].toString());
+            totalRating += numericRating;
+            // Store the parsed numeric rating for use in the UI
+            feedback['numericRating'] = numericRating;
 
             // Fetch user info for each feedback
             try {
-              final int userId = feedback['konsultasi']['id_user'];
+              final userId = int.parse(feedback['konsultasi']['id_user'].toString());
               final userResponse = await http.get(
                 Uri.parse('${ApiConstants.profile}/$userId'),
               );
@@ -307,10 +319,14 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
           });
         } else {
           setState(() {
+            averageRating = 0;
+            reviewCount = 0;
+            topFeedbacks = [];
             _isLoading = false;
           });
         }
       } else {
+        print('API error: ${response.statusCode}');
         setState(() {
           _isLoading = false;
         });
@@ -618,23 +634,6 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // User info and date
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.black,
-                                      ),
-                                      child: const Center(
-                                        child: Icon(Icons.person, size: 20, color: Colors.white),
-                                      ),
-                                    ),
-                                  ],
-                                ),
                                 Text(
                                   topFeedbacks[0]['user_name'] ?? "Pasien",
                                   style: const TextStyle(
@@ -657,8 +656,8 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
                                   children: List.generate(5, (index) {
                                     return Icon(
                                       Icons.star,
-                                      color: index < (topFeedbacks[0]['rating']) 
-                                          ? Colors.orange 
+                                      color: index < (int.parse(topFeedbacks[0]['rating'].toString()))
+                                          ? Colors.orange
                                           : Colors.grey,
                                       size: 24,
                                     );

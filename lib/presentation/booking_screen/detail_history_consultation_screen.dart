@@ -10,21 +10,25 @@ class DetailHistoryConsultationScreen extends StatefulWidget {
   final int consultationId;
 
   const DetailHistoryConsultationScreen({
-    Key? key,
+    super.key,
     required this.consultationId,
-  }) : super(key: key);
+  });
 
   @override
   State<DetailHistoryConsultationScreen> createState() => _DetailHistoryConsultationScreenState();
 }
 
 class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultationScreen> {
+  final TextEditingController _feedbackController = TextEditingController();
+  final TextEditingController _keluhanEditController = TextEditingController();
   bool _isLoading = true;
+  bool _isEditing = false;
+  bool _feedbackExists = false;
+  bool _isSendingFeedback = false;
   Map<String, dynamic>? _consultationData;
   String? _errorMessage;
-  final TextEditingController _feedbackController = TextEditingController();
   double _rating = 0;
-  bool _isSendingFeedback = false;
+  Map<String, dynamic>? _existingFeedback;
   Map<String, dynamic>? _treatmentData;
   Map<String, dynamic>? _doctorRatingData;
 
@@ -37,6 +41,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
   @override
   void dispose() {
     _feedbackController.dispose();
+    _keluhanEditController.dispose();
     super.dispose();
   }
 
@@ -70,6 +75,10 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
         },
       );
 
+      if (_consultationData?['status_booking_konsultasi'] == 'Selesai') {
+        await checkExistingFeedback();
+      }
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
@@ -88,8 +97,19 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
             _consultationData!['detail_konsultasi'] is List &&
             _consultationData!['detail_konsultasi'].isNotEmpty) {
           for (var detail in _consultationData!['detail_konsultasi']) {
+            // Similarly for treatment data:
             if (detail['id_treatment'] != null) {
-              await fetchTreatmentData(detail['id_treatment']);
+              try {
+                int treatmentId;
+                if (detail['id_treatment'] is int) {
+                  treatmentId = detail['id_treatment'];
+                } else {
+                  treatmentId = int.parse(detail['id_treatment'].toString());
+                }
+                await fetchTreatmentData(treatmentId);
+              } catch (e) {
+                print('Error parsing treatment ID: $e');
+              }
             }
           }
         }
@@ -97,7 +117,18 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
         // Fetch doctor ratings if doctor exists
         if (_consultationData?['dokter'] != null &&
             _consultationData!['dokter']['id_dokter'] != null) {
-          await fetchDoctorRatings(_consultationData!['dokter']['id_dokter']);
+          // Convert string ID to integer
+          int doctorId;
+          try {
+            if (_consultationData!['dokter']['id_dokter'] is int) {
+              doctorId = _consultationData!['dokter']['id_dokter'];
+            } else {
+              doctorId = int.parse(_consultationData!['dokter']['id_dokter'].toString());
+            }
+            await fetchDoctorRatings(doctorId);
+          } catch (e) {
+            print('Error parsing doctor ID: $e');
+          }
         }
 
       } else {
@@ -160,6 +191,98 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
       }
     } catch (e) {
       print('Error fetching doctor ratings: $e');
+    }
+  }
+
+  Future<void> updateKeluhan() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        setState(() {
+          _errorMessage = 'Authentication token not found. Please login again.';
+        });
+        return;
+      }
+
+      final response = await http.put(
+        Uri.parse('${ApiConstants.bookingKonsultasi}/${widget.consultationId}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'keluhan_pelanggan': _keluhanEditController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _isEditing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Keluhan berhasil diperbarui')),
+        );
+        // Refresh consultation details
+        fetchConsultationDetails();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memperbarui keluhan: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> checkExistingFeedback() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('${ApiConstants.feedbackKonsultasi}/konsultasi/${widget.consultationId}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final feedbackData = responseData['data'];
+
+        setState(() {
+          if (feedbackData != null &&
+              (feedbackData is List ? feedbackData.isNotEmpty : true)) {
+            _feedbackExists = true;
+            _existingFeedback = feedbackData is List ? feedbackData[0] : feedbackData;
+
+            // Set rating to match existing feedback
+            if (_existingFeedback != null && _existingFeedback!.containsKey('rating')) {
+              if (_existingFeedback!['rating'] is int) {
+                _rating = _existingFeedback!['rating'].toDouble();
+              } else {
+                _rating = double.tryParse(_existingFeedback!['rating'].toString()) ?? 0.0;
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      print('Error checking existing feedback: $e');
     }
   }
 
@@ -388,7 +511,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
     final bool isConsultationComplete =
         _consultationData?['status_booking_konsultasi'] == 'Selesai';
     final double doctorRating = _doctorRatingData != null ?
-    (_doctorRatingData?['average_rating'] ?? 0.0) : 0.0;
+    double.tryParse(_doctorRatingData?['average_rating']?.toString() ?? '0') ?? 0.0 : 0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -652,20 +775,78 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                     const Divider(height: 24),
 
                     // Keluhan Pelanggan
-                    Text(
-                      'Keluhan Pelanggan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: appTheme.black900.withOpacity(0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _consultationData?['keluhan_pelanggan'] ?? '-',
-                      style: const TextStyle(
-                        fontSize: 14,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Keluhan Pelanggan',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: appTheme.black900.withOpacity(0.7),
+                              ),
+                            ),
+                            // Edit button - only visible for "Verifikasi" status and when not editing
+                            if (_consultationData?['status_booking_konsultasi'] == 'Verifikasi')
+                              IconButton(
+                                icon: Icon(
+                                  _isEditing ? Icons.save : Icons.edit,
+                                  color: appTheme.orange200,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  if (_isEditing) {
+                                    // Save changes
+                                    updateKeluhan();
+                                  } else {
+                                    // Enter edit mode
+                                    _keluhanEditController.text = _consultationData?['keluhan_pelanggan'] ?? '';
+                                    setState(() {
+                                      _isEditing = true;
+                                    });
+                                  }
+                                },
+                              )
+                            else if (_consultationData?['status_booking_konsultasi'] == 'Berhasil dibooking' ||
+                                _consultationData?['status_booking_konsultasi'] == 'Dibatalkan' ||
+                                _consultationData?['status_booking_konsultasi'] == 'Selesai')
+                              IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: appTheme.lightGrey,
+                                  size: 20,
+                                ),
+                                onPressed: null, // Disabled
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Editable text field when in editing mode, otherwise just display text
+                        _isEditing
+                            ? TextField(
+                          controller: _keluhanEditController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: appTheme.lightGrey),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: appTheme.orange200),
+                            ),
+                          ),
+                        )
+                            : Text(
+                          _consultationData?['keluhan_pelanggan'] ?? '-',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
 
@@ -854,6 +1035,137 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
 
             // Submit Button (only when status is "Selesai")
             if (isConsultationComplete)
+              Card(
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: appTheme.lightGrey,
+                    width: 1,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ulasan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: appTheme.black900,
+                        ),
+                      ),
+                      const Divider(height: 24),
+
+                      if (_feedbackExists && _existingFeedback != null)
+                      // Display existing feedback
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Rating stars (read-only)
+                            Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: List.generate(5, (index) {
+                                  return Icon(
+                                    Icons.star,
+                                    color: index < _rating.toInt()
+                                        ? appTheme.orange200
+                                        : Colors.grey,
+                                    size: 36,
+                                  );
+                                }),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Feedback text
+                            if (_existingFeedback!.containsKey('teks_feedback') &&
+                                _existingFeedback!['teks_feedback'] != null)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: appTheme.lightGrey),
+                                ),
+                                child: Text(
+                                  _existingFeedback!['teks_feedback'].toString(),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: appTheme.black900,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        )
+                      else
+                      // Show feedback form (existing implementation)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Rating Bar
+                            Center(
+                              child: RatingBar.builder(
+                                initialRating: _rating,
+                                minRating: 1,
+                                direction: Axis.horizontal,
+                                allowHalfRating: false,
+                                itemCount: 5,
+                                itemSize: 48,
+                                itemPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                itemBuilder: (context, _) => Icon(
+                                  Icons.star,
+                                  color: appTheme.orange200,
+                                ),
+                                onRatingUpdate: (rating) {
+                                  setState(() {
+                                    _rating = rating;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Feedback Text Area
+                            Text(
+                              'Tambahkan Komentar',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: appTheme.black900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _feedbackController,
+                              maxLines: 4,
+                              maxLength: 100,
+                              decoration: InputDecoration(
+                                hintText: 'Jelaskan Pengalaman Anda',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: appTheme.lightGrey),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: appTheme.orange200),
+                                ),
+                                contentPadding: const EdgeInsets.all(16),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+// Only show submit button if feedback doesn't exist
+            if (isConsultationComplete && !_feedbackExists)
               Container(
                 alignment: Alignment.centerRight,
                 margin: const EdgeInsets.only(top: 16),
