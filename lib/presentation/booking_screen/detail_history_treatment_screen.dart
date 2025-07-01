@@ -238,6 +238,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
             IconButton(
               icon: Icon(
                 Icons.support_agent_rounded,
+                size: 24,
                 color: appTheme.darkCherry, // Dark cherry color
               ),
               onPressed: () {

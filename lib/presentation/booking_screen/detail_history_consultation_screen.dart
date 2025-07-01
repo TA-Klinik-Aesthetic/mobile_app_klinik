@@ -220,6 +220,85 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
     }
   }
 
+  Future<void> cancelConsultation() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        setState(() {
+          _errorMessage = 'Authentication token not found. Please login again.';
+        });
+        return;
+      }
+
+      final response = await http.put(
+        Uri.parse('${ApiConstants.bookingKonsultasi}/${widget.consultationId}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'status_booking_konsultasi': 'Dibatalkan',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konsultasi berhasil dibatalkan')),
+        );
+        // Refresh consultation details
+        fetchConsultationDetails();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membatalkan konsultasi: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Function to show confirmation dialog
+  Future<void> _showCancellationConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Pembatalan'),
+          content: const Text('Apakah Anda yakin ingin membatalkan konsultasi ini?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Tidak', style: TextStyle(color: appTheme.lightGrey)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Ya', style: TextStyle(color: appTheme.darkCherry)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                cancelConsultation();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   String _formatDate(String dateString) {
     if (dateString.isEmpty) return '';
 
@@ -421,6 +500,29 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                 ),
               ),
             ),
+
+            if (_consultationData?['status_booking_konsultasi'] == 'Berhasil dibooking')
+              Container(
+                margin: const EdgeInsets.only(top: 16),
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _showCancellationConfirmationDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: appTheme.darkCherry,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batalkan',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
 
             const SizedBox(height: 16),
 

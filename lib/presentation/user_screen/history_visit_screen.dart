@@ -278,17 +278,48 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
                 // Detail button
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailHistoryConsultationScreen(
-                          consultationId: consultation['id_konsultasi'],
+                    try {
+                      var rawId = consultation['id_konsultasi'];
+                      print('Raw consultation ID type: ${rawId.runtimeType}, value: $rawId');
+
+                      int consultationId;
+
+                      if (rawId is int) {
+                        consultationId = rawId;
+                      } else if (rawId is String) {
+                        // Remove any non-numeric characters if present
+                        String cleanIdString = rawId.replaceAll(RegExp(r'[^0-9]'), '');
+                        consultationId = int.parse(cleanIdString);
+                      } else if (rawId == null) {
+                        throw Exception('Consultation ID is null');
+                      } else {
+                        // For other types, convert to string first then parse
+                        consultationId = int.parse(rawId.toString());
+                      }
+
+                      print('Parsed consultation ID: $consultationId');
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailHistoryConsultationScreen(
+                            consultationId: consultationId,
+                          ),
                         ),
-                      ),
-                    ).then((_) {
-                      // Refresh data when returning from detail screen
-                      fetchAllHistory();
-                    });
+                      ).then((_) {
+                        // Refresh data when returning from detail screen
+                        fetchAllHistory();
+                      });
+                    } catch (e) {
+                      // Show error message to user
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error accessing consultation details: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      print('Error processing consultation ID: $e');
+                    }
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: appTheme.lightGreen,
@@ -304,10 +335,9 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
                   ),
                   child: Text(
                     'Lihat Detail',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w500),
                   ),
-                ),
+                )
               ],
             ),
           ],
