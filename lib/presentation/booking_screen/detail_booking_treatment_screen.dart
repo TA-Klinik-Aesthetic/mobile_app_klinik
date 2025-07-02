@@ -22,21 +22,23 @@ class DetailBookingTreatmentScreen extends StatefulWidget {
 class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScreen> {
   late List<Map<String, dynamic>> _treatments;
   List<Promo> _promos = [];
+  List<Map<String, dynamic>> _availableTimeSlots = [];
+  bool _isLoadingTimeSlots = false;
+  Map<String, dynamic>? _selectedTimeSlot;
   Promo? _selectedPromo;
   bool _isLoadingPromos = false;
   final PromoService _promoService = PromoService();
 
-  // New variables for date and time selection
+  // Date and time selection
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  TimeOfDay? _selectedTime;
   bool _isBookingLoading = false;
   Map<String, dynamic>? _userData;
 
   // Getter for form validation
   bool get _isFormValid =>
       _selectedDay != null &&
-          _selectedTime != null;
+      _selectedTimeSlot != null;
 
   @override
   void initState() {
@@ -97,70 +99,168 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     }
   }
 
-  void _showTimePicker() {
-    // Round the current time to the nearest 15 minutes
-    final DateTime now = DateTime.now();
-    const int minuteInterval = 15;
-    final int minutes = ((now.minute + minuteInterval ~/ 2) ~/ minuteInterval) * minuteInterval;
-    final DateTime initialDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        now.hour,
-        minutes
-    );
+  Future<void> _fetchTimeSlots(DateTime date) async {
+    setState(() {
+      _isLoadingTimeSlots = true;
+      _availableTimeSlots = [];
+      _selectedTimeSlot = null;
+    });
 
-    showCupertinoModalPopup(
+    try {
+      final formattedDate = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      final response = await http.get(
+        Uri.parse("${ApiConstants.jadwalTreatment}/$formattedDate"),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          setState(() {
+            if (data['data']['details'] != null) {
+              _availableTimeSlots = List<Map<String, dynamic>>.from(data['data']['details']);
+            } else {
+              _availableTimeSlots = [];
+            }
+          });
+
+          if (_availableTimeSlots.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tidak ada jadwal tersedia untuk tanggal ini')),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal memuat jadwal: ${data['message'] ?? "Unknown error"}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      print('Error fetching time slots: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoadingTimeSlots = false;
+      });
+    }
+  }
+
+  // Replace time picker with time slot selector
+  void _showTimeSlotSelector() {
+    if (_availableTimeSlots.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak ada jadwal tersedia untuk tanggal ini')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return Container(
-          height: 280,
-          padding: const EdgeInsets.only(top: 6.0),
-          margin: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          child: SafeArea(
-            top: false,
-            child: Column(
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Batal'),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    CupertinoButton(
-                      child: const Text('Selesai'),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                Expanded(
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.time,
-                    initialDateTime: initialDateTime,
-                    minuteInterval: minuteInterval,
-                    onDateTimeChanged: (DateTime newTime) {
-                      setState(() {
-                        _selectedTime = TimeOfDay(
-                            hour: newTime.hour,
-                            minute: newTime.minute
-                        );
-                      });
-                    },
+                Text(
+                  'Pilih Waktu',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: appTheme.black900,
                   ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close, color: appTheme.black900),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 16),
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 2.2,
+                ),
+                itemCount: _availableTimeSlots.length,
+                itemBuilder: (context, index) {
+                  final timeSlot = _availableTimeSlots[index];
+                  final isAvailable = timeSlot['status_jadwal'] == 'tersedia';
+                  final timeString = timeSlot['waktu_tersedia'].toString().substring(0, 5); // Format HH:MM
+
+                  return GestureDetector(
+                    onTap: isAvailable ? () {
+                      setState(() {
+                        _selectedTimeSlot = timeSlot;
+                      });
+                      Navigator.pop(context);
+                    } : null,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isAvailable
+                            ? (_selectedTimeSlot != null && _selectedTimeSlot!['id_detail'] == timeSlot['id_detail'])
+                            ? appTheme.orange200
+                            : Colors.white
+                            : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isAvailable
+                              ? (_selectedTimeSlot != null && _selectedTimeSlot!['id_detail'] == timeSlot['id_detail'])
+                              ? appTheme.orange200
+                              : appTheme.lightGrey
+                              : Colors.grey[300]!,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        timeString,
+                        style: TextStyle(
+                          color: isAvailable
+                              ? (_selectedTimeSlot != null && _selectedTimeSlot!['id_detail'] == timeSlot['id_detail'])
+                              ? Colors.white
+                              : appTheme.black900
+                              : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  // Booking treatment function
+  // Add day selection handler to fetch time slots
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+      _selectedTimeSlot = null;
+    });
+
+    _fetchTimeSlots(selectedDay);
+  }
+
+// Update booking treatment function to use time slot ID
   Future<void> _bookTreatment() async {
     if (!_isFormValid) return;
 
@@ -173,78 +273,42 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       final String? token = prefs.getString('token');
       final int? userId = prefs.getInt('id_user');
 
-      if (token == null) {
+      if (token == null || userId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Silakan login untuk melakukan booking')),
+          const SnackBar(content: Text('Silakan login terlebih dahulu')),
         );
-        setState(() {
-          _isBookingLoading = false;
-        });
+        setState(() => _isBookingLoading = false);
         return;
       }
 
-      if (userId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User ID tidak ditemukan, silakan login ulang')),
-        );
-        setState(() {
-          _isBookingLoading = false;
-        });
-        return;
-      }
-
-      // Format waktu treatment: YYYY-MM-DD HH:MM:SS
-      final DateTime treatmentDate = DateTime(
-        _selectedDay!.year,
-        _selectedDay!.month,
-        _selectedDay!.day,
-        _selectedTime!.hour,
-        _selectedTime!.minute,
-      );
-
-      final String formattedDate =
-          '${treatmentDate.year}-'
-          '${treatmentDate.month.toString().padLeft(2, '0')}-'
-          '${treatmentDate.day.toString().padLeft(2, '0')} '
-          '${treatmentDate.hour.toString().padLeft(2, '0')}:'
-          '${treatmentDate.minute.toString().padLeft(2, '0')}:00';
-
-      // Calculate prices and discount
-      double totalPrice = _calculateTotalPrice();
-      double discount = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
-      double tax = _calculateTax();
-      double finalPrice = totalPrice - discount + tax;
-      if (finalPrice < 0) finalPrice = 0.0;
+      // Format date
+      final String formattedDate = "${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}";
 
       // Create treatment detail list for request
       final List<Map<String, dynamic>> treatmentDetails = _treatments.map((treatment) {
         return {
-          'id_treatment': treatment['id_treatment'],
+          "id_treatment": treatment['id_treatment'],
+          "id_kompensasi_diberikan": null
         };
       }).toList();
 
-      // Create request body according to API format
+      // Create request body according to updated API format
       Map<String, dynamic> requestBody = {
         'id_user': userId,
         'waktu_treatment': formattedDate,
-        'id_dokter': null,
+        'id_detail_jadwal_treatment': _selectedTimeSlot!['id_detail'],
+        'id_dokter': 1, // This could be dynamic in the future
         'id_beautician': null,
-        'status_booking_treatment': 'Verifikasi',
         'id_promo': _selectedPromo?.idPromo,
-        'potongan_harga': discount.toStringAsFixed(2),
-        'besaran_pajak': tax.toStringAsFixed(2), // Add tax to request body
-        'harga_total': totalPrice.toStringAsFixed(2),
-        'harga_akhir_treatment': finalPrice.toStringAsFixed(2),
         'details': treatmentDetails,
       };
 
-      // Send the booking request
       final response = await http.post(
         Uri.parse(ApiConstants.bookingTreatment),
         headers: {
           'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: jsonEncode(requestBody),
       );
@@ -253,7 +317,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         final responseData = jsonDecode(response.body);
 
         // Safely access the booking ID
-        int bookingId = responseData['data']?['id_booking_treatment'] ??
+        int? bookingId = responseData['data']?['id_booking_treatment'] ??
             responseData['booking_treatment']?['id_booking_treatment'] ??
             responseData['id_booking_treatment'] ??
             responseData['id'];
@@ -267,27 +331,25 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Booking berhasil, tapi ID tidak ditemukan')),
+            const SnackBar(content: Text('Booking berhasil tapi ID tidak ditemukan')),
           );
-          Navigator.pop(context);
+          Navigator.pushReplacementNamed(context, AppRoutes.treatmentHistoryScreen);
         }
       } else {
-        final errorData = jsonDecode(response.body);
+        final errorMsg = response.body.isNotEmpty
+            ? jsonDecode(response.body)['message'] ?? 'Gagal melakukan booking'
+            : 'Gagal melakukan booking';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorData['message'] ?? 'Gagal membuat jadwal')),
+          SnackBar(content: Text(errorMsg)),
         );
       }
-
-      setState(() {
-        _isBookingLoading = false;
-      });
     } catch (e) {
-      setState(() {
-        _isBookingLoading = false;
-      });
+      setState(() => _isBookingLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
+    } finally {
+      setState(() => _isBookingLoading = false);
     }
   }
 
@@ -763,7 +825,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
                 // Calendar section
                 const Text(
-                  "Pilih Tanggal Treatment",
+                  "Pilih Tanggal & Waktu Treatment",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -773,132 +835,81 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
                 // Calendar widget
                 Container(
-                  decoration: BoxDecoration(
-                    color: appTheme.whiteA700,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: appTheme.lightGrey, width: 1),
-                  ),
                   padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: appTheme.lightGrey),
+                  ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Month selector
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${_focusedDay.month}/${_focusedDay.year}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back_ios, size: 16),
-                                onPressed: () {
-                                  setState(() {
-                                    _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
-                                  });
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.arrow_forward_ios, size: 16),
-                                onPressed: () {
-                                  setState(() {
-                                    _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                      // Calendar
                       TableCalendar(
                         firstDay: DateTime.now(),
-                        lastDay: DateTime(2030),
+                        lastDay: DateTime.now().add(const Duration(days: 60)),
                         focusedDay: _focusedDay,
                         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                        onDaySelected: (selectedDay, focusedDay) {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay = focusedDay;
-                          });
-                        },
                         calendarFormat: CalendarFormat.month,
-                        headerVisible: false,
+                        startingDayOfWeek: StartingDayOfWeek.monday,
+                        headerStyle: HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                          titleTextStyle: TextStyle(
+                            color: appTheme.black900,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         calendarStyle: CalendarStyle(
+                          outsideDaysVisible: false,
                           selectedDecoration: BoxDecoration(
                             color: appTheme.orange200,
                             shape: BoxShape.circle,
                           ),
-                          selectedTextStyle: const TextStyle(color: Colors.white),
                           todayDecoration: BoxDecoration(
                             color: appTheme.orange200.withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
-                          todayTextStyle: TextStyle(color: appTheme.black900, fontWeight: FontWeight.bold),
-                          defaultTextStyle: TextStyle(color: appTheme.black900),
-                          outsideTextStyle: const TextStyle(color: Colors.grey),
-                          outsideDaysVisible: false,
-                          weekendTextStyle: TextStyle(color: appTheme.orange200),
+                          selectedTextStyle: const TextStyle(color: Colors.white),
                         ),
-                        daysOfWeekStyle: DaysOfWeekStyle(
-                          weekdayStyle: TextStyle(
-                            color: appTheme.black900,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                        onDaySelected: _onDaySelected,
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: _selectedDay != null ? _showTimeSlotSelector : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: appTheme.lightGrey),
+                            borderRadius: BorderRadius.circular(8),
+                            color: _selectedDay == null ? Colors.grey[200] : Colors.white,
                           ),
-                          weekendStyle: TextStyle(
-                            color: appTheme.orange200,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _selectedTimeSlot != null
+                                    ? "Waktu: ${_selectedTimeSlot!['waktu_tersedia'].toString().substring(0, 5)}"
+                                    : "Pilih Waktu",
+                                style: TextStyle(
+                                  color: _selectedTimeSlot != null ? appTheme.black900 : Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Icon(
+                                Icons.access_time,
+                                color: _selectedDay == null ? Colors.grey : appTheme.orange200,
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Time picker section
-                const Text(
-                  "Pilih Jam Treatment",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: _showTimePicker,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: appTheme.whiteA700,
-                      border: Border.all(color: appTheme.lightGrey, width: 1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _selectedTime == null
-                              ? "Pilih jam treatment"
-                              : "Jam ${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}",
-                          style: TextStyle(
-                            color: _selectedTime == null
-                                ? appTheme.black900.withOpacity(0.5)
-                                : appTheme.black900,
-                            fontSize: 14,
-                          ),
+                      if (_isLoadingTimeSlots)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Center(child: CircularProgressIndicator(color: appTheme.orange200)),
                         ),
-                        Icon(Icons.access_time, color: appTheme.black900),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
 

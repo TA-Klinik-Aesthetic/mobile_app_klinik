@@ -75,10 +75,6 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
         },
       );
 
-      if (_consultationData?['status_booking_konsultasi'] == 'Selesai') {
-        await checkExistingFeedback();
-      }
-
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
@@ -87,10 +83,14 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
 
         // Check if the data is nested inside a data field
         final consultationData = responseData['data'] ?? responseData;
-
         setState(() {
           _consultationData = consultationData;
         });
+
+
+        if (_consultationData?['status_booking_konsultasi'] == 'Selesai') {
+          await checkExistingFeedback();
+        }
 
         // Fetch treatments data for recommendations
         if (_consultationData?['detail_konsultasi'] != null &&
@@ -211,7 +211,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
       }
 
       final response = await http.put(
-        Uri.parse('${ApiConstants.bookingKonsultasi}/${widget.consultationId}'),
+        Uri.parse('${ApiConstants.bookingKonsultasi}/${widget.consultationId}/keluhan'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -953,87 +953,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
             const SizedBox(height: 16),
 
             // CONTAINER 4: Rating Section (only when status is "Selesai")
-            if (isConsultationComplete)
-              Card(
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: appTheme.lightGrey,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Beri Penilaian',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: appTheme.black900,
-                        ),
-                      ),
-                      const Divider(height: 24),
-
-                      // Rating Bar
-                      Center(
-                        child: RatingBar.builder(
-                          initialRating: _rating,
-                          minRating: 1,
-                          direction: Axis.horizontal,
-                          allowHalfRating: false,
-                          itemCount: 5,
-                          itemSize: 48,
-                          itemPadding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemBuilder: (context, _) => Icon(
-                            Icons.star,
-                            color: appTheme.orange200,
-                          ),
-                          onRatingUpdate: (rating) {
-                            setState(() {
-                              _rating = rating;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Feedback Text Area
-                      Text(
-                        'Tambahkan Komentar',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: appTheme.black900,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _feedbackController,
-                        maxLines: 4,
-                        maxLength: 100,
-                        decoration: InputDecoration(
-                          hintText: 'Jelaskan Pengalaman Anda',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: appTheme.lightGrey),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: appTheme.orange200),
-                          ),
-                          contentPadding: const EdgeInsets.all(16),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            // Submit Button (only when status is "Selesai")
+            // and feedback does not already exist
             if (isConsultationComplete)
               Card(
                 margin: EdgeInsets.zero,

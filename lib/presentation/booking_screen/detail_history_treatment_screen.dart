@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/presentation/user_screen/complaint_screen.dart';
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -239,10 +240,18 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
               icon: Icon(
                 Icons.support_agent_rounded,
                 size: 24,
-                color: appTheme.darkCherry, // Dark cherry color
+                color: appTheme.darkCherry,
               ),
               onPressed: () {
-                // Handle support action
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ComplaintScreen(
+                      bookingId: widget.bookingId,
+                      treatments: _bookingData?['detail_booking'] ?? [],
+                    ),
+                  ),
+                );
               },
             ),
         ],

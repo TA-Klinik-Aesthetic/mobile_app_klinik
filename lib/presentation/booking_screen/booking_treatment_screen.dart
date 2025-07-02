@@ -15,6 +15,7 @@ class BookingTreatmentScreen extends StatefulWidget {
 
 class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
   List<dynamic> jenisTreatments = [];
+  Map<int, List<dynamic>> treatmentsByCategory = {};
   bool _isLoading = true;
   String? error;
   // Store selected treatments at parent level to persist across category changes
@@ -59,6 +60,20 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
         final data = jsonDecode(response.body);
         setState(() {
           jenisTreatments = data['data'];
+
+          // Extract treatments from each category and store them in the map
+          treatmentsByCategory.clear(); // Clear existing data first
+          for (var category in jenisTreatments) {
+            int categoryId = category['id_jenis_treatment'];
+            if (category['treatment'] != null && category['treatment'] is List) {
+              treatmentsByCategory[categoryId] = List.from(category['treatment']);
+              print('Category $categoryId has ${treatmentsByCategory[categoryId]?.length} treatments');
+            } else {
+              treatmentsByCategory[categoryId] = [];
+              print('Category $categoryId has no treatments');
+            }
+          }
+
           _isLoading = false;
         });
       } else {
@@ -72,6 +87,7 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
         error = 'Error: $e';
         _isLoading = false;
       });
+      print('Error in fetchJenisTreatment: $e');
     }
   }
 
@@ -130,20 +146,31 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : error != null
+          ? Center(child: Text(error!))
+          : jenisTreatments.isEmpty
           ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(error!),
-            const SizedBox(height: 16),
+            Icon(Icons.sentiment_dissatisfied, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Belum ada treatment dalam kategori ini',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
             ElevatedButton(
               onPressed: _refreshData,
-              child: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: appTheme.orange200,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Refresh'),
             ),
           ],
         ),
       )
-        : RefreshIndicator(
+          : RefreshIndicator(
         onRefresh: _refreshData,
         color: appTheme.orange200,
         child: Padding(
@@ -157,15 +184,20 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
                   itemCount: jenisTreatments.length,
                   itemBuilder: (context, index) {
                     final treatment = jenisTreatments[index];
+                    final categoryId = treatment['id_jenis_treatment'];
+                    // Get treatments for this category
+                    final categoryTreatments = treatmentsByCategory[categoryId] ?? [];
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: TreatmentCategoryCard(
                         name: treatment['nama_jenis_treatment'],
-                        id: treatment['id_jenis_treatment'],
+                        id: categoryId,
                         description: treatment['deskripsi_treatment'] ?? 'Treatment spesial untuk kebutuhan Anda',
                         selectedTreatments: _selectedTreatments,
                         updateSelectedTreatments: updateSelectedTreatments,
                         maxSelections: maxSelections,
+                        treatments: categoryTreatments, // Pass treatments directly
                       ),
                     );
                   },
@@ -263,6 +295,7 @@ class TreatmentCategoryCard extends StatelessWidget {
   final List<Map<String, dynamic>> selectedTreatments;
   final Function(Map<String, dynamic>) updateSelectedTreatments;
   final int maxSelections;
+  final List<dynamic> treatments; // Add this parameter
 
   const TreatmentCategoryCard({
     super.key,
@@ -272,6 +305,7 @@ class TreatmentCategoryCard extends StatelessWidget {
     required this.selectedTreatments,
     required this.updateSelectedTreatments,
     required this.maxSelections,
+    required this.treatments,
   });
 
   @override
@@ -288,8 +322,9 @@ class TreatmentCategoryCard extends StatelessWidget {
               selectedTreatments: selectedTreatments,
               updateSelectedTreatments: updateSelectedTreatments,
               maxSelections: maxSelections,
+              preloadedTreatments: treatments, // Pass treatments directly
             ),
-            fullscreenDialog: true, // Hide bottom navigation
+            fullscreenDialog: true,
           ),
         );
       },
@@ -341,6 +376,7 @@ class TreatmentListScreen extends StatefulWidget {
   final List<Map<String, dynamic>> selectedTreatments;
   final Function(Map<String, dynamic>) updateSelectedTreatments;
   final int maxSelections;
+  final List<dynamic> preloadedTreatments;
 
   const TreatmentListScreen({
     super.key,
@@ -349,6 +385,7 @@ class TreatmentListScreen extends StatefulWidget {
     required this.selectedTreatments,
     required this.updateSelectedTreatments,
     required this.maxSelections,
+    required this.preloadedTreatments,
   });
 
   @override
@@ -367,7 +404,10 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
   @override
   void initState() {
     super.initState();
-    fetchTreatmentsByCategory();
+    treatments = widget.preloadedTreatments;
+    print('TreatmentListScreen initialized with ${treatments.length} treatments');
+    print('Category ID: ${widget.categoryId}, Category Name: ${widget.categoryName}');
+    _isLoading = false;
     checkFavoriteTreatments();
   }
 
@@ -380,8 +420,12 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
   Future<void> _refreshData() async {
     setState(() {
       error = null;
+      // Just use the preloaded data again for refresh
+      treatments = widget.preloadedTreatments;
+      _isLoading = false;
     });
-    await fetchTreatmentsByCategory();
+
+    await checkFavoriteTreatments();
 
     // Scroll to top after refresh
     if (_scrollController.hasClients) {

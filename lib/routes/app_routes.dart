@@ -30,6 +30,7 @@ class AppRoutes {
   static const String bookingScreen = '/booking_screen';
   static const String bookingConsultationScreen = '/booking_consultation_screen';
   static const String bookingTreatmentScreen = '/booking_treatment_screen';
+  static const String treatmentHistoryScreen = '/treatment_history_screen';
   static const String userScreen = '/user_screen';
   static const String promoScreen = '/promo_screen';
   static const String favoriteUserScreen = '/favorite_screen';
@@ -49,6 +50,7 @@ class AppRoutes {
     bookingScreen: (context) => const BookingScreen(),
     bookingConsultationScreen: (context) => const BookingConsultationScreen(),
     bookingTreatmentScreen: (context) => const BookingTreatmentScreen(),
+    treatmentHistoryScreen: (context) => const HistoryVisitScreen(),
     userScreen: (context) => const UserScreen(),
     favoriteUserScreen: (context) => const FavoriteScreen(),
     appNavigationScreen: (context) => const AppNavigationScreen(),

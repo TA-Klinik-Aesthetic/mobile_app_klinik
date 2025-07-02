@@ -21,6 +21,7 @@ class ApiConstants {
   static const String feedbackKonsultasi = "$baseUrl/feedbacks";  
   static const String bookingTreatment = "$baseUrl/detailBookingTreatments";
   static const String detailBookingTreatment = "$baseUrl/detailBookingTreatments";
+  static const String jadwalTreatment = '$baseUrl/jadwal-treatment';
   static const String dokter = "$baseUrl/dokters";
   static const String jenisTreatment = "$baseUrl/jenisTreatments";
   static const String beautician = "$baseUrl/beauticians";

@@ -417,7 +417,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     borderRadius: BorderRadius.circular(12),
                     child: treatment['gambar_treatment'] != null
                         ? Image.network(
-                      treatment['gambar_treatment'],
+                      "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
                       width: 140,
                       height: 140,
                       fit: BoxFit.cover,

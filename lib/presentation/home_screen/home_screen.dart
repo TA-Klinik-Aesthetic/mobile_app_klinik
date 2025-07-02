@@ -488,19 +488,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 36),
 
               // Jadwal Doctor dengan padding
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16.0),
-                child: Text(
-                  "Jadwal Doctor",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
@@ -520,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Calender Jadwal Dokter",
+                            "Waktu Treatment Tersedia",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
