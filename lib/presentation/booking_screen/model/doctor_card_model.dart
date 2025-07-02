@@ -145,7 +145,7 @@ class _DoctorCardState extends State<DoctorCard> {
                     
                     // Pengalaman
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color: appTheme.whiteA700,
                         border: Border.all(color: Colors.grey),
