@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/presentation/user_screen/history_complaint_screen.dart';
 import 'package:toastification/toastification.dart';
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
@@ -284,7 +285,12 @@ class _UserScreenState extends State<UserScreen> {
                 _buildMenuOption(
                   title: 'Pengajuan Komplain',
                   onTap: () {
-                    // Navigate to complaint screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HistoryComplaintScreen(),
+                      ),
+                    );
                   },
                 ),
 
@@ -402,7 +408,7 @@ class _UserScreenState extends State<UserScreen> {
             Text(
               title,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
             ),
