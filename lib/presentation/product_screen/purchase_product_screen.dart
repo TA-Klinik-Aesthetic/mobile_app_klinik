@@ -492,7 +492,7 @@ class _PurchaseProductScreenState extends State<PurchaseProductScreen> {
                       '- Rp ${_formatPrice(purchaseData['potongan_harga'])}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: appTheme.orange200,
+                        color: appTheme.lightGreen,
                       ),
                     ),
                   ],

@@ -664,9 +664,10 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Detail Booking Treatment',
+          'Booking Treatment',
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
         backgroundColor: appTheme.whiteA700,
@@ -756,7 +757,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                     LayoutBuilder(
                                       builder: (context, constraints) {
                                         // Calculate available width considering the price text width
-                                        const priceWidth = 120.0; // Approximate width for price text
+                                        const priceWidth = 80.0; // Approximate width for price text
                                         final availableWidth = constraints.maxWidth - priceWidth - 16; // 16 for spacing
 
                                         return Container(
@@ -810,28 +811,18 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                   Positioned(
                                     top: -8,
                                     right: -8,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.shade50,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.red.shade200,
-                                          width: 1,
-                                        ),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: appTheme.darkCherry,
+                                        size: 20,
                                       ),
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.red.shade600,
-                                          size: 18,
-                                        ),
-                                        padding: const EdgeInsets.all(2),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 12,
-                                          minHeight: 12,
-                                        ),
-                                        onPressed: () => _showDeleteConfirmation(context, index),
+                                      padding: const EdgeInsets.all(2),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 12,
+                                        minHeight: 12,
                                       ),
+                                      onPressed: () => _showDeleteConfirmation(context, index),
                                     ),
                                   ),
                               ],
@@ -874,6 +865,34 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                           headerStyle: const HeaderStyle(
                             formatButtonVisible: false,
                             titleCentered: true,
+                          ),
+                          calendarStyle: CalendarStyle(
+                            selectedDecoration: BoxDecoration(
+                              color: appTheme.orange200,
+                              shape: BoxShape.circle,
+                            ),
+                            selectedTextStyle: const TextStyle(color: Colors.white),
+                            todayDecoration: BoxDecoration(
+                              color: appTheme.orange200.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            todayTextStyle: TextStyle(color: appTheme.black900, fontWeight: FontWeight.bold),
+                            defaultTextStyle: TextStyle(color: appTheme.black900),
+                            outsideTextStyle: const TextStyle(color: Colors.grey),
+                            outsideDaysVisible: false,
+                            weekendTextStyle: TextStyle(color: appTheme.orange200),
+                          ),
+                          daysOfWeekStyle: DaysOfWeekStyle(
+                            weekdayStyle: TextStyle(
+                              color: appTheme.black900,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            weekendStyle: TextStyle(
+                              color: appTheme.orange200,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                           availableGestures: AvailableGestures.all,
                         ),
