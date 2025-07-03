@@ -931,10 +931,10 @@ class TreatmentCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         treatment['nama_treatment'] ?? 'Unnamed Treatment',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: appTheme.orange200,
                         ),
                       ),
                     ),

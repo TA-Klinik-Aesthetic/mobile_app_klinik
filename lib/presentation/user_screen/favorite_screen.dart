@@ -296,6 +296,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           final product = favoriteProducts[index];
           return InkWell(
             onTap: () {
+              // Debug print to check product data structure
+              print('Favorite product data: $product');
+
               Navigator.push(
                 context,
                 MaterialPageRoute(

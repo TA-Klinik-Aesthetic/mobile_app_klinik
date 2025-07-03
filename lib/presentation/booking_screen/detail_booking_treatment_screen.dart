@@ -777,11 +777,12 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Booking Treatment',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
+            color: appTheme.orange200,
           ),
         ),
         backgroundColor: appTheme.whiteA700,
