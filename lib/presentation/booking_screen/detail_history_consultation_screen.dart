@@ -87,31 +87,8 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
           _consultationData = consultationData;
         });
 
-
         if (_consultationData?['status_booking_konsultasi'] == 'Selesai') {
           await checkExistingFeedback();
-        }
-
-        // Fetch treatments data for recommendations
-        if (_consultationData?['detail_konsultasi'] != null &&
-            _consultationData!['detail_konsultasi'] is List &&
-            _consultationData!['detail_konsultasi'].isNotEmpty) {
-          for (var detail in _consultationData!['detail_konsultasi']) {
-            // Similarly for treatment data:
-            if (detail['id_treatment'] != null) {
-              try {
-                int treatmentId;
-                if (detail['id_treatment'] is int) {
-                  treatmentId = detail['id_treatment'];
-                } else {
-                  treatmentId = int.parse(detail['id_treatment'].toString());
-                }
-                await fetchTreatmentData(treatmentId);
-              } catch (e) {
-                print('Error parsing treatment ID: $e');
-              }
-            }
-          }
         }
 
         // Fetch doctor ratings if doctor exists
@@ -921,8 +898,8 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                   ),
                                   const SizedBox(height: 8),
 
-                                  // Recommended Treatment
-                                  if (detail['id_treatment'] != null)
+                                  // Recommended Treatment - Updated to use nested treatment data
+                                  if (detail['treatment'] != null)
                                     RichText(
                                       text: TextSpan(
                                         style: DefaultTextStyle.of(context).style,
@@ -932,7 +909,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                           ),
                                           TextSpan(
-                                            text: _treatmentData?['nama_treatment'] ?? '-',
+                                            text: detail['treatment']['nama_treatment'] ?? '-',
                                             style: const TextStyle(fontSize: 14),
                                           ),
                                         ],
