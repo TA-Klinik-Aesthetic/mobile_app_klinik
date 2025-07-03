@@ -53,6 +53,7 @@ dependencies:
   image_picker: ^1.1.2
   package_info_plus: ^8.3.0
   card_swiper: ^3.0.1
+  font_awesome_flutter: ^10.8.0
   flutter_rating_bar: ^4.0.0
   midtrans_sdk: ^1.0.1
   share_plus: ^7.0.0

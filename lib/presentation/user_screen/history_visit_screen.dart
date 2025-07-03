@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toastification/toastification.dart';
 import '../../../api/api_constant.dart';
 import '../../core/app_export.dart';
 import '../booking_screen/detail_history_consultation_screen.dart';
@@ -21,6 +23,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
   List<dynamic> _treatments = [];
   List<Map<String, dynamic>> _combinedHistory = [];
   String? _errorMessage;
+  bool _isNewestFirst = true;
 
   @override
   void initState() {
@@ -94,8 +97,8 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         });
       }
 
-      // Sort by date, newest first
-      _combinedHistory.sort((a, b) => b['date'].compareTo(a['date']));
+      // Sort based on current sort order
+      _sortHistory();
 
       setState(() {
         _isLoading = false;
@@ -106,6 +109,58 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         _errorMessage = 'An error occurred: $e';
       });
     }
+  }
+
+  // Add method to handle sorting
+  void _sortHistory() {
+    if (_isNewestFirst) {
+      // Sort by date, newest first
+      _combinedHistory.sort((a, b) => b['date'].compareTo(a['date']));
+    } else {
+      // Sort by date, oldest first
+      _combinedHistory.sort((a, b) => a['date'].compareTo(b['date']));
+    }
+  }
+
+  // Add method to toggle sort order
+  // Add method to toggle sort order with toast notification
+  void _toggleSortOrder() {
+    setState(() {
+      _isNewestFirst = !_isNewestFirst;
+      _sortHistory();
+    });
+
+    // Show toast notification
+    toastification.show(
+      context: context,
+      type: ToastificationType.info,
+      style: ToastificationStyle.flatColored,
+      title: Text(_isNewestFirst ? 'Menampilkan dari yang terbaru' : 'Menampilkan dari yang terlama'),
+      description: Text(_isNewestFirst
+          ? 'Data diurutkan dari tanggal terbaru ke terlama'
+          : 'Data diurutkan dari tanggal terlama ke terbaru'),
+      alignment: Alignment.topCenter,
+      autoCloseDuration: const Duration(seconds: 3),
+      icon: Icon(_isNewestFirst ? Icons.trending_down : Icons.trending_up),
+      primaryColor: appTheme.lightGreenOld,
+      backgroundColor: appTheme.lightGreen.withAlpha((0.6 * 255).toInt()),
+      foregroundColor: appTheme.black900,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x07000000),
+          blurRadius: 16,
+          offset: Offset(0, 16),
+          spreadRadius: 0,
+        )
+      ],
+      showProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      dragToClose: true,
+    );
   }
 
   String _formatDate(String dateString) {
@@ -529,6 +584,25 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         elevation: 0.0,
         centerTitle: true,
         foregroundColor: appTheme.black900,
+        actions: [
+          // Add toggle button for sort order
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              onPressed: _toggleSortOrder,
+              icon: Icon(
+                _isNewestFirst ? FontAwesomeIcons.sortAmountAsc : FontAwesomeIcons.sortAmountUpAlt,
+                color: appTheme.black900,
+              ),
+              tooltip: _isNewestFirst ? 'Urutkan dari yang terlama' : 'Urutkan dari yang terbaru',
+              style: IconButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -586,21 +660,41 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
           ],
         ),
       )
-          : RefreshIndicator(
-        onRefresh: fetchAllHistory,
-        color: appTheme.orange200,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _combinedHistory.length,
-          itemBuilder: (context, index) {
-            final item = _combinedHistory[index];
-            if (item['type'] == 'consultation') {
-              return _buildConsultationCard(item);
-            } else {
-              return _buildTreatmentCard(item);
-            }
-          },
-        ),
+          : Column(
+        children: [
+          // Add sort indicator below app bar
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: appTheme.whiteA700,
+              border: Border(
+                bottom: BorderSide(
+                  color: appTheme.lightGrey,
+                  width: 0.5,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: fetchAllHistory,
+              color: appTheme.orange200,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _combinedHistory.length,
+                itemBuilder: (context, index) {
+                  final item = _combinedHistory[index];
+                  if (item['type'] == 'consultation') {
+                    return _buildConsultationCard(item);
+                  } else {
+                    return _buildTreatmentCard(item);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
