@@ -162,12 +162,55 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
       );
 
       if (response.statusCode == 200) {
-        setState(() {
-          _doctorRatingData = json.decode(response.body);
-        });
+        final responseData = json.decode(response.body);
+        final feedbackList = responseData['data'] as List?;
+
+        if (feedbackList != null && feedbackList.isNotEmpty) {
+          double totalRating = 0;
+          int validRatingCount = 0;
+
+          for (var feedback in feedbackList) {
+            if (feedback['rating'] != null) {
+              try {
+                double rating = 0;
+                if (feedback['rating'] is int) {
+                  rating = feedback['rating'].toDouble();
+                } else if (feedback['rating'] is String) {
+                  rating = double.parse(feedback['rating']);
+                } else {
+                  rating = feedback['rating'].toDouble();
+                }
+                totalRating += rating;
+                validRatingCount++;
+              } catch (e) {
+                print('Error parsing rating: $e');
+              }
+            }
+          }
+
+          setState(() {
+            _doctorRatingData = {
+              'average_rating': validRatingCount > 0 ? (totalRating / validRatingCount) : 0.0,
+              'total_reviews': validRatingCount,
+            };
+          });
+        } else {
+          setState(() {
+            _doctorRatingData = {
+              'average_rating': 0.0,
+              'total_reviews': 0,
+            };
+          });
+        }
       }
     } catch (e) {
       print('Error fetching doctor ratings: $e');
+      setState(() {
+        _doctorRatingData = {
+          'average_rating': 0.0,
+          'total_reviews': 0,
+        };
+      });
     }
   }
 
@@ -601,7 +644,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
               ),
             ),
 
-            if (_consultationData?['status_booking_konsultasi'] == 'Verifikasi' &&
+            if (_consultationData?['status_booking_konsultasi'] == 'Verifikasi' ||
                 _consultationData?['status_booking_konsultasi'] == 'Berhasil dibooking')
               Container(
                 margin: const EdgeInsets.only(top: 16),
@@ -768,7 +811,8 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                               ),
                             ),
                             // Edit button - only visible for "Verifikasi" status and when not editing
-                            if (_consultationData?['status_booking_konsultasi'] == 'Verifikasi')
+                            if (_consultationData?['status_booking_konsultasi'] == 'Verifikasi' ||
+                                _consultationData?['status_booking_konsultasi'] == 'Berhasil dibooking')
                               IconButton(
                                 icon: Icon(
                                   _isEditing ? Icons.save : Icons.edit,

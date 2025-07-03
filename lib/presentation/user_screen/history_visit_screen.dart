@@ -11,7 +11,7 @@ import '../booking_screen/detail_history_consultation_screen.dart';
 import '../booking_screen/detail_history_treatment_screen.dart';
 
 class HistoryVisitScreen extends StatefulWidget {
-  const HistoryVisitScreen({Key? key}) : super(key: key);
+  const HistoryVisitScreen({super.key});
 
   @override
   State<HistoryVisitScreen> createState() => _HistoryVisitScreenState();
@@ -50,18 +50,18 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
         return;
       }
 
-      // Fetch consultations
+      // Fetch consultations with user-specific endpoint
       final consultationResponse = await http.get(
-        Uri.parse(ApiConstants.bookingKonsultasi),
+        Uri.parse('${ApiConstants.bookingKonsultasi}/user/$userId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
       );
 
-      // Fetch treatments
+      // Fetch treatments with user-specific endpoint
       final treatmentResponse = await http.get(
-        Uri.parse(ApiConstants.bookingTreatment),
+        Uri.parse('${ApiConstants.bookingTreatment}/user/$userId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -75,7 +75,7 @@ class _HistoryVisitScreenState extends State<HistoryVisitScreen> {
 
       if (treatmentResponse.statusCode == 200) {
         final treatmentData = json.decode(treatmentResponse.body);
-        _treatments = treatmentData['booking_treatments'] ?? [];
+        _treatments = treatmentData['booking_treatment'] ?? [];
       }
 
       // Combine both types into a single list with a type indicator

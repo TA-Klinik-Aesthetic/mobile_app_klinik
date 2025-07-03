@@ -649,14 +649,22 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                
+
                                 // Rating stars
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: List.generate(5, (index) {
+                                    // Parse the rating string to int safely
+                                    int ratingValue = 0;
+                                    try {
+                                      ratingValue = int.parse(topFeedbacks[0]['rating'].toString());
+                                    } catch (e) {
+                                      ratingValue = 0;
+                                    }
+
                                     return Icon(
                                       Icons.star,
-                                      color: index < (int.parse(topFeedbacks[0]['rating'].toString()))
+                                      color: index < ratingValue
                                           ? Colors.orange
                                           : Colors.grey,
                                       size: 24,
@@ -736,15 +744,23 @@ class _DetailBookingKonsultasiState extends State<DetailBookingKonsultasi> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    
+
                                     // Rating stars
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: List.generate(5, (starIndex) {
+                                        // Parse the rating string to int safely
+                                        int ratingValue = 0;
+                                        try {
+                                          ratingValue = int.parse(feedback['rating'].toString());
+                                        } catch (e) {
+                                          ratingValue = 0;
+                                        }
+
                                         return Icon(
                                           Icons.star,
-                                          color: starIndex < (feedback['rating']) 
-                                              ? appTheme.orange400 
+                                          color: starIndex < ratingValue
+                                              ? appTheme.orange400
                                               : Colors.grey,
                                           size: 16,
                                         );

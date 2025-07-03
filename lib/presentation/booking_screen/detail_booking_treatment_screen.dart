@@ -965,7 +965,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                         Text(
                           'Pilih Tanggal & Waktu',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: appTheme.black900,
                           ),
@@ -1068,7 +1068,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                         Text(
                           'Promo',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: appTheme.black900,
                           ),
