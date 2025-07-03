@@ -933,10 +933,10 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Subtotal:', style: TextStyle(fontSize: 14)),
+                    const Text('Subtotal:', style: TextStyle(fontSize: 16)),
                     Text(
                       'Rp ${_formatPrice(totalPrice)}',
-                      style: const TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ],
                 ),
@@ -950,8 +950,8 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           Text(
                             'Diskon',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: appTheme.orange200,
+                              fontSize: 16,
+                              color: appTheme.black900,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -974,8 +974,8 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                       Text(
                         '- Rp ${_formatPrice(_selectedPromo!.calculateDiscount(totalPrice))}',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: appTheme.orange200,
+                          fontSize: 16,
+                          color: appTheme.lightGreen,
                         ),
                       ),
                     ],
@@ -986,10 +986,10 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Pajak 10%', style: TextStyle(fontSize: 14)),
+                    Text('Pajak (10%)', style: TextStyle(fontSize: 14,color: appTheme.black900)),
                     Text(
                       '+ Rp ${_formatPrice(_calculateTax())}',
-                      style: TextStyle(fontSize: 14, color: appTheme.darkCherry),
+                      style: TextStyle(fontSize: 16, color: appTheme.darkCherry),
                     ),
                   ],
                 ),
@@ -1002,7 +1002,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                     Text(
                       'Total Pembayaran:',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: appTheme.black900,
                       ),
@@ -1010,7 +1010,7 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                     Text(
                       'Rp ${_formatPrice(_calculateFinalPrice())}',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: appTheme.orange200,
                       ),

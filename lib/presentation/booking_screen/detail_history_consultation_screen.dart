@@ -624,7 +624,8 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
               ),
             ),
 
-            if (_consultationData?['status_booking_konsultasi'] == 'Berhasil dibooking')
+            if (_consultationData?['status_booking_konsultasi'] == 'Verifikasi' &&
+                _consultationData?['status_booking_konsultasi'] == 'Berhasil dibooking')
               Container(
                 margin: const EdgeInsets.only(top: 16),
                 width: double.infinity,
@@ -931,7 +932,7 @@ class _DetailHistoryConsultationScreenState extends State<DetailHistoryConsultat
                                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                           ),
                                           TextSpan(
-                                            text: _treatmentData?['nama_treatment'] ?? 'Loading...',
+                                            text: _treatmentData?['nama_treatment'] ?? '-',
                                             style: const TextStyle(fontSize: 14),
                                           ),
                                         ],

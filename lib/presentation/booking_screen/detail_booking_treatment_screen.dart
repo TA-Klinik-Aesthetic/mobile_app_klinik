@@ -21,12 +21,14 @@ class DetailBookingTreatmentScreen extends StatefulWidget {
 
 class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScreen> {
   late List<Map<String, dynamic>> _treatments;
-  List<Promo> _promos = [];
   List<String> _availableTimeSlots = [];
   List<String> _bookedTimeSlots = [];
   String? _selectedTimeSlot;
   bool _isLoadingTimeSlots = false;
   Promo? _selectedPromo;
+
+  //Promo Related
+  List<Promo> _promos = [];
   bool _isLoadingPromos = false;
   final PromoService _promoService = PromoService();
 
@@ -335,6 +337,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     try {
       final promos = await _promoService.fetchPromos();
       setState(() {
+        // Filter promos to only include "Produk" type
         _promos = promos.where((promo) => promo.jenisPromo == "Treatment").toList();
         _isLoadingPromos = false;
       });
@@ -554,21 +557,43 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Pilih Promo',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: appTheme.black900,
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: appTheme.black900),
                 onPressed: () => Navigator.pop(context),
-              ),
+                icon: const Icon(Icons.close),
+              )
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          if (_selectedPromo != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: appTheme.lightGreen, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green),
+                  const SizedBox(width: 10),
+                  Text(
+                    '${_selectedPromo!.namaPromo} berhasil diterapkan',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: _isLoadingPromos
                 ? const Center(child: CircularProgressIndicator())
@@ -604,24 +629,111 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         final promo = _promos[index];
         bool isSelected = _selectedPromo != null && _selectedPromo!.idPromo == promo.idPromo;
 
+        // Check if cart total meets minimum spending requirement
+        double minBelanja = double.tryParse(promo.minimalBelanja ?? '0') ?? 0;
+        bool isEligible = _calculateTotalPrice() >= minBelanja;
+        double amountNeeded = minBelanja - _calculateTotalPrice();
+
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: Icon(
-              Icons.local_offer,
-              color: isSelected ? appTheme.orange200 : Colors.grey,
+          margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSelected ? appTheme.orange200 : Colors.transparent,
+              width: 2,
             ),
-            title: Text(promo.namaPromo ?? 'Nama promo tidak tersedia'),
-            subtitle: Text(promo.deskripsiPromo ?? 'Deskripsi tidak tersedia'),
-            trailing: isSelected
-                ? Icon(Icons.check_circle, color: appTheme.orange200)
-                : null,
-            onTap: () {
+          ),
+          child: InkWell(
+            onTap: isEligible ? () {
               setState(() {
-                _selectedPromo = isSelected ? null : promo;
+                _selectedPromo = promo;
               });
               Navigator.pop(context);
-            },
+            } : null,
+            child: Opacity(
+              opacity: isEligible ? 1.0 : 0.7,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          promo.namaPromo ?? 'Promo',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isEligible ? appTheme.black900 : Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          promo.formatPromoValue(),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isEligible ? appTheme.orange200 : Colors.grey.shade500,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      promo.deskripsiPromo ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isEligible ? Colors.grey.shade600 : Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Minimal belanja: Rp ${_formatPrice(minBelanja)}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isEligible ? appTheme.orange200 : Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          "Periode: ${promo.formatDate(promo.tanggalMulai)} - ${promo.formatDate(promo.tanggalBerakhir)}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: appTheme.lightGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Show missing amount if not eligible
+                    if (!isEligible) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Text(
+                          "Belanja Rp ${_formatPrice(amountNeeded)} lagi untuk menggunakan promo ini",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -634,25 +746,27 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: appTheme.lightGrey),
-          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: appTheme.lightGrey, width: 1),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              _selectedPromo != null
-                  ? _selectedPromo!.namaPromo ?? 'Promo dipilih'
-                  : 'Pilih Promo (Opsional)',
-              style: TextStyle(
-                color: _selectedPromo != null
-                    ? appTheme.black900
-                    : Colors.grey[600],
+            Icon(Icons.discount_outlined, color: appTheme.orange200),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                _selectedPromo != null
+                    ? '${_selectedPromo!.namaPromo} diterapkan'
+                    : 'Gunakan Promo',
+                style: TextStyle(
+                  color: _selectedPromo != null ? appTheme.black900 : Colors.grey.shade600,
+                ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[600]),
+            Icon(
+              Icons.keyboard_arrow_right,
+              color: Colors.grey.shade600,
+            ),
           ],
         ),
       ),
@@ -833,6 +947,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     ),
                   );
                 }),
+                const SizedBox(height: 8),
 
                 // Date & Time Selection
                 Card(
@@ -873,7 +988,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                             ),
                             selectedTextStyle: const TextStyle(color: Colors.white),
                             todayDecoration: BoxDecoration(
-                              color: appTheme.orange200.withOpacity(0.3),
+                              color: appTheme.orange200.withAlpha(150),
                               shape: BoxShape.circle,
                             ),
                             todayTextStyle: TextStyle(color: appTheme.black900, fontWeight: FontWeight.bold),
@@ -896,18 +1011,18 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                           ),
                           availableGestures: AvailableGestures.all,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         // Debug information
                         if (_selectedDay != null) ...[
                           Text(
-                            'Tanggal dipilih: ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}',
+                            'Tanggal dipilih: ${_selectedDay!.day}-${_selectedDay!.month}-${_selectedDay!.year}',
                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                           ),
                           Text(
                             'Waktu terisi: ${_bookedTimeSlots.length} slot',
                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 16),
                         ],
                         // Time selection button
                         SizedBox(
@@ -935,8 +1050,9 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
 
-                // Promo Selection
+                // Promo Section
                 Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   shape: RoundedRectangleBorder(
@@ -956,7 +1072,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                             color: appTheme.black900,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         _buildPromoButton(),
                       ],
                     ),
@@ -996,7 +1112,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     children: [
                       const Text('Diskon:', style: TextStyle(fontSize: 16)),
                       Text('- Rp ${_formatPrice(_selectedPromo!.calculateDiscount(_calculateTotalPrice()))}',
-                          style: const TextStyle(fontSize: 16, color: Colors.green)),
+                          style: TextStyle(fontSize: 16, color: appTheme.lightGreen)),
                     ],
                   ),
                 ],
@@ -1005,7 +1121,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Pajak (10%):', style: TextStyle(fontSize: 16)),
-                    Text('Rp ${_formatPrice(_calculateTax())}', style: const TextStyle(fontSize: 16)),
+                    Text('+ Rp ${_formatPrice(_calculateTax())}', style: TextStyle(fontSize: 16, color: appTheme.darkCherry)),
                   ],
                 ),
                 const SizedBox(height: 8),
