@@ -43,6 +43,9 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
   bool _isBookingLoading = false;
   Map<String, dynamic>? _userData;
 
+  // Add time slot cache
+  Map<String, List<String>> _timeSlotCache = {};
+
   // Getter for form validation
   bool get _isFormValid =>
       _selectedDay != null &&
@@ -52,8 +55,16 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
   void initState() {
     super.initState();
     _treatments = List.from(widget.selectedTreatments);
-    _fetchPromos();
-    _getUserData();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Run all data fetching operations in parallel
+    await Future.wait([
+      _fetchPromos(),
+      _fetchCompensations(),
+      _getUserData(),
+    ]);
   }
 
   List<String> _generateTimeSlots() {
@@ -67,7 +78,24 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     return slots;
   }
 
+
   Future<void> _fetchBookedTimeSlots(DateTime date) async {
+    if (!mounted) return;
+
+    final dateKey = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+    // Check cache first
+    if (_timeSlotCache.containsKey(dateKey)) {
+      setState(() {
+        _bookedTimeSlots = _timeSlotCache[dateKey]!;
+        _availableTimeSlots = _generateTimeSlots()
+            .where((slot) => !_bookedTimeSlots.contains(slot))
+            .toList();
+        _isLoadingTimeSlots = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoadingTimeSlots = true;
       _bookedTimeSlots = [];
@@ -75,24 +103,17 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     });
 
     try {
-      final formattedDate = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-
-      // Get all booking treatments first
       final response = await http.get(
         Uri.parse(ApiConstants.bookingTreatment),
         headers: {
           'Accept': 'application/json',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
 
-      print('API Response Status: ${response.statusCode}');
-      print('API Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && mounted) {
         final data = jsonDecode(response.body);
         List<String> bookedSlotsForDate = [];
 
-        // Handle different response structures
         List<dynamic> bookings = [];
         if (data['data'] != null) {
           bookings = data['data'] is List ? data['data'] : [data['data']];
@@ -102,60 +123,46 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           bookings = [data['booking_treatment']];
         }
 
-        print('Total bookings found: ${bookings.length}');
-
         for (var booking in bookings) {
           if (booking['waktu_treatment'] != null) {
-            String waktuTreatment = booking['waktu_treatment'];
-            print('Processing booking time: $waktuTreatment');
-
             try {
-              DateTime bookingDateTime = DateTime.parse(waktuTreatment);
-
-              // Only add to booked slots if it's the same date
+              DateTime bookingDateTime = DateTime.parse(booking['waktu_treatment']);
               String bookingDateOnly = "${bookingDateTime.year}-${bookingDateTime.month.toString().padLeft(2, '0')}-${bookingDateTime.day.toString().padLeft(2, '0')}";
 
-              print('Booking date: $bookingDateOnly, Selected date: $formattedDate');
-
-              if (bookingDateOnly == formattedDate) {
-                String roundedTime = _roundToNearestSlot(bookingDateTime);
-                print('Adding booked slot for selected date: $roundedTime');
-                bookedSlotsForDate.add(roundedTime);
-              } else {
-                print('Skipping booking - different date');
+              if (bookingDateOnly == dateKey) {
+                String timeOnly = "${bookingDateTime.hour.toString().padLeft(2, '0')}:${bookingDateTime.minute.toString().padLeft(2, '0')}:00";
+                bookedSlotsForDate.add(timeOnly);
               }
             } catch (e) {
-              print('Error parsing time: $waktuTreatment - $e');
+              print('Error parsing booking time: $e');
             }
           }
         }
 
-        print('Booked slots for $formattedDate: $bookedSlotsForDate');
+        // Cache the result
+        _timeSlotCache[dateKey] = bookedSlotsForDate;
 
-        setState(() {
-          _bookedTimeSlots = bookedSlotsForDate;
-          _availableTimeSlots = _generateTimeSlots()
-              .where((slot) => !_bookedTimeSlots.contains(slot))
-              .toList();
-          _isLoadingTimeSlots = false;
-        });
-
-        print('Available slots: $_availableTimeSlots');
-      } else {
-        print('API Error: ${response.statusCode} - ${response.body}');
+        if (mounted) {
+          setState(() {
+            _bookedTimeSlots = bookedSlotsForDate;
+            _availableTimeSlots = _generateTimeSlots()
+                .where((slot) => !_bookedTimeSlots.contains(slot))
+                .toList();
+            _isLoadingTimeSlots = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching booked time slots: $e');
+      if (mounted) {
         setState(() {
           _availableTimeSlots = _generateTimeSlots();
           _isLoadingTimeSlots = false;
         });
       }
-    } catch (e) {
-      print('Error fetching booked time slots: $e');
-      setState(() {
-        _availableTimeSlots = _generateTimeSlots();
-        _isLoadingTimeSlots = false;
-      });
     }
   }
+
 
   String _roundToNearestSlot(DateTime time) {
     int hour = time.hour;
@@ -356,6 +363,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
   // Add this method to fetch compensations
   Future<void> _fetchCompensations() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoadingCompensations = true;
     });
@@ -366,9 +375,12 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       final int? userId = prefs.getInt('id_user');
 
       if (token == null || userId == null) {
-        setState(() {
-          _isLoadingCompensations = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingCompensations = false;
+            _availableCompensations = [];
+          });
+        }
         return;
       }
 
@@ -379,36 +391,59 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-      );
+      ).timeout(const Duration(seconds: 10)); // Add timeout
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _availableCompensations = (data as List).where((comp) =>
-          comp['komplain']['id_user'].toString() == userId.toString() &&
-              comp['status_kompensasi'] == 'Belum Digunakan'
-          ).toList();
-          _isLoadingCompensations = false;
-        });
+        final responseBody = response.body;
+        if (responseBody.isNotEmpty) {
+          final data = jsonDecode(responseBody);
+
+          // Handle both List and Map responses
+          List<dynamic> compensations = [];
+          if (data is List) {
+            compensations = data;
+          } else if (data is Map && data['data'] is List) {
+            compensations = data['data'];
+          }
+
+          if (mounted) {
+            setState(() {
+              _availableCompensations = compensations.where((comp) {
+                try {
+                  return comp['komplain'] != null &&
+                      comp['komplain']['id_user'].toString() == userId.toString() &&
+                      comp['status_kompensasi'] == 'Belum Digunakan';
+                } catch (e) {
+                  print('Error filtering compensation: $e');
+                  return false;
+                }
+              }).toList();
+              _isLoadingCompensations = false;
+            });
+          }
+        }
       } else {
-        setState(() {
-          _isLoadingCompensations = false;
-        });
+        if (mounted) {
+          setState(() {
+            _availableCompensations = [];
+            _isLoadingCompensations = false;
+          });
+        }
       }
     } catch (e) {
       print('Error fetching compensations: $e');
-      setState(() {
-        _isLoadingCompensations = false;
-      });
+      if (mounted) {
+        setState(() {
+          _availableCompensations = [];
+          _isLoadingCompensations = false;
+        });
+      }
     }
   }
 
-// Method to show compensation selection for a specific treatment
+  // Update compensation selection method to use preloaded data
   void _showCompensationSelection(int treatmentId, String treatmentName) {
-    if (_availableCompensations.isEmpty) {
-      _fetchCompensations();
-    }
-
+    // Data is already loaded, no need to fetch again
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -419,7 +454,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     );
   }
 
-// Build compensation bottom sheet
+  // Build compensation bottom sheet
   Widget _buildCompensationBottomSheet(int treatmentId, String treatmentName) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1005,6 +1040,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     );
   }
 
+  // Add loading indicator for the entire screen during initialization
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1027,6 +1064,17 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         child: Text(
           'Tidak ada treatment yang dipilih.',
           style: TextStyle(fontSize: 16, color: appTheme.lightGrey),
+        ),
+      )
+          : _isLoadingCompensations || _isLoadingPromos
+          ? const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Memuat data...'),
+          ],
         ),
       )
           : Column(
@@ -1454,5 +1502,12 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         ],
       ),
     );
+  }
+
+  // Move dispose method inside the class but outside build method
+  @override
+  void dispose() {
+    _timeSlotCache.clear();
+    super.dispose();
   }
 }
