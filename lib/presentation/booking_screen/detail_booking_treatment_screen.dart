@@ -641,8 +641,8 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       final List<Map<String, dynamic>> treatmentDetails = _treatments.map((treatment) {
         final treatmentId = treatment['id_treatment'];
         return {
-          "id_treatment": treatmentId,
-          "id_kompensasi_diberikan": _selectedCompensations[treatmentId]
+          'id_treatment': treatmentId,
+          'id_kompensasi_diberikan': _selectedCompensations[treatmentId],
         };
       }).toList();
 
@@ -667,28 +667,21 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
+        final bookingId = responseData['booking_id'] ?? responseData['id_booking_treatment'];
 
-        int? bookingId = responseData['booking_treatment']?['id_booking_treatment'];
-
-        if (bookingId != null) {
-          Navigator.push(
+        if (mounted) {
+          // Don't pop the screen, instead navigate to detail history
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => DetailHistoryTreatmentScreen(bookingId: bookingId),
             ),
           );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Booking berhasil tapi ID tidak ditemukan')),
-          );
-          Navigator.pushReplacementNamed(context, AppRoutes.treatmentHistoryScreen);
         }
       } else {
-        final errorMsg = response.body.isNotEmpty
-            ? jsonDecode(response.body)['message'] ?? 'Gagal melakukan booking'
-            : 'Gagal melakukan booking';
+        final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
+          SnackBar(content: Text('Gagal melakukan booking: ${errorData['message'] ?? 'Unknown error'}')),
         );
       }
     } catch (e) {

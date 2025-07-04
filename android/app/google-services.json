@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "731902008313",
+    "project_id": "navyahub-fcm",
+    "storage_bucket": "navyahub-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:731902008313:android:b116c9bd65d4fe051e7b28",
+        "android_client_info": {
+          "package_name": "com.example.mobile_app_klinik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjkwxJfHHwNo3xMJzk_1LfmrB319FsPrM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
