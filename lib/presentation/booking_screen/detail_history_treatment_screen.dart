@@ -36,8 +36,8 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
     });
 
     try {
-      // Check if bookingId is null
-      if (widget.bookingId == null) {
+      // Check if bookingId is null or invalid
+      if (widget.bookingId == null || widget.bookingId <= 0) {
         setState(() {
           _isLoading = false;
           _errorMessage = 'ID booking tidak valid';
@@ -56,6 +56,8 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
         return;
       }
 
+      print('Fetching booking details for ID: ${widget.bookingId}'); // Debug log
+
       final response = await http.get(
         Uri.parse('${ApiConstants.detailBookingTreatment}/${widget.bookingId}'),
         headers: {
@@ -64,10 +66,13 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
         },
       );
 
+      print('Response status: ${response.statusCode}'); // Debug log
+      print('Response body: ${response.body}'); // Debug log
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          _bookingData = data['booking_treatment'];
+          _bookingData = data['booking_treatment'] ?? data['data'];
           _isLoading = false;
         });
       } else {
@@ -78,6 +83,7 @@ class _DetailHistoryTreatmentScreenState extends State<DetailHistoryTreatmentScr
         });
       }
     } catch (e) {
+      print('Error in fetchBookingDetails: $e'); // Debug log
       setState(() {
         _isLoading = false;
         _errorMessage = 'Error: $e';

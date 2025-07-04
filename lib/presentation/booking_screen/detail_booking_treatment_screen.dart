@@ -78,6 +78,55 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     return slots;
   }
 
+  Future<void> _fetchLatestBookingAndNavigate(int userId, String token) async {
+    try {
+      // Fetch user's treatment bookings like in HistoryVisitScreen
+      final treatmentResponse = await http.get(
+        Uri.parse('${ApiConstants.bookingTreatment}/user/$userId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (treatmentResponse.statusCode == 200) {
+        final treatmentData = json.decode(treatmentResponse.body);
+        final treatments = treatmentData['booking_treatment'] ?? [];
+
+        if (treatments.isNotEmpty && mounted) {
+          // Get the latest booking (first item if sorted by date desc, or find the most recent)
+          final latestBooking = treatments.first;
+          final latestBookingId = latestBooking['id_booking_treatment'];
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailHistoryTreatmentScreen(bookingId: latestBookingId),
+            ),
+          );
+        } else {
+          // Fallback: show success message and go back
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking berhasil!')),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        // Fallback: show success message and go back
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking berhasil!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      print('Error fetching latest booking: $e');
+      // Fallback: show success message and go back
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking berhasil!')),
+      );
+      Navigator.pop(context);
+    }
+  }
 
   Future<void> _fetchBookedTimeSlots(DateTime date) async {
     if (!mounted) return;
@@ -640,10 +689,19 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
       final List<Map<String, dynamic>> treatmentDetails = _treatments.map((treatment) {
         final treatmentId = treatment['id_treatment'];
-        return {
+        final compensationId = _selectedCompensations[treatmentId];
+
+        // Create treatment detail map, only include compensation if it's not null
+        Map<String, dynamic> detail = {
           'id_treatment': treatmentId,
-          'id_kompensasi_diberikan': _selectedCompensations[treatmentId],
         };
+
+        // Only add compensation field if it's not null
+        if (compensationId != null) {
+          detail['id_kompensasi_diberikan'] = compensationId;
+        }
+
+        return detail;
       }).toList();
 
       Map<String, dynamic> requestBody = {
@@ -651,9 +709,13 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         'waktu_treatment': waktuTreatment,
         'id_dokter': null,
         'id_beautician': null,
-        'id_promo': _selectedPromo?.idPromo,
         'details': treatmentDetails,
       };
+
+      // Only add promo if it's selected
+      if (_selectedPromo?.idPromo != null) {
+        requestBody['id_promo'] = _selectedPromo!.idPromo;
+      }
 
       final response = await http.post(
         Uri.parse(ApiConstants.bookingTreatment),
@@ -667,16 +729,27 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        final bookingId = responseData['booking_id'] ?? responseData['id_booking_treatment'];
+        print('Response data: $responseData'); // Debug log
 
-        if (mounted) {
-          // Don't pop the screen, instead navigate to detail history
+        // Try multiple possible field names for booking ID
+        final bookingId = responseData['booking_id'] ??
+            responseData['id_booking_treatment'] ??
+            responseData['data']?['booking_id'] ??
+            responseData['data']?['id_booking_treatment'];
+
+        print('Extracted booking ID: $bookingId'); // Debug log
+
+        if (bookingId != null && mounted) {
+          // Navigate to detail history
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => DetailHistoryTreatmentScreen(bookingId: bookingId),
             ),
           );
+        } else {
+          // Handle case where booking ID is null - fetch latest booking
+          await _fetchLatestBookingAndNavigate(userId, token);
         }
       } else {
         final errorData = jsonDecode(response.body);
@@ -1101,21 +1174,21 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                 child: imageUrl.isNotEmpty
                                     ? Image.network(
                                   "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
-                                  width: 80,
-                                  height: 80,
+                                  width: 90,
+                                  height: 90,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
-                                      width: 80,
-                                      height: 80,
+                                      width: 90,
+                                      height: 90,
                                       color: Colors.grey[300],
                                       child: Icon(Icons.image_not_supported, color: Colors.grey[600]),
                                     );
                                   },
                                 )
                                     : Container(
-                                  width: 80,
-                                  height: 80,
+                                  width: 90,
+                                  height: 90,
                                   color: Colors.grey[300],
                                   child: Icon(Icons.image, color: Colors.grey[600]),
                                 ),
@@ -1221,10 +1294,11 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Compensation Button - ADD THIS SECTION
+
+                          // Compensation Button
                           SizedBox(
                             width: double.infinity,
-                            height: 24,
+                            height: 36,
                             child: OutlinedButton.icon(
                               onPressed: () => _showCompensationSelection(
                                 treatmentId,
@@ -1236,7 +1310,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                     : Icons.add,
                                 size: 18,
                                 color: _selectedCompensations[treatmentId] != null
-                                    ? appTheme.orange200
+                                    ? Colors.white
                                     : Colors.grey[600],
                               ),
                               label: Text(
@@ -1245,11 +1319,14 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                                     : 'Tambah Kompensasi',
                                 style: TextStyle(
                                   color: _selectedCompensations[treatmentId] != null
-                                      ? appTheme.orange200
+                                      ? Colors.white
                                       : Colors.grey[600],
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
+                                backgroundColor: _selectedCompensations[treatmentId] != null
+                                    ? appTheme.orange200
+                                    : Colors.white,
                                 side: BorderSide(
                                   color: _selectedCompensations[treatmentId] != null
                                       ? appTheme.orange200
