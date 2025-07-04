@@ -32,4 +32,5 @@ class ApiConstants {
   static const String viewDoctorFavorite = "$baseUrl/favorites/user/{id_user}/doctors";
   static const String viewProductFavorite = "$baseUrl/favorites/user/{id_user}/products";
   static const String viewTreatmentFavorite = "$baseUrl/favorites/user/{id_user}/treatments";
+  static const String kompensasiUser = "$baseUrl/kompensasi-diberikan";
 }

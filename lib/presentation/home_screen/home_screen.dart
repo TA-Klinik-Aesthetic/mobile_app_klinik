@@ -405,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     const TextSpan(
                       text: "Halo, ",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),
@@ -414,14 +414,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       text: namaUser,
                       style: TextStyle(
                         color: appTheme.orange200,
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const TextSpan(
                       text: "!",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),

@@ -27,6 +27,11 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
   bool _isLoadingTimeSlots = false;
   Promo? _selectedPromo;
 
+  // Add compensation related variables
+  Map<int, int?> _selectedCompensations = {}; // treatmentId -> compensationId
+  bool _isLoadingCompensations = false;
+  List<dynamic> _availableCompensations = [];
+
   //Promo Related
   List<Promo> _promos = [];
   bool _isLoadingPromos = false;
@@ -349,6 +354,232 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
     }
   }
 
+  // Add this method to fetch compensations
+  Future<void> _fetchCompensations() async {
+    setState(() {
+      _isLoadingCompensations = true;
+    });
+
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+      final int? userId = prefs.getInt('id_user');
+
+      if (token == null || userId == null) {
+        setState(() {
+          _isLoadingCompensations = false;
+        });
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConstants.kompensasiUser}/user/$userId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _availableCompensations = (data as List).where((comp) =>
+          comp['komplain']['id_user'].toString() == userId.toString() &&
+              comp['status_kompensasi'] == 'Belum Digunakan'
+          ).toList();
+          _isLoadingCompensations = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingCompensations = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching compensations: $e');
+      setState(() {
+        _isLoadingCompensations = false;
+      });
+    }
+  }
+
+// Method to show compensation selection for a specific treatment
+  void _showCompensationSelection(int treatmentId, String treatmentName) {
+    if (_availableCompensations.isEmpty) {
+      _fetchCompensations();
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _buildCompensationBottomSheet(treatmentId, treatmentName),
+    );
+  }
+
+// Build compensation bottom sheet
+  Widget _buildCompensationBottomSheet(int treatmentId, String treatmentName) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pilih Kompensasi',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'untuk $treatmentName',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Remove compensation option
+          if (_selectedCompensations[treatmentId] != null)
+            Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: Icon(Icons.remove_circle, color: Colors.red),
+                title: const Text('Hapus Kompensasi'),
+                subtitle: const Text('Tidak menggunakan kompensasi'),
+                onTap: () {
+                  setState(() {
+                    _selectedCompensations.remove(treatmentId);
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+
+          Expanded(
+            child: _isLoadingCompensations
+                ? const Center(child: CircularProgressIndicator())
+                : _availableCompensations.isEmpty
+                ? _buildEmptyCompensationState()
+                : _buildCompensationList(treatmentId),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Build empty compensation state
+  Widget _buildEmptyCompensationState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.card_giftcard_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'Tidak ada kompensasi tersedia',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Anda belum memiliki kompensasi yang dapat digunakan',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+// Build compensation list
+  Widget _buildCompensationList(int treatmentId) {
+    return ListView.builder(
+      itemCount: _availableCompensations.length,
+      itemBuilder: (context, index) {
+        final compensation = _availableCompensations[index];
+        final kompensasi = compensation['kompensasi'];
+        final isSelected = _selectedCompensations[treatmentId] == compensation['id_kompensasi_diberikan'];
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSelected ? appTheme.orange200 : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: ListTile(
+            leading: Icon(
+              Icons.card_giftcard,
+              color: isSelected ? appTheme.orange200 : Colors.grey[600],
+            ),
+            title: Text(
+              kompensasi['nama_kompensasi'] ?? 'Kompensasi',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? appTheme.orange200 : appTheme.black900,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  kompensasi['deskripsi_kompensasi'] ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kode: ${compensation['kode_kompensasi']}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: appTheme.orange200,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  'Berlaku hingga: ${compensation['tanggal_berakhir_kompensasi']}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+            trailing: isSelected ? Icon(Icons.check_circle, color: appTheme.orange200) : null,
+            onTap: () {
+              setState(() {
+                _selectedCompensations[treatmentId] = compensation['id_kompensasi_diberikan'];
+              });
+              Navigator.pop(context);
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _bookTreatment() async {
     if (!_isFormValid) return;
 
@@ -373,9 +604,10 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
       final String waktuTreatment = "$formattedDate $_selectedTimeSlot";
 
       final List<Map<String, dynamic>> treatmentDetails = _treatments.map((treatment) {
+        final treatmentId = treatment['id_treatment'];
         return {
-          "id_treatment": treatment['id_treatment'],
-          "id_kompensasi_diberikan": null
+          "id_treatment": treatmentId,
+          "id_kompensasi_diberikan": _selectedCompensations[treatmentId]
         };
       }).toList();
 
@@ -781,7 +1013,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
           'Booking Treatment',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 24,
             color: appTheme.orange200,
           ),
         ),
@@ -807,6 +1039,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                 ...List.generate(_treatments.length, (index) {
                   final treatment = _treatments[index];
                   final imageUrl = treatment['gambar_treatment'] ?? '';
+                  final treatmentId = treatment['id_treatment'];
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
@@ -816,131 +1049,173 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(
                         children: [
-                          // Treatment Image
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: imageUrl.isNotEmpty
-                                ? Image.network(
-                              "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Treatment Image
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: imageUrl.isNotEmpty
+                                    ? Image.network(
+                                  "https://klinikneshnavya.com/${treatment['gambar_treatment']}",
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 80,
+                                      height: 80,
+                                      color: Colors.grey[300],
+                                      child: Icon(Icons.image_not_supported, color: Colors.grey[600]),
+                                    );
+                                  },
+                                )
+                                    : Container(
                                   width: 80,
                                   height: 80,
                                   color: Colors.grey[300],
-                                  child: Icon(Icons.image_not_supported, color: Colors.grey[600]),
-                                );
-                              },
-                            )
-                                : Container(
-                              width: 80,
-                              height: 80,
-                              color: Colors.grey[300],
-                              child: Icon(Icons.image, color: Colors.grey[600]),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Treatment Details
-                          Expanded(
-                            child: Stack(
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  child: Icon(Icons.image, color: Colors.grey[600]),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Treatment Details
+                              Expanded(
+                                child: Stack(
                                   children: [
-                                    // Treatment Name - with padding to avoid delete button
-                                    Padding(
-                                      padding: EdgeInsets.only(
-                                        right: _treatments.length > 1 ? 40 : 0,
-                                      ),
-                                      child: Text(
-                                        treatment['nama_treatment'] ?? 'Nama tidak tersedia',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    // Description - limited to 2 lines and aligned with price width
-                                    LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        // Calculate available width considering the price text width
-                                        const priceWidth = 80.0; // Approximate width for price text
-                                        final availableWidth = constraints.maxWidth - priceWidth - 16; // 16 for spacing
-
-                                        return Container(
-                                          width: availableWidth,
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Treatment Name - with padding to avoid delete button
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            right: _treatments.length > 1 ? 40 : 0,
+                                          ),
                                           child: Text(
-                                            treatment['deskripsi_treatment'] ?? 'Deskripsi tidak tersedia',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[600],
+                                            treatment['nama_treatment'] ?? 'Nama tidak tersedia',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 8),
-                                    // Estimasi and Price row
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        // Estimasi
+                                        ),
+                                        const SizedBox(height: 8),
+                                        // Description
+                                        LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            const priceWidth = 80.0;
+                                            final availableWidth = constraints.maxWidth - priceWidth - 16;
+
+                                            return Container(
+                                              width: availableWidth,
+                                              child: Text(
+                                                treatment['deskripsi_treatment'] ?? 'Deskripsi tidak tersedia',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[600],
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(height: 8),
+                                        // Estimasi and Price row
                                         Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                                            const SizedBox(width: 4),
+                                            // Estimasi
+                                            Row(
+                                              children: [
+                                                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _formatEstimasi(treatment['estimasi_treatment'] ?? '0:00:00'),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            // Price
                                             Text(
-                                              _formatEstimasi(treatment['estimasi_treatment'] ?? '0:00:00'),
+                                              'Rp ${_formatPrice(treatment['biaya_treatment'])}',
                                               style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[600],
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: appTheme.orange200,
                                               ),
                                             ),
                                           ],
                                         ),
-                                        // Price
-                                        Text(
-                                          'Rp ${_formatPrice(treatment['biaya_treatment'])}',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: appTheme.orange200,
-                                          ),
-                                        ),
                                       ],
                                     ),
+                                    // Floating Delete Button
+                                    if (_treatments.length > 1)
+                                      Positioned(
+                                        top: -8,
+                                        right: -8,
+                                        child: IconButton(
+                                          icon: Icon(
+                                            Icons.close,
+                                            color: appTheme.darkCherry,
+                                            size: 20,
+                                          ),
+                                          padding: const EdgeInsets.all(2),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 12,
+                                            minHeight: 12,
+                                          ),
+                                          onPressed: () => _showDeleteConfirmation(context, index),
+                                        ),
+                                      ),
                                   ],
                                 ),
-                                // Floating Delete Button
-                                if (_treatments.length > 1)
-                                  Positioned(
-                                    top: -8,
-                                    right: -8,
-                                    child: IconButton(
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: appTheme.darkCherry,
-                                        size: 20,
-                                      ),
-                                      padding: const EdgeInsets.all(2),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 12,
-                                        minHeight: 12,
-                                      ),
-                                      onPressed: () => _showDeleteConfirmation(context, index),
-                                    ),
-                                  ),
-                              ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Compensation Button - ADD THIS SECTION
+                          SizedBox(
+                            width: double.infinity,
+                            height: 24,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showCompensationSelection(
+                                treatmentId,
+                                treatment['nama_treatment'] ?? 'Treatment',
+                              ),
+                              icon: Icon(
+                                _selectedCompensations[treatmentId] != null
+                                    ? Icons.check_circle
+                                    : Icons.add,
+                                size: 18,
+                                color: _selectedCompensations[treatmentId] != null
+                                    ? appTheme.orange200
+                                    : Colors.grey[600],
+                              ),
+                              label: Text(
+                                _selectedCompensations[treatmentId] != null
+                                    ? 'Kompensasi Diterapkan'
+                                    : 'Tambah Kompensasi',
+                                style: TextStyle(
+                                  color: _selectedCompensations[treatmentId] != null
+                                      ? appTheme.orange200
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: _selectedCompensations[treatmentId] != null
+                                      ? appTheme.orange200
+                                      : Colors.grey[400]!,
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ),
                             ),
                           ),
                         ],

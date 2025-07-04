@@ -934,7 +934,7 @@ class TreatmentCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: appTheme.orange200,
+                          color: appTheme.black900,
                         ),
                       ),
                     ),
