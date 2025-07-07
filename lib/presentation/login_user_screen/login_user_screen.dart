@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_app_klinik/core/services/fcm_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -70,17 +71,17 @@ class LoginUserScreenState extends State<LoginUserScreen> {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        
+
         // Check if user role is "pelanggan"
         if (responseData['user']['role'] != "pelanggan") {
           toastification.show(
             context: context,
             title: const Text(
-                'Akses Ditolak',
-                style: TextStyle(color: Colors.white),),
+              'Akses Ditolak',
+              style: TextStyle(color: Colors.white),),
             description: const Text(
-                "Login hanya dengan akun pelanggan",
-                style: TextStyle(color: Colors.white),),
+              "Login hanya dengan akun pelanggan",
+              style: TextStyle(color: Colors.white),),
             autoCloseDuration: const Duration(seconds: 3),
             backgroundColor: appTheme.lightYellow.withAlpha((0.8 * 255).toInt()),
             style: ToastificationStyle.flat,
@@ -89,7 +90,7 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           );
           return;
         }
-        
+
         final prefs = await SharedPreferences.getInstance();
 
         await prefs.setInt('id_user', responseData['user']['id_user']);
@@ -97,8 +98,16 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         await prefs.setString('no_telp', responseData['user']['no_telp']);
         await prefs.setString('email', responseData['user']['email']);
         await prefs.setString('role', responseData['user']['role']);
-
         await prefs.setString('token', responseData['token']);
+
+        // Register FCM token after successful login
+        try {
+          await FCMService.registerTokenAfterLogin();
+          print('FCM token registered successfully after login');
+        } catch (fcmError) {
+          print('Failed to register FCM token: $fcmError');
+          // Don't fail the login process if FCM registration fails
+        }
 
         toastification.show(
           context: context,
@@ -127,9 +136,9 @@ class LoginUserScreenState extends State<LoginUserScreen> {
         toastification.show(
           context: context,
           title: const Text('Login Failed',
-              style: TextStyle(color: Colors.white),),
+            style: TextStyle(color: Colors.white),),
           description: Text(errorMessage,
-              style: const TextStyle(color: Colors.white),),
+            style: const TextStyle(color: Colors.white),),
           autoCloseDuration: const Duration(seconds: 3),
           backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
           style: ToastificationStyle.flat,

@@ -1,18 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/app_export.dart';
+import 'core/services/fcm_service.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-void main() {
+// Handle background messages
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('Handling a background message: ${message.messageId}');
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Future.wait([
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Set up background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  await Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
     PrefUtils().init()
-  ]).then((value) {
-    runApp(const MyApp());
-  });
+  ]);
+
+  // Initialize FCM
+  await FCMService.initialize();
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -34,19 +52,11 @@ class MyApp extends StatelessWidget {
             );
           },
           navigatorKey: NavigatorService.navigatorKey,
+          scaffoldMessengerKey: globalMessengerKey,
           debugShowCheckedModeBanner: false,
-          localizationsDelegates: const [
-            AppLocalizationDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', 'US'),
-          ],
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,
-          onGenerateRoute: AppRoutes.onGenerateRoute, // ini fallback kalau ada route tidak ditemukan
+          onGenerateRoute: AppRoutes.onGenerateRoute,
         );
       },
     );

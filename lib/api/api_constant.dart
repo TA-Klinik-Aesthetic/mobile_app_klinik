@@ -1,6 +1,6 @@
 class ApiConstants {
-  static const String baseUrl = "https://klinikneshnavya.com/api";
-  //static const String baseUrl = "http://10.0.2.2:8000/api";
+  //static const String baseUrl = "https://klinikneshnavya.com/api";
+  static const String baseUrl = "http://10.0.2.2:8000/api";
   static const String register = "$baseUrl/register";
   static const String login = "$baseUrl/login";
   static const String logout = "$baseUrl/logout";
@@ -33,4 +33,7 @@ class ApiConstants {
   static const String viewProductFavorite = "$baseUrl/favorites/user/{id_user}/products";
   static const String viewTreatmentFavorite = "$baseUrl/favorites/user/{id_user}/treatments";
   static const String kompensasiUser = "$baseUrl/kompensasi-diberikan";
+  static const String fcmRegister = '$baseUrl/fcm/register';
+  static const String fcmUnregister = '$baseUrl/fcm/unregister';
+  static const String notifications = '$baseUrl/notifications';
 }

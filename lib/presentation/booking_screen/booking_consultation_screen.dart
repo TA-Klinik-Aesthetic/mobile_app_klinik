@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/core/models/doctor_card_model.dart';
 import 'package:mobile_app_klinik/presentation/booking_screen/detail_booking_consultation_screen.dart';
-import 'package:mobile_app_klinik/presentation/booking_screen/model/doctor_card_model.dart';
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
 

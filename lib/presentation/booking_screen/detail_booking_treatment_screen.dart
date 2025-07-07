@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/core/models/promo_model.dart';
+import 'package:mobile_app_klinik/core/services/promo_service.dart';
 import 'package:mobile_app_klinik/presentation/booking_screen/detail_history_treatment_screen.dart';
 import 'package:mobile_app_klinik/theme/theme_helper.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../api/api_constant.dart';
-import 'model/promo_model.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mobile_app_klinik/routes/app_routes.dart';
 
 class DetailBookingTreatmentScreen extends StatefulWidget {
   final List<Map<String, dynamic>> selectedTreatments;

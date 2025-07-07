@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/core/services/fcm_service.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/history_complaint_screen.dart';
 import 'package:toastification/toastification.dart';
 import '../../api/api_constant.dart';
@@ -59,6 +60,9 @@ class _UserScreenState extends State<UserScreen> {
       final token = prefs.getString('token');
 
       if (token != null) {
+        // Unregister FCM token before logout
+        await FCMService.unregisterToken();
+
         await http.post(
           Uri.parse(ApiConstants.logout),
           headers: {
@@ -68,7 +72,7 @@ class _UserScreenState extends State<UserScreen> {
         );
       }
 
-      // Hapus semua data user dari SharedPreferences
+      // Clear all data
       await prefs.clear();
 
       setState(() {
@@ -88,13 +92,11 @@ class _UserScreenState extends State<UserScreen> {
         icon: const Icon(Icons.check_circle, color: Colors.white),
       );
 
-      // Kembali ke HomeScreen dan hapus semua rute sebelumnya
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.homeScreen,
             (route) => false,
       );
-
     } catch (e) {
       print('Logout error: $e');
       final prefs = await SharedPreferences.getInstance();

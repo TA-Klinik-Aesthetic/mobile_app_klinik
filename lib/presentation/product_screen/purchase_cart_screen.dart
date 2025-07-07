@@ -1,13 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/core/models/promo_model.dart';
+import 'package:mobile_app_klinik/core/services/promo_service.dart';
 import 'package:mobile_app_klinik/presentation/product_screen/purchase_product_screen.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_export.dart';
 import '../../api/api_constant.dart';
-import '../booking_screen/model/promo_model.dart';
 
 class PurchaseCartScreen extends StatefulWidget {
   const PurchaseCartScreen({super.key});

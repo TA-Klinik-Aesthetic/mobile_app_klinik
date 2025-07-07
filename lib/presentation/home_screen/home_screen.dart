@@ -41,11 +41,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // Add method to fetch notification count
   Future<void> _fetchNotificationCount() async {
-    // This would typically come from an API call
-    // For now, we'll simulate with a fake count
-    setState(() {
-      _notificationCount = 0; // Example count - replace with actual API data
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('id_user');
+      final token = prefs.getString('token');
+
+      if (userId != null && token != null) {
+        final response = await http.get(
+          Uri.parse('${ApiConstants.notifications}/$userId'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final notifications = data['notifications'] as List;
+          final unreadCount = notifications.where((notif) => notif['is_read'] == false).length;
+
+          setState(() {
+            _notificationCount = unreadCount;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching notification count: $e');
+    }
   }
 
   Future<void> _fetchPromos() async {

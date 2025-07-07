@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_klinik/core/app_export.dart';
 import 'dart:convert';
-import '../../../api/api_constant.dart';
+import '../../api/api_constant.dart';
 
 class DoctorCard extends StatefulWidget {
   final Map<String, dynamic> doctor;
