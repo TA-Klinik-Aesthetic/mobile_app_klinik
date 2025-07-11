@@ -28,7 +28,7 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
   Promo? _selectedPromo;
 
   // Add compensation related variables
-  Map<int, int?> _selectedCompensations = {}; // treatmentId -> compensationId
+  final Map<int, int?> _selectedCompensations = {}; // treatmentId -> compensationId
   bool _isLoadingCompensations = false;
   List<dynamic> _availableCompensations = [];
 

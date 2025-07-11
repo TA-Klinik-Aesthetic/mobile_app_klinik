@@ -4,9 +4,9 @@ import 'package:mobile_app_klinik/presentation/booking_screen/booking_consultati
 import 'package:mobile_app_klinik/presentation/booking_screen/booking_treatment_screen.dart';
 import 'package:mobile_app_klinik/presentation/doctor_schedule_screen/doctor_schedule_screen.dart';
 import 'package:mobile_app_klinik/presentation/home_screen/notification_screen.dart';
-import 'package:mobile_app_klinik/presentation/login_user_screen/login_user_screen.dart';
+import 'package:mobile_app_klinik/presentation/authentication_screen/login_user_screen.dart';
 import 'package:mobile_app_klinik/presentation/promo_screen/promo_screen.dart';
-import 'package:mobile_app_klinik/presentation/register_user_screen/register_user_screen.dart';
+import 'package:mobile_app_klinik/presentation/authentication_screen/register_user_screen.dart';
 import 'package:mobile_app_klinik/presentation/home_screen/home_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/favorite_screen.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/history_purchase_screen.dart';

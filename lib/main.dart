@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/app_export.dart';
 import 'core/services/fcm_service.dart';
 
@@ -22,15 +23,16 @@ void main() async {
   // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  await Future.wait([
+  Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
     PrefUtils().init()
-  ]);
+  ]).then((value) {
+    runApp(const MyApp());
+  });
 
   // Initialize FCM
   await FCMService.initialize();
 
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -51,9 +53,19 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
+
           navigatorKey: NavigatorService.navigatorKey,
-          scaffoldMessengerKey: globalMessengerKey,
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: const [
+            AppLocalizationDelegate(),
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', 'US'),
+          ],
+          
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,
           onGenerateRoute: AppRoutes.onGenerateRoute,

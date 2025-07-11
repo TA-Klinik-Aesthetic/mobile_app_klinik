@@ -1,2 +1,0 @@
-A:/@college/[7] smt 7/Program TA/mobile_app_klinik/android/app/.cxx/Debug/1h1v263j/x86_64/CMakeFiles/edit_cache.dir
-A:/@college/[7] smt 7/Program TA/mobile_app_klinik/android/app/.cxx/Debug/1h1v263j/x86_64/CMakeFiles/rebuild_cache.dir

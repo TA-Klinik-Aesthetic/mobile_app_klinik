@@ -275,18 +275,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductByCategoryScreen(
-                              categoryId: widget.product['kategori']['id_kategori'],
-                              categoryName: widget.product['kategori']['nama_kategori'],
-                            ),
-                          ),
-                        );
+                        // Tambahkan null safety
+                        final kategoriData = widget.product['kategori'];
+                        if (kategoriData != null) {
+                          final categoryId = kategoriData is Map 
+                              ? kategoriData['id_kategori'] 
+                              : widget.product['id_kategori'];
+                          final categoryName = kategoriData is Map 
+                              ? kategoriData['nama_kategori'] 
+                              : widget.product['nama_kategori'];
+                              
+                          if (categoryId != null && categoryName != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductByCategoryScreen(
+                                  categoryId: categoryId,
+                                  categoryName: categoryName,
+                                ),
+                              ),
+                            );
+                          }
+                        }
                       },
                       child: Text(
-                        widget.product['kategori']['nama_kategori'],
+                        // Perbaiki akses kategori dengan null safety
+                        _getCategoryName(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -530,6 +544,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       ],
     );
+  }
+
+  // Tambahkan method helper untuk mendapatkan nama kategori
+  String _getCategoryName() {
+    final kategoriData = widget.product['kategori'];
+    
+    if (kategoriData == null) {
+      return widget.product['nama_kategori'] ?? 'Unknown Category';
+    }
+    
+    if (kategoriData is Map<String, dynamic>) {
+      return kategoriData['nama_kategori'] ?? 'Unknown Category';
+    }
+    
+    if (kategoriData is String) {
+      return kategoriData;
+    }
+    
+    return 'Unknown Category';
   }
 
   String _formatPrice(dynamic price) {

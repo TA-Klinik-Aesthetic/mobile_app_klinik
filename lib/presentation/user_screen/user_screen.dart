@@ -60,9 +60,8 @@ class _UserScreenState extends State<UserScreen> {
       final token = prefs.getString('token');
 
       if (token != null) {
-        // Unregister FCM token before logout
         await FCMService.unregisterToken();
-
+        
         await http.post(
           Uri.parse(ApiConstants.logout),
           headers: {
@@ -71,8 +70,8 @@ class _UserScreenState extends State<UserScreen> {
           },
         );
       }
-
-      // Clear all data
+      
+      // ✅ Clear all data
       await prefs.clear();
 
       setState(() {
