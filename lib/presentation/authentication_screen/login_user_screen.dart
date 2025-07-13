@@ -49,113 +49,145 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   }
 
   Future<void> _loginUser() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+  if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    print('Attempting login with email: $email');
+    
+    final response = await http.post(
+      Uri.parse(ApiConstants.login),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    print('Login response status: ${response.statusCode}');
+    print('Login response body: ${response.body}');
 
     setState(() {
-      isLoading = true;
+      isLoading = false;
     });
 
-    try {
-      final response = await http.post(
-        Uri.parse(ApiConstants.login),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+
+      // Check if user role is "pelanggan"
+      if (responseData['user']['role'] != "pelanggan") {
+        toastification.show(
+          context: context,
+          title: const Text('Akses Ditolak', style: TextStyle(color: Colors.white)),
+          description: const Text("Login hanya dengan akun pelanggan", style: TextStyle(color: Colors.white)),
+          autoCloseDuration: const Duration(seconds: 3),
+          backgroundColor: appTheme.lightYellow.withAlpha((0.8 * 255).toInt()),
+          style: ToastificationStyle.flat,
+          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+          icon: const Icon(Icons.exit_to_app, color: Colors.white),
+        );
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setInt('id_user', responseData['user']['id_user']);
+      await prefs.setString('nama_user', responseData['user']['nama_user']);
+      await prefs.setString('no_telp', responseData['user']['no_telp']);
+      await prefs.setString('email', responseData['user']['email']);
+      await prefs.setString('role', responseData['user']['role']);
+      await prefs.setString('token', responseData['token']);
+
+      // Register FCM token after successful login
+      _registerFCMInBackground();
+
+      toastification.show(
+        context: context,
+        title: const Text('Success!', style: TextStyle(color: Colors.white)),
+        description: Text(
+          "Login successful! Welcome, ${responseData['user']['nama_user']}",
+          style: const TextStyle(color: Colors.white),
+        ),
+        autoCloseDuration: const Duration(seconds: 3),
+        backgroundColor: appTheme.lightGreen.withAlpha((0.8 * 255).toInt()),
+        style: ToastificationStyle.flat,
+        borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+        icon: Icon(Icons.check_circle, color: appTheme.whiteA700),
       );
 
-      setState(() {
-        isLoading = false;
-      });
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-
-        // Check if user role is "pelanggan"
-        if (responseData['user']['role'] != "pelanggan") {
-          toastification.show(
-            context: context,
-            title: const Text(
-              'Akses Ditolak',
-              style: TextStyle(color: Colors.white),),
-            description: const Text(
-              "Login hanya dengan akun pelanggan",
-              style: TextStyle(color: Colors.white),),
-            autoCloseDuration: const Duration(seconds: 3),
-            backgroundColor: appTheme.lightYellow.withAlpha((0.8 * 255).toInt()),
-            style: ToastificationStyle.flat,
-            borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-            icon: const Icon(Icons.exit_to_app, color: Colors.white),
-          );
-          return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      // Handle different error responses
+      final errorData = jsonDecode(response.body);
+      String errorMessage = 'Login failed';
+      
+      if (response.statusCode == 403) {
+        // Email not verified
+        errorMessage = errorData['message'] ?? 'Akun Anda belum diverifikasi. Silakan cek email Anda.';
+      } else if (response.statusCode == 401) {
+        // Wrong credentials
+        errorMessage = errorData['message'] ?? 'Email atau password salah.';
+      } else if (response.statusCode == 422) {
+        // Validation errors
+        if (errorData['errors'] != null) {
+          final errors = errorData['errors'] as Map<String, dynamic>;
+          final errorMessages = <String>[];
+          
+          errors.forEach((field, messages) {
+            if (messages is List) {
+              errorMessages.addAll(messages.cast<String>());
+            } else {
+              errorMessages.add(messages.toString());
+            }
+          });
+          
+          errorMessage = errorMessages.join('\n');
         }
-
-        final prefs = await SharedPreferences.getInstance();
-
-        await prefs.setInt('id_user', responseData['user']['id_user']);
-        await prefs.setString('nama_user', responseData['user']['nama_user']);
-        await prefs.setString('no_telp', responseData['user']['no_telp']);
-        await prefs.setString('email', responseData['user']['email']);
-        await prefs.setString('role', responseData['user']['role']);
-        await prefs.setString('token', responseData['token']);
-
-        // Register FCM token after successful login
-        try {
-          await FCMService.registerTokenAfterLogin();
-          print('FCM token registered successfully after login');
-        } catch (fcmError) {
-          print('Failed to register FCM token: $fcmError');
-          // Don't fail the login process if FCM registration fails
-        }
-
-        toastification.show(
-          context: context,
-          title: const Text(
-            'Success!',
-            style: TextStyle(color: Colors.white),),
-          description: Text(
-            "Login successful! Welcome, ${responseData['user']['nama_user']}",
-            style: const TextStyle(color: Colors.white),),
-          autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.lightGreen.withAlpha((0.8 * 255).toInt()),
-          style: ToastificationStyle.flat,
-          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-          icon: Icon(Icons.check_circle, color: appTheme.whiteA700),
-        );
-
-        // Navigate to HomeScreen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
       } else {
-        final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['message'] ?? 'Login failed.';
-
-        toastification.show(
-          context: context,
-          title: const Text('Login Failed',
-            style: TextStyle(color: Colors.white),),
-          description: Text(errorMessage,
-            style: const TextStyle(color: Colors.white),),
-          autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
-          style: ToastificationStyle.flat,
-          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-          icon: Icon(Icons.block, color: appTheme.whiteA700),
-        );
+        errorMessage = errorData['message'] ?? 'Login failed.';
       }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Something went wrong: $e")),
+      toastification.show(
+        context: context,
+        title: const Text('Login Failed', style: TextStyle(color: Colors.white)),
+        description: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+        autoCloseDuration: const Duration(seconds: 5),
+        backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
+        style: ToastificationStyle.flat,
+        borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+        icon: Icon(Icons.block, color: appTheme.whiteA700),
       );
     }
+  } catch (e) {
+    setState(() {
+      isLoading = false;
+    });
+
+    print('Login error: $e');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Something went wrong: $e")),
+    );
   }
+}
+
+// Tambahkan method untuk FCM registration di background
+void _registerFCMInBackground() {
+  Future.delayed(const Duration(milliseconds: 500), () async {
+    try {
+      await FCMService.registerTokenAfterLogin();
+      print('FCM token registered successfully after login');
+    } catch (fcmError) {
+      print('Failed to register FCM token: $fcmError');
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
