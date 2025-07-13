@@ -25,35 +25,60 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _retypePasswordController = TextEditingController();
+  final TextEditingController _tanggalLahirController = TextEditingController();
+  
+  String? _selectedJenisKelamin;
   bool isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureRetypePassword = true;
 
   Future<void> _registerUser() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      return;
+    // Fix: Logic validation yang benar
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return; // Stop jika form tidak valid
     }
 
-    final email = _emailController.text;
-    final namaUser = _usernameController.text;
-    final phone = _phoneController.text;
-    final password = _passwordController.text;
+    final email = _emailController.text.trim();
+    final namaUser = _usernameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+    final tanggalLahir = _tanggalLahirController.text.trim();
 
     setState(() {
       isLoading = true;
     });
 
     try {
+      // Sesuaikan dengan API Controller yang baru
+      final requestBody = {
+        'nama_user': namaUser,
+        'no_telp': phone,
+        'email': email,
+        'password': password,
+        'password_confirmation': _retypePasswordController.text.trim(), // Tambahkan confirmed
+      };
+
+      // Tambahkan field opsional jika diisi
+      if (tanggalLahir.isNotEmpty) {
+        requestBody['tanggal_lahir'] = tanggalLahir;
+      }
+      
+      if (_selectedJenisKelamin != null) {
+        requestBody['jenis_kelamin'] = _selectedJenisKelamin!;
+      }
+
+      print('Register request body: $requestBody');
+
       final response = await http.post(
         Uri.parse(ApiConstants.register),
         headers: {
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'nama_user': namaUser,
-          'no_telp': phone,
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode(requestBody),
       );
+
+      print('Register response status: ${response.statusCode}');
+      print('Register response body: ${response.body}');
 
       setState(() {
         isLoading = false;
@@ -61,30 +86,62 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
 
       if (response.statusCode == 201) { 
         final responseData = jsonDecode(response.body);
+        
         toastification.show(
           context: context,
-          title: const Text('Registration Successful'),
-          description: Text("${responseData['message']}"),
-          autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
-          backgroundColor: appTheme.lightGreen, // Warna hijau untuk sukses
-          icon: const Icon(Icons.check_circle, color: Colors.white), // Ikon sukses
+          title: const Text('Registration Successful', style: TextStyle(color: Colors.white)),
+          description: Text(
+            responseData['message'] ?? "Registrasi berhasil. Silakan cek email Anda untuk verifikasi akun.",
+            style: const TextStyle(color: Colors.white),
+          ),
+          autoCloseDuration: const Duration(seconds: 5),
+          backgroundColor: appTheme.lightGreen.withAlpha((0.8 * 255).toInt()),
+          style: ToastificationStyle.flat,
+          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+          icon: const Icon(Icons.check_circle, color: Colors.white),
         );
+        
         Navigator.pushNamed(context, AppRoutes.loginUserScreen);
       } else {
         final errorData = jsonDecode(response.body);
+        String errorMessage = 'Registration failed';
+        
+        // Handle validation errors dari controller
+        if (errorData['errors'] != null) {
+          final errors = errorData['errors'] as Map<String, dynamic>;
+          final errorMessages = <String>[];
+          
+          errors.forEach((field, messages) {
+            if (messages is List) {
+              errorMessages.addAll(messages.cast<String>());
+            } else {
+              errorMessages.add(messages.toString());
+            }
+          });
+          
+          errorMessage = errorMessages.join('\n');
+        } else if (errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        }
+
         toastification.show(
           context: context,
-          title: const Text('Registration Failed'),
-          description: Text("${errorData['errors'] ?? 'Unknown error'}"),
-          autoCloseDuration: const Duration(seconds: 3), // Toast otomatis tertutup
-          backgroundColor: appTheme.darkCherry, // Warna merah untuk error
-          icon: const Icon(Icons.error, color: Colors.white), // Ikon error
+          title: const Text('Registration Failed', style: TextStyle(color: Colors.white)),
+          description: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+          autoCloseDuration: const Duration(seconds: 5),
+          backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
+          style: ToastificationStyle.flat,
+          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+          icon: const Icon(Icons.error, color: Colors.white),
         );
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
+      
+      print('Register error: $e');
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("An error occurred: $e")),
       );
@@ -130,106 +187,109 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 14.h,
-            vertical: 34.h,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 14.h, vertical: 34.h),
           decoration: BoxDecoration(
             color: appTheme.whiteA700.withOpacity(0.6),
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(
-              color: theme.colorScheme.primary,
-              width: 1.h,
-            ),
+            border: Border.all(color: theme.colorScheme.primary, width: 1.h),
           ),
           child: Column(
             children: [
-              // Rest of the form content remains the same
               _buildLogo(),
               SizedBox(height: 24.h),
-              // ... existing form fields
+              
+              // Username Input
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text(
-                    "lbl_username".tr(context),
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  child: Text("Username", style: theme.textTheme.bodySmall),
                 ),
               ),
-              CustomTextFormField(
-                controller: _usernameController,
-                hintText: "User Name",
-                textInputType: TextInputType.name,
-              ),
+              _buildUsernameInput(),
               SizedBox(height: 16.h),
+              
+              // Phone Input
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text(
-                    "lbl_phone_number".tr(context),
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  child: Text("Phone Number", style: theme.textTheme.bodySmall),
                 ),
               ),
-              CustomTextFormField(
-                controller: _phoneController,
-                hintText: "lbl_hint_phonum".tr(context),
-                textInputType: TextInputType.phone,
-              ),
+              _buildPhoneInput(),
               SizedBox(height: 16.h),
+              
+              // Email Input
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text(
-                    "lbl_enter_the_email".tr(context),
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  child: Text("Email", style: theme.textTheme.bodySmall),
                 ),
               ),
               _buildEmailInput(),
               SizedBox(height: 16.h),
+              
+              // Tanggal Lahir (Opsional)
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text(
-                    "msg_enter_the_password".tr(context),
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  child: Text("Tanggal Lahir (Opsional)", style: theme.textTheme.bodySmall),
+                ),
+              ),
+              _buildTanggalLahirInput(),
+              SizedBox(height: 16.h),
+              
+              // Jenis Kelamin (Opsional)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text("Jenis Kelamin (Opsional)", style: theme.textTheme.bodySmall),
+                ),
+              ),
+              _buildJenisKelaminDropdown(),
+              SizedBox(height: 16.h),
+              
+              // Password Input
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Text("Password", style: theme.textTheme.bodySmall),
                 ),
               ),
               _buildPasswordInput(),
               SizedBox(height: 16.h),
+              
+              // Retype Password Input
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text(
-                    "msg_re_type_password".tr(context),
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  child: Text("Confirm Password", style: theme.textTheme.bodySmall),
                 ),
               ),
               _buildRetypePasswordInput(),
               SizedBox(height: 48.h),
+              
               isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _buildRegisterButton(),
               SizedBox(height: 16.h),
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("lbl_have_account".tr(context)),
+                  Text("Already have an account? ", style: theme.textTheme.bodyMedium),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, AppRoutes.loginUserScreen);
                     },
                     child: Text(
-                      "btn_login".tr(context),
+                      "Login",
                       style: TextStyle(
                         color: appTheme.orange200,
                         fontWeight: FontWeight.bold,
@@ -242,6 +302,150 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUsernameInput() {
+    return CustomTextFormField(
+      controller: _usernameController,
+      hintText: "Enter your username",
+      textInputType: TextInputType.name,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return "Username is required";
+        }
+        if (value.trim().length > 255) {
+          return "Username must be less than 255 characters";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPhoneInput() {
+    return CustomTextFormField(
+      controller: _phoneController,
+      hintText: "08** **** ****",
+      textInputType: TextInputType.phone,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return "Phone number is required";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildEmailInput() {
+    return CustomTextFormField(
+      controller: _emailController,
+      hintText: "Enter your email",
+      textInputType: TextInputType.emailAddress,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return "Email is required";
+        }
+        if (!isValidEmail(value.trim())) {
+          return "Please enter a valid email";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildTanggalLahirInput() {
+    return CustomTextFormField(
+      controller: _tanggalLahirController,
+      hintText: "YYYY-MM-DD (optional)",
+      textInputType: TextInputType.datetime,
+      validator: (value) {
+        if (value != null && value.trim().isNotEmpty) {
+          // Basic date format validation
+          final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+          if (!dateRegex.hasMatch(value.trim())) {
+            return "Please enter date in YYYY-MM-DD format";
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildJenisKelaminDropdown() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedJenisKelamin,
+          hint: const Text("Select gender (optional)"),
+          isExpanded: true,
+          items: const [
+            DropdownMenuItem(value: 'Laki-laki', child: Text('Laki-laki')),
+            DropdownMenuItem(value: 'Perempuan', child: Text('Perempuan')),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedJenisKelamin = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordInput() {
+    return CustomTextFormField(
+      controller: _passwordController,
+      hintText: "Enter your password",
+      textInputType: TextInputType.visiblePassword,
+      obscureText: _obscurePassword,
+      suffix: GestureDetector(
+        onTap: () {
+          setState(() {
+            _obscurePassword = !_obscurePassword;
+          });
+        },
+        child: Icon(
+          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+          color: Colors.grey,
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.length < 8) {
+          return "Password must be at least 8 characters";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildRetypePasswordInput() {
+    return CustomTextFormField(
+      controller: _retypePasswordController,
+      hintText: "Confirm your password",
+      obscureText: _obscureRetypePassword,
+      suffix: GestureDetector(
+        onTap: () {
+          setState(() {
+            _obscureRetypePassword = !_obscureRetypePassword;
+          });
+        },
+        child: Icon(
+          _obscureRetypePassword ? Icons.visibility : Icons.visibility_off,
+          color: Colors.grey,
+        ),
+      ),
+      validator: (value) {
+        if (value != _passwordController.text) {
+          return "Passwords do not match";
+        }
+        return null;
+      },
     );
   }
 
@@ -277,49 +481,6 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildEmailInput() {
-    return CustomTextFormField(
-      controller: _emailController,
-      hintText: "Enter your email",
-      textInputType: TextInputType.emailAddress,
-      validator: (value) {
-        if (value == null || !isValidEmail(value, isRequired: true)) {
-          return "Please enter a valid email.";
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildPasswordInput() {
-    return CustomTextFormField(
-      controller: _passwordController,
-      hintText: "Enter your password",
-      textInputType: TextInputType.visiblePassword,
-      obscureText: true,
-      validator: (value) {
-        if (value == null || value.length < 8) {
-          return "Password must be at least 8 characters.";
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildRetypePasswordInput() {
-    return CustomTextFormField(
-      controller: _retypePasswordController,
-      hintText: "Re-type your password",
-      obscureText: true,
-      validator: (value) {
-        if (value != _passwordController.text) {
-          return "Passwords do not match.";
-        }
-        return null;
-      },
     );
   }
 
