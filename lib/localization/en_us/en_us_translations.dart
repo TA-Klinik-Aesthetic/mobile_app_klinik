@@ -3,7 +3,7 @@ final Map<String, String> enUs = {
   "lbl_enter_password": "Enter password",
   "lbl_user": "User",
   "lbl_password": "Password",
-  "msg_don_t_have_an_account": "Don’t have an account? ",
+  "msg_don_t_have_an_account": "Don't have an account? ",
   "msg_enter_your_email": "Enter your email",
   "msg_forgot_password": "Forgot Password?",
   "msg_password_must_be_8_characters": "Password must be at least 8 characters",
@@ -14,14 +14,30 @@ final Map<String, String> enUs = {
   "btn_login": "Login",
 
   // Register User Screen
-  "lbl_username": "Enter Username",
+  "lbl_username": "Username",
   "lbl_hint_phonum": "08** **** ****",
   "lbl_enter_the_email": "Enter the email",
-  "lbl_phone_number": "Enter Phone Number",
+  "lbl_phone_number": "Phone Number",
   "lbl_have_account": "Already have an account? ",
   "msg_already_have_an": "Already have an account? ",
   "msg_enter_the_password": "Enter the password",
   "msg_re_type_password": "Re-type Password",
+  "lbl_enter_your_username": "Enter your username",
+  "lbl_enter_your_phone": "Enter your phone number",
+  "lbl_tanggal_lahir": "Birth Date (Optional)",
+  "lbl_jenis_kelamin": "Gender (Optional)",
+  "lbl_confirm_password": "Confirm Password",
+  "lbl_enter_confirm_password": "Confirm your password",
+  "lbl_pilih_jenis_kelamin": "Select gender (optional)",
+  "lbl_creating_account": "Creating Account...",
+  "msg_username_required": "Username is required",
+  "msg_username_max_255": "Username must be less than 255 characters",
+  "msg_phone_required": "Phone number is required",
+  "msg_email_required_register": "Email is required",
+  "msg_email_valid": "Please enter a valid email",
+  "msg_password_min_8": "Password must be at least 8 characters",
+  "msg_passwords_not_match": "Passwords do not match",
+  "msg_date_format": "Please enter date in YYYY-MM-DD format",
 
   // Product Screen
   "lbl_booking": "Booking",
@@ -30,13 +46,14 @@ final Map<String, String> enUs = {
   "lbl_product": "Product",
   "lbl_profile": "Profile",
   "lbl_search": "search",
-  "lbl_urutkan": "Urutkan",
+  "lbl_urutkan": "Sort",
   "msg_kahf_oil_acne": "Kahf Oil & Acne Care Face Wash 50 ml",
   "lbl_rp_100_000_00": "Rp 100.000,00",
   "msg_skintific_acne": "Skintific - Acne Clay Stick 40G",
 
   // Promo Screen
-  "lbl_banner": "Banner", "lbl_special_promo": "Special Promo",
+  "lbl_banner": "Banner",
+  "lbl_special_promo": "Special Promo",
 
   // Promo Detail Screen
   "lbl_1_4": "1 / 4",
@@ -44,16 +61,15 @@ final Map<String, String> enUs = {
   "lbl_3_4": "3 / 4",
   "lbl_4_4": "4 / 4",
   "lbl_alaskan_volcano": "Alaskan Volcano",
-  "lbl_detail_produk": "Detail Produk",
+  "lbl_detail_produk": "Product Details",
   "lbl_mugworts": "Mugworts",
   "lbl_photo_product": "Photo Product",
-  "lbl_sabun_cuci_muka": "Sabun Cuci Muka",
+  "lbl_sabun_cuci_muka": "Face Wash Soap",
   "lbl_see_more": "See more",
-  "lbl_varian_produk": "Varian Produk",
-  "msg_dekskripsi_produk": "Dekskripsi Produk",
-  "msg_lorem_ipsum_dolor":
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ",
-  "msg_produk_sabun_cuci": "Produk Sabun Cuci Muka lainnya",
+  "lbl_varian_produk": "Product Variants",
+  "msg_dekskripsi_produk": "Product Description",
+  "msg_lorem_ipsum_dolor": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ",
+  "msg_produk_sabun_cuci": "Other Face Wash Products",
 
   // Common String
   "lbl_email": "Email",
@@ -70,7 +86,24 @@ final Map<String, String> enUs = {
   "err_msg_please_enter_valid_email": "Please enter valid email",
   "err_msg_please_enter_valid_password": "Please enter valid password",
 
-// Network Error String
+  // Network Error String
   "msg_network_err": "Network Error",
   "msg_something_went_wrong": "Something Went Wrong!",
+
+  // Language Selector
+  "lbl_language": "Language",
+  "lbl_english": "English (America)",
+  "lbl_indonesian": "Bahasa (Indonesia)",
+  "lbl_select_language": "Select Language",
+
+  "msg_access_denied": "Access Denied",
+  "msg_customer_only": "Login only with customer account",
+  "lbl_success": "Success!",
+  "msg_login_success": "Login successful! Welcome, {name}",
+  "msg_login_failed": "Login failed",
+  "msg_account_not_verified": "Your account is not verified. Please check your email.",
+  "msg_invalid_credentials": "Invalid email or password.",
+  "lbl_login_failed": "Login Failed",
+  "msg_something_wrong": "Something went wrong",
+  "msg_welcome_to": "Welcome to",
 };

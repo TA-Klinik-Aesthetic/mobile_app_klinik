@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/app_export.dart';
 import 'core/services/fcm_service.dart';
 
@@ -14,29 +15,64 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Handling a background message: ${message.messageId}');
 }
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
   await Firebase.initializeApp();
-
-  // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  Future.wait([
+  // Initialize language service
+  await LanguageService.initialize();
+  await AppLocalization.loadSavedLanguage();
+
+  await Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
     PrefUtils().init()
-  ]).then((value) {
-    runApp(const MyApp());
-  });
+  ]);
 
-  // Initialize FCM
-  await FCMService.initialize();
-
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale _locale = const Locale('en', 'US'); // Default locale
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLanguage();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeFCM();
+    });
+  }
+
+  Future<void> _loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedLanguage = prefs.getString('selected_language') ?? 'en';
+    
+    if (mounted) {
+      setState(() {
+        _locale = savedLanguage == 'id' 
+            ? const Locale('id', 'ID') 
+            : const Locale('en', 'US');
+      });
+    }
+  }
+
+  Future<void> _initializeFCM() async {
+    try {
+      await FCMService.initialize();
+      print('FCM initialized successfully');
+    } catch (e) {
+      print('FCM initialization error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +81,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           theme: theme,
           title: 'NAVYA Hub Mobile App',
+          locale: _locale, // FIX: Use the _locale field
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
@@ -53,7 +90,6 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-
           navigatorKey: NavigatorService.navigatorKey,
           debugShowCheckedModeBanner: false,
           localizationsDelegates: const [
@@ -64,8 +100,8 @@ class MyApp extends StatelessWidget {
           ],
           supportedLocales: const [
             Locale('en', 'US'),
+            Locale('id', 'ID'),
           ],
-          
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,
           onGenerateRoute: AppRoutes.onGenerateRoute,

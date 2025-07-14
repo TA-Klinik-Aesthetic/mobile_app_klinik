@@ -8,3 +8,5 @@ export 'package:mobile_app_klinik/theme/app_decoration.dart';
 export 'package:mobile_app_klinik/theme/custom_text_style.dart';
 export 'package:mobile_app_klinik/theme/theme_helper.dart';
 export 'package:mobile_app_klinik/widgets/custom_image_view.dart';
+export 'package:mobile_app_klinik/core/widgets/language_selector.dart';
+export 'package:mobile_app_klinik/core/services/language_service.dart';

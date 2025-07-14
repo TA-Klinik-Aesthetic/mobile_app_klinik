@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mobile_app_klinik/core/services/fcm_service.dart';
+import 'package:mobile_app_klinik/core/widgets/language_selector.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -28,6 +30,9 @@ class LoginUserScreenState extends State<LoginUserScreen> {
   bool _obscurePassword = true;
   bool isLoading = false;
   String appVersion = "Loading...";
+  
+  // Add this key to force rebuild
+  Key _rebuildKey = UniqueKey();
 
   @override
   void initState() {
@@ -35,163 +40,186 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     _getAppVersion();
   }
 
+  // Method to force rebuild the entire widget
+  void _forceRebuild() {
+    print('🔄 Force rebuilding login screen...');
+    if (mounted) {
+      setState(() {
+        _rebuildKey = UniqueKey();
+      });
+    }
+  }
+
   Future<void> _getAppVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      setState(() {
-        appVersion = "${packageInfo.version}${packageInfo.buildNumber.isNotEmpty ? '+${packageInfo.buildNumber}' : ''}";
-      });
+      if (mounted) {
+        setState(() {
+          appVersion = "${packageInfo.version}${packageInfo.buildNumber.isNotEmpty ? '+${packageInfo.buildNumber}' : ''}";
+        });
+      }
     } catch (e) {
-      setState(() {
-        appVersion = "0.0.0";
-      });
+      if (mounted) {
+        setState(() {
+          appVersion = "0.0.0";
+        });
+      }
     }
   }
 
   Future<void> _loginUser() async {
-  if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-  final email = _emailController.text.trim();
-  final password = _passwordController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-  setState(() {
-    isLoading = true;
-  });
-
-  try {
-    print('Attempting login with email: $email');
-    
-    final response = await http.post(
-      Uri.parse(ApiConstants.login),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-
-    print('Login response status: ${response.statusCode}');
-    print('Login response body: ${response.body}');
-
-    setState(() {
-      isLoading = false;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          isLoading = true;
+        });
+      }
     });
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
+    try {
+      print('Attempting login with email: $email');
+      
+      final response = await http.post(
+        Uri.parse(ApiConstants.login),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
 
-      // Check if user role is "pelanggan"
-      if (responseData['user']['role'] != "pelanggan") {
-        toastification.show(
-          context: context,
-          title: const Text('Akses Ditolak', style: TextStyle(color: Colors.white)),
-          description: const Text("Login hanya dengan akun pelanggan", style: TextStyle(color: Colors.white)),
-          autoCloseDuration: const Duration(seconds: 3),
-          backgroundColor: appTheme.lightYellow.withAlpha((0.8 * 255).toInt()),
-          style: ToastificationStyle.flat,
-          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-          icon: const Icon(Icons.exit_to_app, color: Colors.white),
-        );
-        return;
+      print('Login response status: ${response.statusCode}');
+      print('Login response body: ${response.body}');
+
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
       }
 
-      final prefs = await SharedPreferences.getInstance();
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
 
-      await prefs.setInt('id_user', responseData['user']['id_user']);
-      await prefs.setString('nama_user', responseData['user']['nama_user']);
-      await prefs.setString('no_telp', responseData['user']['no_telp']);
-      await prefs.setString('email', responseData['user']['email']);
-      await prefs.setString('role', responseData['user']['role']);
-      await prefs.setString('token', responseData['token']);
+        if (responseData['user']['role'] != "pelanggan") {
+          if (mounted) {
+            toastification.show(
+              context: context,
+              title: Text('msg_access_denied'.tr, style: const TextStyle(color: Colors.white)),
+              description: Text('msg_customer_only'.tr, style: const TextStyle(color: Colors.white)),
+              autoCloseDuration: const Duration(seconds: 3),
+              backgroundColor: appTheme.lightYellow.withAlpha((0.8 * 255).toInt()),
+              style: ToastificationStyle.flat,
+              borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+              icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            );
+          }
+          return;
+        }
 
-      // Register FCM token after successful login
-      _registerFCMInBackground();
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('id_user', responseData['user']['id_user']);
+        await prefs.setString('nama_user', responseData['user']['nama_user']);
+        await prefs.setString('no_telp', responseData['user']['no_telp']);
+        await prefs.setString('email', responseData['user']['email']);
+        await prefs.setString('role', responseData['user']['role']);
+        await prefs.setString('token', responseData['token']);
 
-      toastification.show(
-        context: context,
-        title: const Text('Success!', style: TextStyle(color: Colors.white)),
-        description: Text(
-          "Login successful! Welcome, ${responseData['user']['nama_user']}",
-          style: const TextStyle(color: Colors.white),
-        ),
-        autoCloseDuration: const Duration(seconds: 3),
-        backgroundColor: appTheme.lightGreen.withAlpha((0.8 * 255).toInt()),
-        style: ToastificationStyle.flat,
-        borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-        icon: Icon(Icons.check_circle, color: appTheme.whiteA700),
-      );
+        _registerFCMInBackground();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      // Handle different error responses
-      final errorData = jsonDecode(response.body);
-      String errorMessage = 'Login failed';
-      
-      if (response.statusCode == 403) {
-        // Email not verified
-        errorMessage = errorData['message'] ?? 'Akun Anda belum diverifikasi. Silakan cek email Anda.';
-      } else if (response.statusCode == 401) {
-        // Wrong credentials
-        errorMessage = errorData['message'] ?? 'Email atau password salah.';
-      } else if (response.statusCode == 422) {
-        // Validation errors
-        if (errorData['errors'] != null) {
-          final errors = errorData['errors'] as Map<String, dynamic>;
-          final errorMessages = <String>[];
-          
-          errors.forEach((field, messages) {
-            if (messages is List) {
-              errorMessages.addAll(messages.cast<String>());
-            } else {
-              errorMessages.add(messages.toString());
-            }
-          });
-          
-          errorMessage = errorMessages.join('\n');
+        if (mounted) {
+          toastification.show(
+            context: context,
+            title: Text('lbl_success'.tr, style: const TextStyle(color: Colors.white)),
+            description: Text(
+              'msg_login_success'.tr.replaceFirst('{name}', responseData['user']['nama_user']),
+              style: const TextStyle(color: Colors.white),
+            ),
+            autoCloseDuration: const Duration(seconds: 3),
+            backgroundColor: appTheme.lightGreen.withAlpha((0.8 * 255).toInt()),
+            style: ToastificationStyle.flat,
+            borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+            icon: Icon(Icons.check_circle, color: appTheme.whiteA700),
+          );
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
         }
       } else {
-        errorMessage = errorData['message'] ?? 'Login failed.';
+        final errorData = jsonDecode(response.body);
+        String errorMessage = 'msg_login_failed'.tr;
+        
+        if (response.statusCode == 403) {
+          errorMessage = errorData['message'] ?? 'msg_account_not_verified'.tr;
+        } else if (response.statusCode == 401) {
+          errorMessage = errorData['message'] ?? 'msg_invalid_credentials'.tr;
+        } else if (response.statusCode == 422) {
+          if (errorData['errors'] != null) {
+            final errors = errorData['errors'] as Map<String, dynamic>;
+            final errorMessages = <String>[];
+            
+            errors.forEach((field, messages) {
+              if (messages is List) {
+                errorMessages.addAll(messages.cast<String>());
+              } else {
+                errorMessages.add(messages.toString());
+              }
+            });
+            
+            errorMessage = errorMessages.join('\n');
+          }
+        } else {
+          errorMessage = errorData['message'] ?? 'msg_login_failed'.tr;
+        }
+
+        if (mounted) {
+          toastification.show(
+            context: context,
+            title: Text('lbl_login_failed'.tr, style: const TextStyle(color: Colors.white)),
+            description: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+            autoCloseDuration: const Duration(seconds: 5),
+            backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
+            style: ToastificationStyle.flat,
+            borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+            icon: Icon(Icons.block, color: appTheme.whiteA700),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
       }
 
-      toastification.show(
-        context: context,
-        title: const Text('Login Failed', style: TextStyle(color: Colors.white)),
-        description: Text(errorMessage, style: const TextStyle(color: Colors.white)),
-        autoCloseDuration: const Duration(seconds: 5),
-        backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
-        style: ToastificationStyle.flat,
-        borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-        icon: Icon(Icons.block, color: appTheme.whiteA700),
-      );
+      print('Login error: $e');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${'msg_something_wrong'.tr}: $e")),
+        );
+      }
     }
-  } catch (e) {
-    setState(() {
-      isLoading = false;
-    });
-
-    print('Login error: $e');
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Something went wrong: $e")),
-    );
   }
-}
 
-// Tambahkan method untuk FCM registration di background
-void _registerFCMInBackground() {
-  Future.delayed(const Duration(milliseconds: 500), () async {
-    try {
-      await FCMService.registerTokenAfterLogin();
-      print('FCM token registered successfully after login');
-    } catch (fcmError) {
-      print('Failed to register FCM token: $fcmError');
-    }
-  });
-}
+  void _registerFCMInBackground() {
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      try {
+        await FCMService.registerTokenAfterLogin();
+        print('FCM token registered successfully after login');
+      } catch (fcmError) {
+        print('Failed to register FCM token: $fcmError');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      key: _rebuildKey, // Force rebuild key
       child: Scaffold(
         body: Stack(
           children: [
@@ -217,12 +245,12 @@ void _registerFCMInBackground() {
                       Text(
                         "v$appVersion © 2024",
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
+                      const Text(
                         "Copyright By NESH Navya",
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -233,6 +261,18 @@ void _registerFCMInBackground() {
                     ],
                   ),
                 ),
+              ),
+            ),
+            // Language Selector positioned manually
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              right: 16,
+              child: LanguageSelector(
+                showAsButton: true,
+                onLanguageChanged: () {
+                  print('🔄 Language changed callback triggered in login');
+                  _forceRebuild(); // Force complete rebuild
+                },
               ),
             ),
           ],
@@ -255,13 +295,15 @@ void _registerFCMInBackground() {
           ),
           child: Column(
             children: [
+              // Logo centered (no language selector here)
               buildLogo(),
-              const SizedBox(height: 24),
+              
+              const SizedBox(height: 40),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text("Email", style: theme.textTheme.bodySmall),
+                  child: Text("lbl_email".tr, style: theme.textTheme.bodySmall),
                 ),
               ),
               buildEmailInput(),
@@ -270,7 +312,7 @@ void _registerFCMInBackground() {
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text("lbl_password".tr(context), style: theme.textTheme.bodySmall),
+                  child: Text("lbl_password".tr, style: theme.textTheme.bodySmall),
                 ),
               ),
               buildPasswordInput(),
@@ -279,7 +321,7 @@ void _registerFCMInBackground() {
                 alignment: Alignment.centerRight,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text("msg_forgot_password".tr(context), style: theme.textTheme.bodySmall),
+                  child: Text("msg_forgot_password".tr, style: theme.textTheme.bodySmall),
                 ),
               ),
               const SizedBox(height: 24),
@@ -290,14 +332,14 @@ void _registerFCMInBackground() {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("msg_don_t_have_an_account".tr(context), style: theme.textTheme.bodyMedium),
+                  Text("msg_don_t_have_an_account".tr, style: theme.textTheme.bodyMedium),
                   const SizedBox(width: 2),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, AppRoutes.registerUserScreen);
                     },
                     child: Text(
-                      "lbl_register".tr(context),
+                      "lbl_register".tr,
                       style: TextStyle(
                         color: appTheme.orange400,
                         fontWeight: FontWeight.bold,
@@ -310,13 +352,6 @@ void _registerFCMInBackground() {
           ),
         ),
       ),
-    );
-  }
-
-  Widget buildLoginButton() {
-    return CustomOutlinedButton(
-      text: "btn_login".tr(context),
-      onPressed: _loginUser,
     );
   }
 
@@ -334,11 +369,11 @@ void _registerFCMInBackground() {
           text: TextSpan(
             children: [
               TextSpan(
-                text: "Welcome to ",
+                text: "msg_welcome_to".tr,
                 style: CustomTextStyles.headlineSmallMedium,
               ),
               TextSpan(
-                text: "Navya Hub",
+                text: " Navya Hub",
                 style: CustomTextStyles.signature,
               ),
             ],
@@ -349,18 +384,25 @@ void _registerFCMInBackground() {
     );
   }
 
+  Widget buildLoginButton() {
+    return CustomOutlinedButton(
+      text: "lbl_login".tr,
+      onPressed: isLoading ? null : _loginUser,
+    );
+  }
+
   Widget buildEmailInput() {
     return CustomTextFormField(
       controller: _emailController,
-      hintText: "lbl_enter_your_email".tr(context),
+      hintText: "msg_enter_your_email".tr,
       textInputType: TextInputType.emailAddress,
       validator: (value) {
         final trimmedValue = value?.trim();
         if (trimmedValue == null || trimmedValue.isEmpty) {
-          return "msg_email_required".tr(context);
+          return "msg_email_required".tr;
         }
         if (!isValidEmail(trimmedValue)) {
-          return "msg_email_invalid".tr(context);
+          return "msg_email_invalid".tr;
         }
         return null;
       },
@@ -370,12 +412,16 @@ void _registerFCMInBackground() {
   Widget buildPasswordInput() {
     return CustomTextFormField(
       controller: _passwordController,
-      hintText: "lbl_enter_your_password".tr(context),
+      hintText: "lbl_enter_your_password".tr,
       obscureText: _obscurePassword,
       suffix: GestureDetector(
         onTap: () {
-          setState(() {
-            _obscurePassword = !_obscurePassword;
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            }
           });
         },
         child: Icon(
@@ -385,7 +431,7 @@ void _registerFCMInBackground() {
       ),
       validator: (value) {
         if (value == null || value.trim().length < 8) {
-          return "msg_password_must_be_8".tr(context);
+          return "msg_password_must_be_8_characters".tr;
         }
         return null;
       },
