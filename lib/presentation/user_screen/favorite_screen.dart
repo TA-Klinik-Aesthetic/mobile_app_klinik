@@ -150,16 +150,19 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionHeader('Dokter Favorit'),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _buildDoctorList(),
               const SizedBox(height: 16),
+
               _buildSectionHeader('Produk Favorit'),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _buildProductList(),
               const SizedBox(height: 16),
+
               _buildSectionHeader('Treatment Favorit'),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _buildTreatmentList(),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -191,7 +194,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     }
 
     return SizedBox(
-      height: 200,
+      height: 215,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
@@ -265,11 +268,10 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     doctor['nama_dokter'] ?? 'Unknown Doctor',
                     style: TextStyle(
                       color: appTheme.black900,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -287,7 +289,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     }
 
     return SizedBox(
-      height: 200,
+      height: 215,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
@@ -329,44 +331,147 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: product['gambar_produk'] != null
-                        ? Image.network(
-                      product['gambar_produk'],
-                      width: 140,
-                      height: 140,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 140,
-                        height: 140,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.image, size: 40, color: Colors.grey),
-                      ),
-                    )
-                        : Container(
-                      width: 140,
-                      height: 140,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.image, size: 40, color: Colors.grey),
-                    ),
-                  ),
+                  // ✅ Enhanced product image with ApiConstants.getImageUrl()
+                  _buildFavoriteProductImage(product),
                   const SizedBox(height: 8),
+                  
+                  // Product name
                   Text(
                     product['nama_produk'] ?? 'Unknown Product',
                     style: TextStyle(
                       color: appTheme.black900,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  
+                  // ✅ Add product price if available
+                  if (product['harga_produk'] != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Rp ${_formatPrice(product['harga_produk'])}',
+                      style: TextStyle(
+                        color: appTheme.orange200,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  // ✅ Add enhanced product image method
+  Widget _buildFavoriteProductImage(dynamic product) {
+    final imageUrl = product['gambar_produk'] ?? '';
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 125, // 150 - 16 padding
+        height: 125,
+        decoration: BoxDecoration(
+          color: appTheme.lightBadge100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: imageUrl.isNotEmpty
+            ? Image.network(
+                ApiConstants.getImageUrl(imageUrl), // ✅ Use getImageUrl
+                width: 125,
+                height: 125,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  
+                  return Container(
+                    width: 125,
+                    height: 125,
+                    color: appTheme.lightBadge100,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: appTheme.orange200,
+                              strokeWidth: 2,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Loading...',
+                            style: TextStyle(
+                              color: appTheme.lightGrey,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  final fullUrl = ApiConstants.getImageUrl(imageUrl);
+                  final productName = product['nama_produk'] ?? 'Unknown';
+                  
+                  print('❌ Favorite product image error:');
+                  print('   Product: $productName');
+                  print('   Original path: $imageUrl');
+                  print('   Full URL: $fullUrl');
+                  print('   Error: $error');
+                  
+                  return _buildFavoriteProductPlaceholder();
+                },
+              )
+            : _buildFavoriteProductPlaceholder(),
+      ),
+    );
+  }
+
+  // ✅ Add placeholder for favorite products
+  Widget _buildFavoriteProductPlaceholder() {
+    return Container(
+      width: 125,
+      height: 125,
+      decoration: BoxDecoration(
+        color: appTheme.lightBadge100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: appTheme.lightGrey.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported,
+            color: appTheme.lightGrey,
+            size: 32,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'No Image',
+            style: TextStyle(
+              color: appTheme.lightGrey,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -443,8 +548,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     treatment['nama_treatment'] ?? 'Unknown Treatment',
                     style: TextStyle(
                       color: appTheme.black900,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

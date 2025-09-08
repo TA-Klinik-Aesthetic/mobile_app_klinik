@@ -1,4 +1,25 @@
 final Map<String, String> enUs = {
+
+  // Onboarding Translations
+  "onboarding_title_1": "All-In-One Beauty App",
+  "onboarding_desc_1": "Enjoy a modern beauty experience from consultation and treatment to skincare shopping - all in one app.",
+  
+  "onboarding_title_2": "Booking in Just a Tap",
+  "onboarding_desc_2": "Choose your doctor, schedule, and treatment in just a few taps. Booking is completely easy in this way.",
+  
+  "onboarding_title_3": "Discover your Skincare",
+  "onboarding_desc_3": "Discover quality skincare products from trusted clinics and shop easily through the app.",
+  
+  "onboarding_title_4": "Favorite What You Love",
+  "onboarding_desc_4": "Discover quality skincare products from trusted clinics and shop easily through the app.",
+  
+  "onboarding_title_5": "Stay Updated & Glowing",
+  "onboarding_desc_5": "Get real-time updates on your bookings, consultations, latest promos, and recommended products - right on your phone.",
+  
+  "btn_next": "NEXT",
+  "btn_skip": "SKIP",
+  "btn_get_started": "GET STARTED",
+
   // Login User Screen
   "lbl_enter_password": "Enter password",
   "lbl_user": "User",
@@ -12,6 +33,15 @@ final Map<String, String> enUs = {
   "msg_email_required": "Email cannot be empty",
   "msg_email_invalid": "Email is not valid",
   "btn_login": "Login",
+
+  // Forgot Password Screen
+  "lbl_forgot_password": "Forgot Password",
+  "msg_enter_your_email_to_receive_link": "Enter your email to receive reset link",
+  "btn_send_reset_link": "Send Reset Link",
+  "lbl_back_to_login": "Back to Login",
+  "lbl_error": "Error",
+  "msg_failed_send_reset": "Failed to send reset link",
+  "msg_reset_link_sent": "Reset link sent to your email",
 
   // Register User Screen
   "lbl_username": "Username",

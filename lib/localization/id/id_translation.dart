@@ -1,4 +1,25 @@
 final Map<String, String> idID = {
+
+  // Onboarding Translations
+  "onboarding_title_1": "Aplikasi Kecantikan Lengkap",
+  "onboarding_desc_1": "Nikmati pengalaman kecantikan modern dari konsultasi & perawatan hingga belanja skincare - semua dalam satu aplikasi.",
+  
+  "onboarding_title_2": "Booking Hanya Sekali Tap",
+  "onboarding_desc_2": "Pilih dokter, jadwal, dan perawatan hanya dalam beberapa ketukan. Booking menjadi sangat mudah dengan cara ini.",
+  
+  "onboarding_title_3": "Temukan Skincare Anda",
+  "onboarding_desc_3": "Temukan produk skincare berkualitas dari klinik terpercaya dan berbelanja dengan mudah melalui aplikasi.",
+  
+  "onboarding_title_4": "Favoritkan Yang Anda Suka",
+  "onboarding_desc_4": "Temukan produk skincare berkualitas dari klinik terpercaya dan berbelanja dengan mudah melalui aplikasi.",
+  
+  "onboarding_title_5": "Tetap Update & Bersinar",
+  "onboarding_desc_5": "Dapatkan update real-time tentang booking, konsultasi, promo terbaru, dan produk rekomendasi - langsung di ponsel Anda.",
+  
+  "btn_next": "LANJUT",
+  "btn_skip": "LEWATI",
+  "btn_get_started": "MULAI",
+
   // Login User Screen
   "lbl_enter_password": "Masukkan kata sandi",
   "lbl_user": "Pengguna",
@@ -12,6 +33,15 @@ final Map<String, String> idID = {
   "msg_email_required": "Email tidak boleh kosong",
   "msg_email_invalid": "Email tidak valid",
   "btn_login": "Masuk",
+
+  // Forgot Password Screen
+  "lbl_forgot_password": "Lupa Kata Sandi",
+  "msg_enter_your_email_to_receive_link": "Masukkan email Anda untuk menerima tautan reset",
+  "btn_send_reset_link": "Kirim Tautan Reset",
+  "lbl_back_to_login": "Kembali ke Login",
+  "lbl_error": "Kesalahan",
+  "msg_failed_send_reset": "Gagal mengirim tautan reset",
+  "msg_reset_link_sent": "Tautan reset telah dikirim ke email Anda",
 
   // Register User Screen
   "lbl_username": "Nama Pengguna",

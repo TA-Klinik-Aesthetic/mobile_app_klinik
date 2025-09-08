@@ -207,116 +207,118 @@ class _ProductScreenState extends State<ProductScreen> {
             ),
           ];
         },
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 8),
+        // ✅ Perbaiki body dengan struktur yang benar
+        body: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 8),
           child: RefreshIndicator(
             onRefresh: () async {
               await fetchProducts();
               await fetchCartCount();
             },
             color: appTheme.orange200,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Categories list
-                  SizedBox(
-                    height: 40,
-                    child: isLoadingCategories
-                        ? const Center(child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ))
-                        : categories.isEmpty
-                        ? Center(
-                      child: Text(
-                        "Tidak ada kategori",
-                        style: TextStyle(color: appTheme.black900),
-                      ),
-                    )
-                        : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProductByCategoryScreen(
-                                    categoryId: categories[index]['id_kategori'],
-                                    categoryName: categories[index]['nama_kategori'],
-                                  ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ✅ Categories list dengan tinggi tetap
+                SizedBox(
+                  height: 40,
+                  child: isLoadingCategories
+                      ? const Center(child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ))
+                      : categories.isEmpty
+                      ? Center(
+                    child: Text(
+                      "Tidak ada kategori",
+                      style: TextStyle(color: appTheme.black900),
+                    ),
+                  )
+                      : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductByCategoryScreen(
+                                  categoryId: categories[index]['id_kategori'],
+                                  categoryName: categories[index]['nama_kategori'],
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: appTheme.whiteA700,
-                              side: BorderSide(color: appTheme.lightGrey, width: 1),
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
                               ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: appTheme.whiteA700,
+                            side: BorderSide(color: appTheme.lightGrey, width: 1),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Text(
-                              categories[index]['nama_kategori'],
-                              style: TextStyle(color: appTheme.black900),
-                            ),
+                          ),
+                          child: Text(
+                            categories[index]['nama_kategori'],
+                            style: TextStyle(color: appTheme.black900),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // ✅ Divider dengan tinggi tetap
+                Container(
+                  height: 1,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  color: appTheme.lightGrey,
+                ),
+                const SizedBox(height: 16),
+
+                // ✅ Product Grid - gunakan Expanded untuk mengisi sisa ruang
+                Expanded(
+                  child: isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : filteredProducts.isEmpty
+                      ? Center(
+                    child: Text(
+                      "Produk tidak ditemukan",
+                      style: TextStyle(
+                        color: appTheme.black900,
+                        fontSize: 16,
+                      ),
+                    ),
+                  )
+                      : GridView.builder(
+                    itemCount: filteredProducts.length,
+                    // ✅ Sesuaikan gridDelegate untuk menghindari overflow
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.65, // ✅ Turunkan dari 0.7 ke 0.65
+                      mainAxisSpacing: 16, // ✅ Kurangi spacing
+                      crossAxisSpacing: 12, // ✅ Kurangi spacing
+                    ),
+                    padding: const EdgeInsets.only(bottom: 80), // ✅ Tambahkan padding bawah untuk FAB
+                    itemBuilder: (context, index) => ProductCard(
+                      product: filteredProducts[index],
+                      onPress: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProductDetailScreen(
+                                product: filteredProducts[index]),
                           ),
                         );
                       },
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  // Divider
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Divider(height: 1, color: appTheme.lightGrey),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Product Grid
-                  Expanded(
-                    child: isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : filteredProducts.isEmpty
-                        ? Center(
-                      child: Text(
-                        "Produk tidak ditemukan",
-                        style: TextStyle(
-                          color: appTheme.black900,
-                          fontSize: 16,
-                        ),
-                      ),
-                    )
-                        : GridView.builder(
-                      itemCount: filteredProducts.length,
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 200,
-                        childAspectRatio: 0.7,
-                        mainAxisSpacing: 20,
-                        crossAxisSpacing: 16,
-                      ),
-                      itemBuilder: (context, index) => ProductCard(
-                        product: filteredProducts[index],
-                        onPress: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(
-                                  product: filteredProducts[index]),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -1,77 +1,95 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:app_links/app_links.dart';
+import 'package:mobile_app_klinik/presentation/add_on_screen/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/app_export.dart';
 import 'core/services/fcm_service.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-// Handle background messages
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print('Handling a background message: ${message.messageId}');
-}
-
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Load env (opsional)
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (_) {}
 
-  // Initialize language service
-  await LanguageService.initialize();
-  await AppLocalization.loadSavedLanguage();
+    // Firebase
+    await Firebase.initializeApp();
 
-  await Future.wait([
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
-    PrefUtils().init()
-  ]);
+    // Daftarkan background handler SEBELUM runApp
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  runApp(const MyApp());
+    // Prefs (jika dipakai di app)
+    await PrefUtils().init();
+
+    // FCM: izin + channel + listeners
+    await FCMService.initialize();
+    await FCMService.initializeNotificationListener();
+    await FCMService.debugStatus();
+
+    runApp(const MyApp());
+  }, (error, stackTrace) {
+    print('❌ Uncaught error: $error\n$stackTrace');
+  });
 }
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
-
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale _locale = const Locale('en', 'US'); // Default locale
+  Locale _locale = const Locale('id', 'ID');
+
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadSavedLanguage();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeFCM();
-    });
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadSavedLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedLanguage = prefs.getString('selected_language') ?? 'en';
-    
-    if (mounted) {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('selected_language') ?? 'id';
+      if (!mounted) return;
       setState(() {
-        _locale = savedLanguage == 'id' 
-            ? const Locale('id', 'ID') 
-            : const Locale('en', 'US');
+        _locale = saved == 'en' ? const Locale('en', 'US') : const Locale('id', 'ID');
       });
-    }
+    } catch (_) {}
   }
 
-  Future<void> _initializeFCM() async {
+  void _initDeepLinks() async {
+    _appLinks = AppLinks();
     try {
-      await FCMService.initialize();
-      print('FCM initialized successfully');
-    } catch (e) {
-      print('FCM initialization error: $e');
-    }
+      final initial = await _appLinks.getInitialLink();
+      if (initial != null) {
+        // handle if needed
+      }
+    } catch (_) {}
+    try {
+      _linkSubscription = _appLinks.uriLinkStream.listen(
+        (uri) => print('Deep link: $uri'),
+        onError: (err) => print('Deep link error: $err'),
+      );
+    } catch (_) {}
   }
 
   @override
@@ -79,32 +97,22 @@ class _MyAppState extends State<MyApp> {
     return Sizer(
       builder: (context, orientation, deviceType) {
         return MaterialApp(
+          title: 'NAVYA HUB',
           theme: theme,
-          title: 'NAVYA Hub Mobile App',
-          locale: _locale, // FIX: Use the _locale field
+          locale: _locale,
+          navigatorKey: FCMService.navigatorKey,
+          debugShowCheckedModeBanner: false,
+          initialRoute: AppRoutes.splashScreen,
+          routes: AppRoutes.routes,
+          onGenerateRoute: AppRoutes.onGenerateRoute,
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
                 textScaler: const TextScaler.linear(1.0),
               ),
-              child: child!,
+              child: child ?? const SizedBox(),
             );
           },
-          navigatorKey: NavigatorService.navigatorKey,
-          debugShowCheckedModeBanner: false,
-          localizationsDelegates: const [
-            AppLocalizationDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', 'US'),
-            Locale('id', 'ID'),
-          ],
-          initialRoute: AppRoutes.initialRoute,
-          routes: AppRoutes.routes,
-          onGenerateRoute: AppRoutes.onGenerateRoute,
         );
       },
     );

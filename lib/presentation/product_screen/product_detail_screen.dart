@@ -246,9 +246,78 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(18),
-                    image: DecorationImage(
-                      image: NetworkImage(widget.product['gambar_produk']),
+                    color: appTheme.lightGrey,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Image.network(
+                      ApiConstants.getImageUrl(widget.product['gambar_produk'] ?? ''), // ✅ Use correct base URL
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        final imageUrl = ApiConstants.getImageUrl(widget.product['gambar_produk'] ?? '');
+                        print('❌ Error loading product detail image: $imageUrl');
+                        return Container(
+                          color: appTheme.lightGrey,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_not_supported,
+                                  size: 80,
+                                  color: appTheme.black900.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Image not available',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: appTheme.black900.withOpacity(0.5),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  imageUrl,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: appTheme.black900.withOpacity(0.3),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: appTheme.lightGrey,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(appTheme.orange200),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Loading image...',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: appTheme.black900.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -257,7 +326,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Text(
                 widget.product['nama_produk'],
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
@@ -377,35 +446,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 245,
+                height: 320,
                 child: recommendedProducts.isEmpty
                     ? const Center(child: CircularProgressIndicator())
-                    : ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: recommendedProducts.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    return SizedBox(
-                      width: 160,
-                      child: ProductCard(
-                        product: recommendedProducts[index],
-                        onPress: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(
+                    : ClipRect( // ✅ Tambahkan ClipRect untuk memotong overflow
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 4), // ✅ Tambahkan padding
+                          itemCount: recommendedProducts.length,
+                          separatorBuilder: (context, index) => const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              width: 180,
+                              child: ProductCard(
                                 product: recommendedProducts[index],
+                                onPress: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProductDetailScreen(
+                                        product: recommendedProducts[index],
+                                      ),
+                                    ),
+                                  ).then((_) {
+                                    // Refresh recommendations when returning to this page
+                                    fetchRecommendedProducts();
+                                  });
+                                },
                               ),
-                            ),
-                          ).then((_) {
-                            // Refresh recommendations when returning to this page
-                            fetchRecommendedProducts();
-                          });
-                        },
+                            );
+                          },
+                        ),
                       ),
-                    );
-                  },
-                ),
               ),
               const SizedBox(height: 36),
             ],

@@ -1,36 +1,73 @@
 import 'package:flutter/material.dart';
 
-// ignore_for_file: must_be_immutable
 class NavigatorService {
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  static Future<dynamic> pushNamed(
-    String routeName, {
-    dynamic arguments,
-  }) async {
-    return navigatorKey.currentState
-        ?.pushNamed(routeName, arguments: arguments);
+  static BuildContext? get context => navigatorKey.currentContext;
+
+  static Future<dynamic>? pushNamed(String routeName, {dynamic arguments}) {
+    try {
+      print('🧭 NavigatorService.pushNamed: $routeName');
+      final navigator = navigatorKey.currentState;
+      if (navigator != null) {
+        return navigator.pushNamed(routeName, arguments: arguments);
+      } else {
+        print('❌ Navigator state is null');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error in pushNamed: $e');
+      return null;
+    }
+  }
+
+  static Future<dynamic>? pushNamedAndRemoveUntil(String routeName, {dynamic arguments}) {
+    try {
+      print('🧭 NavigatorService.pushNamedAndRemoveUntil: $routeName');
+      final navigator = navigatorKey.currentState;
+      if (navigator != null) {
+        return navigator.pushNamedAndRemoveUntil(
+          routeName,
+          (route) => false,
+          arguments: arguments,
+        );
+      } else {
+        print('❌ Navigator state is null');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error in pushNamedAndRemoveUntil: $e');
+      return null;
+    }
   }
 
   static void goBack() {
-    return navigatorKey.currentState?.pop();
+    try {
+      print('🔙 NavigatorService.goBack');
+      final navigator = navigatorKey.currentState;
+      if (navigator != null && navigator.canPop()) {
+        navigator.pop();
+      } else {
+        print('❌ Cannot go back - navigator is null or cannot pop');
+      }
+    } catch (e) {
+      print('❌ Error in goBack: $e');
+    }
   }
 
-  static Future<dynamic> pushNamedAndRemoveUntil(
-    String routeName, {
-    bool routePredicate = false,
-    dynamic arguments,
-  }) async {
-    return navigatorKey.currentState?.pushNamedAndRemoveUntil(
-        routeName, (route) => routePredicate,
-        arguments: arguments);
-  }
-
-  static Future<dynamic> popAndPushNamed(
-    String routeName, {
-    dynamic arguments,
-  }) async {
-    return navigatorKey.currentState
-        ?.popAndPushNamed(routeName, arguments: arguments);
+  static Future<dynamic>? pushReplacementNamed(String routeName, {dynamic arguments}) {
+    try {
+      print('🧭 NavigatorService.pushReplacementNamed: $routeName');
+      final navigator = navigatorKey.currentState;
+      if (navigator != null) {
+        return navigator.pushReplacementNamed(routeName, arguments: arguments);
+      } else {
+        print('❌ Navigator state is null');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error in pushReplacementNamed: $e');
+      return null;
+    }
   }
 }

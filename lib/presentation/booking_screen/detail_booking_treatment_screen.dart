@@ -691,12 +691,10 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         final treatmentId = treatment['id_treatment'];
         final compensationId = _selectedCompensations[treatmentId];
 
-        // Create treatment detail map, only include compensation if it's not null
         Map<String, dynamic> detail = {
           'id_treatment': treatmentId,
         };
 
-        // Only add compensation field if it's not null
         if (compensationId != null) {
           detail['id_kompensasi_diberikan'] = compensationId;
         }
@@ -704,18 +702,15 @@ class _DetailBookingTreatmentScreenState extends State<DetailBookingTreatmentScr
         return detail;
       }).toList();
 
+      // Kirim id_promo selalu; akan null jika tidak memilih promo
       Map<String, dynamic> requestBody = {
         'id_user': userId,
         'waktu_treatment': waktuTreatment,
         'id_dokter': null,
         'id_beautician': null,
         'details': treatmentDetails,
+        'id_promo': _selectedPromo?.idPromo, // <-- null if no promo selected
       };
-
-      // Only add promo if it's selected
-      if (_selectedPromo?.idPromo != null) {
-        requestBody['id_promo'] = _selectedPromo!.idPromo;
-      }
 
       final response = await http.post(
         Uri.parse(ApiConstants.bookingTreatment),

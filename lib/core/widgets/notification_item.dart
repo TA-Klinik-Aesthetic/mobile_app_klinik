@@ -9,10 +9,10 @@ class NotificationItem extends StatelessWidget {
   final VoidCallback? onTap;
 
   const NotificationItem({
-    Key? key,
+    super.key,
     required this.notification,
     this.onTap,
-  }) : super(key: key);
+  });
 
   Color _getIconColor() {
     switch (notification.jenis) {

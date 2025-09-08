@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:mobile_app_klinik/core/widgets/language_selector.dart';
 import 'package:toastification/toastification.dart';
+import 'package:intl/intl.dart';
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
@@ -28,6 +28,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   final TextEditingController _tanggalLahirController = TextEditingController();
   
   String? _selectedJenisKelamin;
+  DateTime? _selectedDate;
   bool isLoading = false;
   bool _obscurePassword = true;
   bool _obscureRetypePassword = true;
@@ -217,6 +218,262 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    // Define date limits
+    final DateTime firstDate = DateTime(1900);
+    final DateTime lastDate = DateTime.now().subtract(const Duration(days: 365 * 5)); // At least 5 years old
+    final DateTime initialDate = _selectedDate ?? DateTime(2000, 1, 1);
+
+    try {
+      final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: initialDate.isBefore(firstDate) ? firstDate : 
+                     initialDate.isAfter(lastDate) ? lastDate : initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        // ✅ Customize the date picker appearance
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: appTheme.orange200, // Header background color
+                onPrimary: Colors.white, // Header text color
+                onSurface: appTheme.black900, // Body text color
+                surface: appTheme.whiteA700, // Background color
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  foregroundColor: appTheme.orange200, // Button text color
+                ),
+              ),
+              dialogTheme: DialogThemeData(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: appTheme.black900, width: 1),
+                ),
+              ),
+            ),
+            child: child!,
+          );
+        },
+        // ✅ Set initial view to year
+        initialDatePickerMode: DatePickerMode.year,
+        // ✅ Add help text
+        helpText: 'Pilih Tanggal Lahir',
+        cancelText: 'Batal',
+        confirmText: 'Pilih',
+        // ✅ Format the date picker
+        fieldLabelText: 'Tanggal Lahir',
+        fieldHintText: 'DD/MM/YYYY',
+      );
+
+      if (pickedDate != null && pickedDate != _selectedDate) {
+        setState(() {
+          _selectedDate = pickedDate;
+          // ✅ Format date to YYYY-MM-DD as required by API
+          _tanggalLahirController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
+        });
+        
+        print('Selected date: ${_tanggalLahirController.text}');
+      }
+    } catch (e) {
+      print('Error selecting date: $e');
+      
+      // ✅ Fallback: Show custom date picker dialog
+      _showCustomDatePicker(context);
+    }
+  }
+
+  // ✅ Custom date picker as fallback
+  Future<void> _showCustomDatePicker(BuildContext context) async {
+    int selectedYear = _selectedDate?.year ?? 2000;
+    int selectedMonth = _selectedDate?.month ?? 1;
+    int selectedDay = _selectedDate?.day ?? 1;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            // Get days in selected month
+            int daysInMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
+            if (selectedDay > daysInMonth) {
+              selectedDay = daysInMonth;
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: appTheme.black900, width: 1),
+              ),
+              title: const Text('Pilih Tanggal Lahir'),
+              content: SizedBox(
+                width: 300,
+                height: 300,
+                child: Column(
+                  children: [
+                    // Year Picker
+                    const Text('Tahun:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(
+                      height: 80,
+                      child: ListWheelScrollView.useDelegate(
+                        itemExtent: 40,
+                        physics: const FixedExtentScrollPhysics(),
+                        onSelectedItemChanged: (index) {
+                          setDialogState(() {
+                            selectedYear = 1900 + index;
+                            // Adjust day if needed
+                            int daysInSelectedMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
+                            if (selectedDay > daysInSelectedMonth) {
+                              selectedDay = daysInSelectedMonth;
+                            }
+                          });
+                        },
+                        childDelegate: ListWheelChildBuilderDelegate(
+                          builder: (context, index) {
+                            final year = 1900 + index;
+                            final isSelected = year == selectedYear;
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: isSelected
+                                  ? BoxDecoration(
+                                      color: appTheme.orange200.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(8),
+                                    )
+                                  : null,
+                              child: Text(
+                                year.toString(),
+                                style: TextStyle(
+                                  fontSize: isSelected ? 18 : 16,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? appTheme.orange200 : Colors.black,
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: DateTime.now().year - 1900 + 1,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 10),
+                    
+                    // Month Picker
+                    const Text('Bulan:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(
+                      height: 80,
+                      child: ListWheelScrollView.useDelegate(
+                        itemExtent: 40,
+                        physics: const FixedExtentScrollPhysics(),
+                        onSelectedItemChanged: (index) {
+                          setDialogState(() {
+                            selectedMonth = index + 1;
+                            // Adjust day if needed
+                            int daysInSelectedMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
+                            if (selectedDay > daysInSelectedMonth) {
+                              selectedDay = daysInSelectedMonth;
+                            }
+                          });
+                        },
+                        childDelegate: ListWheelChildBuilderDelegate(
+                          builder: (context, index) {
+                            final month = index + 1;
+                            final monthName = DateFormat('MMMM', 'id_ID').format(DateTime(2000, month));
+                            final isSelected = month == selectedMonth;
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: isSelected
+                                  ? BoxDecoration(
+                                      color: appTheme.orange200.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(8),
+                                    )
+                                  : null,
+                              child: Text(
+                                monthName,
+                                style: TextStyle(
+                                  fontSize: isSelected ? 18 : 16,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? appTheme.orange200 : Colors.black,
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: 12,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 10),
+                    
+                    // Day Picker
+                    const Text('Hari:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(
+                      height: 80,
+                      child: ListWheelScrollView.useDelegate(
+                        itemExtent: 40,
+                        physics: const FixedExtentScrollPhysics(),
+                        onSelectedItemChanged: (index) {
+                          setDialogState(() {
+                            selectedDay = index + 1;
+                          });
+                        },
+                        childDelegate: ListWheelChildBuilderDelegate(
+                          builder: (context, index) {
+                            final day = index + 1;
+                            final isSelected = day == selectedDay;
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: isSelected
+                                  ? BoxDecoration(
+                                      color: appTheme.orange200.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(8),
+                                    )
+                                  : null,
+                              child: Text(
+                                day.toString(),
+                                style: TextStyle(
+                                  fontSize: isSelected ? 18 : 16,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? appTheme.orange200 : Colors.black,
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: daysInMonth,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final selectedDateTime = DateTime(selectedYear, selectedMonth, selectedDay);
+                    setState(() {
+                      _selectedDate = selectedDateTime;
+                      _tanggalLahirController.text = DateFormat('yyyy-MM-dd').format(selectedDateTime);
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: appTheme.orange200,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Pilih'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _clearForm() {
     _usernameController.clear();
     _emailController.clear();
@@ -227,6 +484,7 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
     if (mounted) {
       setState(() {
         _selectedJenisKelamin = null;
+        _selectedDate = null;
       });
     }
   }
@@ -304,10 +562,10 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 100.h,
-          width: 100.h,
+          height: 120.h,
+          width: 120.h,
           child: SvgPicture.asset(
-            'assets/images/logo_navya_hub.svg',
+            'assets/images/register_illustration_app.svg',
             height: 80.h,
             width: 80.h,
             fit: BoxFit.contain,
@@ -508,19 +766,38 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
   }
 
   Widget _buildTanggalLahirInput() {
-    return CustomTextFormField(
-      controller: _tanggalLahirController,
-      hintText: "YYYY-MM-DD",
-      textInputType: TextInputType.datetime,
-      validator: (value) {
-        if (value != null && value.trim().isNotEmpty) {
-          final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-          if (!dateRegex.hasMatch(value.trim())) {
-            return "msg_date_format".tr;
-          }
-        }
-        return null;
-      },
+    return GestureDetector(
+      onTap: () => _selectDate(context),
+      child: AbsorbPointer(
+        child: CustomTextFormField(
+          controller: _tanggalLahirController,
+          hintText: "Pilih tanggal lahir",
+          textInputType: TextInputType.datetime,
+          suffix: Icon(
+            Icons.calendar_today,
+            color: Colors.grey,
+          ),
+          validator: (value) {
+            if (value != null && value.trim().isNotEmpty) {
+              try {
+                final date = DateTime.parse(value.trim());
+                final now = DateTime.now();
+                final age = now.difference(date).inDays ~/ 365;
+                
+                if (age < 5) {
+                  return "Umur minimal 5 tahun";
+                }
+                if (age > 150) {
+                  return "Umur tidak valid";
+                }
+              } catch (e) {
+                return "Format tanggal tidak valid";
+              }
+            }
+            return null;
+          },
+        ),
+      ),
     );
   }
 
@@ -621,7 +898,10 @@ class RegisterUserScreenState extends State<RegisterUserScreen> {
       child: CustomOutlinedButton(
         text: isLoading ? "lbl_creating_account".tr : "lbl_register".tr,
         onPressed: isLoading ? null : _registerUser,
+        backgroundColor: appTheme.orange200, // Add this parameter
+        textColor: Colors.white, // Add this for contrast
       ),
+      
     );
   }
 }

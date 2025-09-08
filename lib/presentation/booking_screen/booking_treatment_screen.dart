@@ -52,33 +52,57 @@ class _BookingTreatmentScreenState extends State<BookingTreatmentScreen> {
   Future<void> fetchJenisTreatment() async {
     try {
       setState(() => _isLoading = true);
-      final response = await http.get(
+      
+      // Fetch categories
+      final categoryResponse = await http.get(
         Uri.parse(ApiConstants.jenisTreatment),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          jenisTreatments = data['data'];
+      // Fetch all treatments
+      final treatmentResponse = await http.get(
+        Uri.parse(ApiConstants.treatment),
+      );
 
-          // Extract treatments from each category and store them in the map
-          treatmentsByCategory.clear(); // Clear existing data first
+      if (categoryResponse.statusCode == 200 && treatmentResponse.statusCode == 200) {
+        final categoryData = jsonDecode(categoryResponse.body);
+        final treatmentData = jsonDecode(treatmentResponse.body);
+        
+        setState(() {
+          jenisTreatments = categoryData['data'];
+          
+          // Clear existing data
+          treatmentsByCategory.clear();
+          
+          // Get all treatments from the treatment endpoint
+          List<dynamic> allTreatments = treatmentData['data'] ?? [];
+          
+          // Group treatments by category
+          for (var treatment in allTreatments) {
+            // Convert id_jenis_treatment to int for comparison
+            int categoryId;
+            if (treatment['id_jenis_treatment'] is String) {
+              categoryId = int.parse(treatment['id_jenis_treatment']);
+            } else {
+              categoryId = treatment['id_jenis_treatment'];
+            }
+            
+            if (treatmentsByCategory[categoryId] == null) {
+              treatmentsByCategory[categoryId] = [];
+            }
+            treatmentsByCategory[categoryId]!.add(treatment);
+          }
+          
+          // Debug print
           for (var category in jenisTreatments) {
             int categoryId = category['id_jenis_treatment'];
-            if (category['treatment'] != null && category['treatment'] is List) {
-              treatmentsByCategory[categoryId] = List.from(category['treatment']);
-              print('Category $categoryId has ${treatmentsByCategory[categoryId]?.length} treatments');
-            } else {
-              treatmentsByCategory[categoryId] = [];
-              print('Category $categoryId has no treatments');
-            }
+            print('Category $categoryId (${category['nama_jenis_treatment']}) has ${treatmentsByCategory[categoryId]?.length ?? 0} treatments');
           }
-
+          
           _isLoading = false;
         });
       } else {
         setState(() {
-          error = 'Gagal memuat data jenis treatment';
+          error = 'Gagal memuat data treatment';
           _isLoading = false;
         });
       }
@@ -393,9 +417,7 @@ class TreatmentListScreen extends StatefulWidget {
 }
 
 class _TreatmentListScreenState extends State<TreatmentListScreen> {
-
   Map<int, bool> treatmentFavoriteStatus = {};
-
   List<dynamic> treatments = [];
   bool _isLoading = true;
   String? error;
@@ -404,11 +426,18 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
   @override
   void initState() {
     super.initState();
+    // Use preloaded treatments first
     treatments = widget.preloadedTreatments;
     print('TreatmentListScreen initialized with ${treatments.length} treatments');
-    print('Category ID: ${widget.categoryId}, Category Name: ${widget.categoryName}');
-    _isLoading = false;
-    checkFavoriteTreatments();
+    print('Treatments: ${treatments.map((t) => t['nama_treatment']).toList()}');
+    
+    if (treatments.isNotEmpty) {
+      _isLoading = false;
+      checkFavoriteTreatments();
+    } else {
+      // If no preloaded treatments, fetch from API
+      fetchTreatmentsByCategory();
+    }
   }
 
   @override
@@ -526,19 +555,30 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
       setState(() => _isLoading = true);
 
       final response = await http.get(
-        Uri.parse('${ApiConstants.treatment}?id_jenis_treatment=${widget.categoryId}'),
+        Uri.parse(ApiConstants.treatment),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final allTreatments = data['data'] ?? [];
+        
         setState(() {
-          final allTreatments = data['data'];
-          treatments = allTreatments is List
-              ? allTreatments.where((item) =>
-          item['id_jenis_treatment'] == widget.categoryId).toList()
-              : [];
+          // Filter treatments by category ID
+          treatments = allTreatments.where((treatment) {
+            int treatmentCategoryId;
+            if (treatment['id_jenis_treatment'] is String) {
+              treatmentCategoryId = int.parse(treatment['id_jenis_treatment']);
+            } else {
+              treatmentCategoryId = treatment['id_jenis_treatment'];
+            }
+            return treatmentCategoryId == widget.categoryId;
+          }).toList();
+          
+          print('Filtered ${treatments.length} treatments for category ${widget.categoryId}');
           _isLoading = false;
         });
+        
+        await checkFavoriteTreatments();
       } else {
         setState(() {
           error = 'Gagal memuat data treatment: ${response.statusCode}';
@@ -550,6 +590,7 @@ class _TreatmentListScreenState extends State<TreatmentListScreen> {
         error = 'Error: $e';
         _isLoading = false;
       });
+      print('Error fetching treatments: $e');
     }
   }
 

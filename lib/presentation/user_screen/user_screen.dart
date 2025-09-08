@@ -1,7 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app_klinik/core/services/auth_service.dart';
 import 'package:mobile_app_klinik/core/services/fcm_service.dart';
 import 'package:mobile_app_klinik/presentation/user_screen/history_complaint_screen.dart';
 import 'package:toastification/toastification.dart';
@@ -21,9 +23,9 @@ class _UserScreenState extends State<UserScreen> {
   String userName = '';
   String userEmail = '';
   String phoneNumber = '';
-  String userProfilePhoto = ''; // Added missing variable
+  String userGender = '';
   bool isLoading = true;
-  bool isLoggedIn = true; // Track login status
+  bool isLoggedIn = true;
 
   @override
   void initState() {
@@ -32,32 +34,119 @@ class _UserScreenState extends State<UserScreen> {
   }
 
   Future<void> loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    try {
+      final isUserLoggedIn = await AuthService.isLoggedIn();
+      
+      if (isUserLoggedIn) {
+        final userData = await AuthService.getUserData();
+        final prefs = await SharedPreferences.getInstance();
+        
+        setState(() {
+          userName = userData['userName'] ?? 'User';
+          userEmail = userData['userEmail'] ?? 'user@example.com';
+          phoneNumber = prefs.getString('no_telp') ?? '62xxxxxxx';
+          userGender = prefs.getString('jenis_kelamin') ?? 'Laki-laki';
+          isLoading = false;
+          isLoggedIn = true;
+        });
 
-    if (token == null) {
+        // ✅ Debug print untuk melihat gender value
+        print('DEBUG: User Gender = "$userGender"');
+      } else {
+        setState(() {
+          isLoggedIn = false;
+          isLoading = false;
+          userName = '';
+          userEmail = '';
+          phoneNumber = '';
+          userGender = '';
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
       setState(() {
         isLoggedIn = false;
         isLoading = false;
       });
-      return;
     }
+  }
 
-    setState(() {
-      userName = prefs.getString('nama_user') ?? 'User';
-      userEmail = prefs.getString('email') ?? 'user@example.com';
-      phoneNumber = prefs.getString('no_telp') ?? '62xxxxxxx';
-      userProfilePhoto = prefs.getString('foto_profil') ?? ''; // Load profile photo URL
-      isLoading = false;
-      isLoggedIn = true;
-    });
+  // ✅ Remove unused _getAvatarWidget and related methods
+  // Keep only the used _getSimpleAvatarWidget method
+
+  // ✅ Main avatar widget: Use different background colors and icons based on gender
+  Widget _getSimpleAvatarWidget({double size = 60}) {
+    bool isFemale = userGender.toLowerCase().contains('perempuan') || 
+                   userGender.toLowerCase().contains('wanita') ||
+                   userGender.toLowerCase().contains('female');
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: isFemale 
+              ? [Colors.pink.shade200, Colors.pink.shade400]
+              : [Colors.blue.shade200, Colors.blue.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Background circle
+          Container(
+            width: size * 0.85,
+            height: size * 0.85,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.3),
+            ),
+          ),
+          // Main icon
+          Icon(
+            Icons.person,
+            size: size * 0.5,
+            color: Colors.white,
+          ),
+          // Gender badge
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: size * 0.35,
+              height: size * 0.35,
+              decoration: BoxDecoration(
+                color: isFemale ? Colors.pink.shade600 : Colors.blue.shade600,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: Icon(
+                isFemale ? Icons.female : Icons.male,
+                size: size * 0.2,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Logout Function
   Future<void> _logout() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await AuthService.getToken();
 
       if (token != null) {
         await FCMService.unregisterToken();
@@ -71,33 +160,7 @@ class _UserScreenState extends State<UserScreen> {
         );
       }
       
-      // ✅ Clear all data
-      await prefs.clear();
-
-      setState(() {
-        isLoggedIn = false;
-        userName = '';
-        userEmail = '';
-        phoneNumber = '';
-        userProfilePhoto = '';
-      });
-
-      toastification.show(
-        context: context,
-        title: const Text('Success!'),
-        description: const Text("Berhasil keluar dari akun"),
-        autoCloseDuration: const Duration(seconds: 3),
-        backgroundColor: appTheme.lightGreen,
-        icon: const Icon(Icons.check_circle, color: Colors.white),
-      );
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.homeScreen,
-            (route) => false,
-      );
-    } catch (e) {
-      print('Logout error: $e');
+      await AuthService.logout();
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
@@ -106,19 +169,64 @@ class _UserScreenState extends State<UserScreen> {
         userName = '';
         userEmail = '';
         phoneNumber = '';
-        userProfilePhoto = '';
+        userGender = '';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Terjadi kesalahan, tetapi Anda berhasil keluar'))
-      );
+      if (mounted) {
+        toastification.show(
+          context: context,
+          title: const Text('Success!'),
+          description: const Text("Berhasil keluar dari akun"),
+          autoCloseDuration: const Duration(seconds: 3),
+          backgroundColor: appTheme.lightGreen,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+        );
 
-      // Kembali ke HomeScreen dan hapus semua rute sebelumnya
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.homeScreen,
-            (route) => false,
-      );
+        NavigatorService.pushNamedAndRemoveUntil(AppRoutes.splashScreen);
+      }
+      
+    } catch (e) {
+      print('Logout error: $e');
+      
+      await AuthService.logout();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      setState(() {
+        isLoggedIn = false;
+        userName = '';
+        userEmail = '';
+        phoneNumber = '';
+        userGender = '';
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Terjadi kesalahan, tetapi Anda berhasil keluar'))
+        );
+
+        NavigatorService.pushNamedAndRemoveUntil(AppRoutes.splashScreen);
+      }
+    }
+  }
+
+  // ✅ Fix unused variable warning
+  void _goToLogin() async {
+    try {
+      // ✅ Remove unused variable and directly await the navigation
+      await NavigatorService.pushNamed(AppRoutes.loginUserScreen);
+      
+      if (mounted) {
+        loadUserData();
+      }
+    } catch (e) {
+      print('Error navigating to login: $e');
+      
+      if (mounted) {
+        // ✅ Remove unused variable here too
+        await Navigator.of(context).pushNamed(AppRoutes.loginUserScreen);
+        loadUserData();
+      }
     }
   }
 
@@ -154,7 +262,11 @@ class _UserScreenState extends State<UserScreen> {
                       MaterialPageRoute(
                         builder: (context) => const EditProfileScreen(),
                       ),
-                    ).then((_) => loadUserData());
+                    ).then((_) {
+                      if (mounted) {
+                        loadUserData();
+                      }
+                    });
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -165,49 +277,8 @@ class _UserScreenState extends State<UserScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        // Profile Image
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: appTheme.lightGrey,
-                            border: Border.all(color: Colors.black, width: 1),
-                          ),
-                          child: ClipOval(
-                            child: userProfilePhoto.isNotEmpty
-                                ? Image.network(
-                              userProfilePhoto,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: appTheme.black900.withOpacity(0.6),
-                                );
-                              },
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                        : null,
-                                    strokeWidth: 2,
-                                  ),
-                                );
-                              },
-                            )
-                                : Icon(
-                              Icons.person,
-                              size: 40,
-                              color: appTheme.black900.withOpacity(0.6),
-                            ),
-                          ),
-                        ),
+                        // ✅ Use simple avatar with guaranteed gender indicator
+                        _getSimpleAvatarWidget(size: 72),
                         const SizedBox(width: 16),
                         // User Info
                         Expanded(
@@ -307,11 +378,8 @@ class _UserScreenState extends State<UserScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.account_circle,
-                        size: 70,
-                        color: appTheme.orange200,
-                      ),
+                      // ✅ Use simple avatar for not logged in (default male)
+                      _getSimpleAvatarWidget(size: 70),
                       const SizedBox(height: 16),
                       const Text(
                         'Anda belum login',
@@ -339,34 +407,7 @@ class _UserScreenState extends State<UserScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isLoggedIn
-                      ? _logout
-                      : () {
-                    try {
-                      // Tambahkan log untuk debugging
-                      print('Mencoba navigasi ke halaman login');
-
-                      // Gunakan Navigator.pushNamed biasa untuk troubleshooting
-                      Navigator.pushNamed(context, AppRoutes.loginUserScreen)
-                          .then((_) {
-                        // Refresh data setelah kembali dari halaman login
-                        loadUserData();
-                        print('Kembali dari halaman login');
-                      })
-                          .catchError((error) {
-                        print('Error navigasi: $error');
-                        // Tampilkan pesan error
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Gagal membuka halaman login: $error'))
-                        );
-                      });
-                    } catch (e) {
-                      print('Exception saat navigasi: $e');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Terjadi kesalahan: $e'))
-                      );
-                    }
-                  },
+                  onPressed: isLoggedIn ? _logout : _goToLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isLoggedIn ? appTheme.darkCherry : appTheme.lightGreen,
                     padding: const EdgeInsets.symmetric(vertical: 16),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/api/api_constant.dart';
 
 import '../../core/app_export.dart';
 
@@ -34,28 +35,68 @@ class DetailPromoScreen extends StatelessWidget {
             AspectRatio(
               aspectRatio: 16 / 9,
               child: Image.network(
-                promo['gambar_promo'],
+                ApiConstants.getImageUrl(promo['gambar_promo'] ?? ''), // ✅ Use getImageUrl
                 width: double.infinity,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                          : null,
+                  return Container(
+                    color: appTheme.lightBadge100,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: appTheme.orange200,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Memuat gambar...',
+                            style: TextStyle(
+                              color: appTheme.lightGrey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
+                  print('❌ Error loading detail promo image: ${promo['gambar_promo']} - $error');
                   return Container(
                     color: appTheme.lightBadge100,
                     child: Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: appTheme.lightGrey,
-                        size: 60,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_not_supported,
+                            color: appTheme.lightGrey,
+                            size: 60,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Gambar tidak dapat dimuat',
+                            style: TextStyle(
+                              color: appTheme.lightGrey,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'URL: ${ApiConstants.getImageUrl(promo['gambar_promo'] ?? '')}',
+                            style: TextStyle(
+                              color: appTheme.lightGrey,
+                              fontSize: 10,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -165,10 +206,17 @@ class DetailPromoScreen extends StatelessWidget {
 
                   // Minimal Transaction indicator
                   Text(
-                    'Minimal Transaksi: ${_formatPrice(promo['minimal_belanja'])}',
+                    'Minimal Transaksi:',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 18,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    'Rp ${_formatPrice(promo['minimal_belanja'])},00',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],

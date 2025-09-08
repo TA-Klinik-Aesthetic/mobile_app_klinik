@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_klinik/api/api_constant.dart';
 
 import '../../../core/app_export.dart';
 
@@ -15,6 +16,8 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String imageUrl = ApiConstants.getImageUrl(product['gambar_produk'] ?? '');
+    
     return GestureDetector(
       onTap: onPress,
       child: Container(
@@ -35,46 +38,142 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 1.02,
+            // Product Image
+            Expanded(
+              flex: 3,
               child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF979797).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(18),
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                   child: Image.network(
-                    product['gambar_produk'],
+                    imageUrl,
+                    width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      print('❌ Error loading image: $imageUrl');
+                      print('❌ Error details: $error');
+                      return Container(
+                        color: appTheme.lightGrey,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.image_not_supported,
+                                size: 40,
+                                color: appTheme.black900.withOpacity(0.5),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Image unavailable',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: appTheme.black900.withOpacity(0.5),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: appTheme.lightGrey,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(appTheme.orange200),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              product['nama_produk'],
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: appTheme.black900,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Rp ${_formatPrice(product['harga_produk'])}",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: appTheme.orange200,
+            
+            // Product Info
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product Name
+                    Text(
+                      product['nama_produk'] ?? 'Unknown Product',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: appTheme.black900,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    const SizedBox(height: 4),
+                    
+                    // Category
+                    Text(
+                      _getCategoryName(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: appTheme.black900.withOpacity(0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Price
+                    Text(
+                      "Rp ${_formatPrice(product['harga_produk'])}",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: appTheme.orange200,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _getCategoryName() {
+    final kategoriData = product['kategori'];
+    
+    if (kategoriData == null) {
+      return product['nama_kategori'] ?? 'Unknown Category';
+    }
+    
+    if (kategoriData is Map<String, dynamic>) {
+      return kategoriData['nama_kategori'] ?? 'Unknown Category';
+    }
+    
+    if (kategoriData is String) {
+      return kategoriData;
+    }
+    
+    return 'Unknown Category';
   }
 
   String _formatPrice(dynamic price) {

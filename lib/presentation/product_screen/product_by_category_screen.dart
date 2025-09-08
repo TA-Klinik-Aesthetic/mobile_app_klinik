@@ -43,8 +43,24 @@ class _ProductByCategoryScreenState extends State<ProductByCategoryScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        List<Map<String, dynamic>> fetchedProducts = List<Map<String, dynamic>>.from(data['data'] ?? []);
+        
+        // Add category name to each product for consistent display
+        for (var product in fetchedProducts) {
+          if (product['kategori'] == null || 
+              (product['kategori'] is Map && product['kategori']['nama_kategori'] == null)) {
+            // Add category info if missing
+            product['kategori'] = {
+              'id_kategori': widget.categoryId,
+              'nama_kategori': widget.categoryName,
+            };
+            // Also add direct field for fallback
+            product['nama_kategori'] = widget.categoryName;
+          }
+        }
+        
         setState(() {
-          products = List<Map<String, dynamic>>.from(data['data'] ?? []);
+          products = fetchedProducts;
           isLoading = false;
         });
       } else {

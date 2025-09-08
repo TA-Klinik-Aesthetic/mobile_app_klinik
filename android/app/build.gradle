@@ -10,6 +10,7 @@ android {
     compileSdk = flutter.compileSdkVersion
 
     compileOptions {
+        coreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -20,11 +21,11 @@ android {
 
     defaultConfig {
         applicationId = "com.example.mobile_app_klinik"
-        minSdk = 30 // UBAH INI MENJADI 30 SECARA EKPLISIT
+        minSdk = 30 
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true // Pastikan multidex diaktifkan
+        multiDexEnabled = true 
     }
 
     buildTypes {
@@ -39,8 +40,8 @@ flutter {
 }
 
 dependencies {
-    // Dependensi Firebase, Multidex (tetap di sini)
     implementation 'com.google.firebase:firebase-messaging:24.1.2'
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'androidx.multidex:multidex:2.0.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }

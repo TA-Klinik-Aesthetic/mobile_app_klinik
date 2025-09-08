@@ -1,29 +1,41 @@
 import 'package:flutter/material.dart';
 import '../core/app_export.dart';
-import 'base_button.dart';
 
-class CustomOutlinedButton extends BaseButton {
+class CustomOutlinedButton extends StatelessWidget {
   const CustomOutlinedButton({
     super.key,
     this.decoration,
     this.leftIcon,
     this.rightIcon,
     this.label,
-    super.onPressed,
-    super.buttonStyle,
-    super.buttonTextStyle,
-    super.isDisabled,
-    super.alignment,
-    super.height,
-    super.width,
-    super.margin,
-    required super.text,
+    this.onPressed,
+    this.buttonStyle,
+    this.buttonTextStyle,
+    this.isDisabled,
+    this.height,
+    this.width,
+    required this.text,
+    this.margin,
+    this.alignment,
+    this.backgroundColor, // Add this parameter
+    this.textColor, // Add this parameter
   });
 
   final BoxDecoration? decoration;
   final Widget? leftIcon;
   final Widget? rightIcon;
   final Widget? label;
+  final VoidCallback? onPressed;
+  final ButtonStyle? buttonStyle;
+  final TextStyle? buttonTextStyle;
+  final bool? isDisabled;
+  final double? height;
+  final double? width;
+  final String text;
+  final EdgeInsets? margin;
+  final Alignment? alignment;
+  final Color? backgroundColor; // Add this parameter
+  final Color? textColor; // Add this parameter
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,5 @@
+import 'package:mobile_app_klinik/api/api_constant.dart';
+
 class Promo {
   final int? idPromo;
   final String? namaPromo;
@@ -51,6 +53,14 @@ class Promo {
       double value = double.tryParse(potonganHarga ?? '0') ?? 0;
       return "Rp ${_formatPrice(value)}";
     }
+  }
+
+  String getFullImageUrl() {
+    return ApiConstants.getImageUrl(gambarPromo ?? '');
+  }
+
+  bool hasValidImage() {
+    return gambarPromo != null && gambarPromo!.isNotEmpty;
   }
 
   double calculateDiscount(double totalPrice) {

@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? namaUser;
   late PersistentTabController _controller;
   bool _isLoading = true;
-  int _notificationCount = 0; // Add notification counter
+  int _notificationCount = 0;
   List<Map<String, dynamic>> _promos = [];
   List<Map<String, dynamic>> _news = [];
   bool _isLoadingNews = true;
@@ -34,80 +34,148 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _controller = PersistentTabController(initialIndex: 0);
     WidgetsBinding.instance.addObserver(this);
     _loadUserName();
-    _fetchNotificationCount(); // Load notification count
-    _fetchPromos();  // Fetch promos data
-    _fetchNews(); // Fetch news data
+    _fetchNotificationCount();
+    _fetchPromos();
+    _fetchNews();
+  }
+
+  // Update this method to refresh all data including promos
+  Future<void> _refreshAllData() async {
+    print('🔄 Refreshing all data...');
+    
+    // Run all refresh operations in parallel
+    await Future.wait([
+      _loadUserName(),
+      _fetchNotificationCount(),
+      _fetchPromos(),
+      _fetchNews(),
+    ]);
+    
+    print('✅ All data refreshed successfully');
   }
 
   // Add method to fetch notification count
   Future<void> _fetchNotificationCount() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('id_user');
+      
+      // ✅ Try multiple ways to get user ID
+      int? userId = prefs.getInt('id_user');
+      
+      if (userId == null) {
+        final userIdString = prefs.getString('id_user');
+        if (userIdString != null) {
+          userId = int.tryParse(userIdString);
+        }
+      }
+
       final token = prefs.getString('token');
 
       if (userId != null && token != null) {
+        print('📡 Fetching notification count for user: $userId');
+        
+        // ✅ Use correct endpoint
         final response = await http.get(
-          Uri.parse('${ApiConstants.notifications}/$userId'),
+          Uri.parse('${ApiConstants.baseUrl}/notifications/$userId'),
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
           },
         );
 
+        print('📡 Notification count response: ${response.statusCode}');
+
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
-          final notifications = data['notifications'] as List;
-          final unreadCount = notifications.where((notif) => notif['is_read'] == false).length;
-
+          if (data['success'] == true) {
+            final unreadCount = data['data']['unread_count'] ?? 0;
+            
+            print('📱 Unread notifications: $unreadCount');
+            
+            if (mounted) {
+              setState(() {
+                _notificationCount = unreadCount;
+              });
+            }
+          }
+        }
+      } else {
+        print('⚠️ User ID or token not found for notification count');
+        if (mounted) {
           setState(() {
-            _notificationCount = unreadCount;
+            _notificationCount = 0;
           });
         }
       }
     } catch (e) {
-      print('Error fetching notification count: $e');
+      print('❌ Error fetching notification count: $e');
     }
   }
 
+
   Future<void> _fetchPromos() async {
-    setState(() {
-      _isLoadingPromos = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoadingPromos = true;
+      });
+    }
 
     try {
+      print('🔄 Fetching promos from: ${ApiConstants.promo}');
       final response = await http.get(Uri.parse(ApiConstants.promo));
+
+      print('📡 Promo response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
 
         if (jsonResponse['success'] == true) {
           final List<dynamic> data = jsonResponse['data'];
+          print('📊 Total promos received: ${data.length}');
+          
+          // Filter only active promos
           final activePromos = data.where((promo) =>
-          promo['status_promo'] == 'Aktif').toList();
+              promo['status_promo'] == 'Aktif').toList();
 
-          setState(() {
-            _promos = List<Map<String, dynamic>>.from(activePromos);
-            _isLoadingPromos = false;
-          });
+          print('✅ Active promos found: ${activePromos.length}');
+
+          if (mounted) {
+            setState(() {
+              _promos = List<Map<String, dynamic>>.from(activePromos);
+              _isLoadingPromos = false;
+            });
+          }
+        } else {
+          print('❌ API returned success: false');
+          if (mounted) {
+            setState(() {
+              _isLoadingPromos = false;
+            });
+          }
         }
       } else {
+        print('❌ HTTP Error: ${response.statusCode}');
         throw Exception('Failed to load promos');
       }
     } catch (e) {
-      print('Error fetching promos: $e');
-      setState(() {
-        _isLoadingPromos = false;
-      });
+      print('💥 Error fetching promos: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingPromos = false;
+        });
+      }
     }
   }
 
   Future<void> _fetchNews() async {
-    setState(() {
-      _isLoadingNews = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoadingNews = true;
+      });
+    }
 
     try {
+      print('🔄 Fetching news...');
       final response = await http.get(
         Uri.parse('https://gnews.io/api/v4/search?q=skincare%20OR%20face%20care%20OR%20facial%20OR%20acne%20OR%20moisturizer%20OR%20sunscreen%20OR%20skin%20health%20OR%20glowing%20skin&lang=en&max=10&apikey=12b7d8ecd9b4e2b3fda3033377788931'),
       );
@@ -116,18 +184,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         final jsonResponse = json.decode(response.body);
         final List<dynamic> articles = jsonResponse['articles'] ?? [];
 
-        setState(() {
-          _news = List<Map<String, dynamic>>.from(articles.take(5));
-          _isLoadingNews = false;
-        });
+        print('✅ News fetched: ${articles.length} articles');
+
+        if (mounted) {
+          setState(() {
+            _news = List<Map<String, dynamic>>.from(articles.take(5));
+            _isLoadingNews = false;
+          });
+        }
       } else {
         throw Exception('Failed to load news');
       }
     } catch (e) {
-      print('Error fetching news: $e');
-      setState(() {
-        _isLoadingNews = false;
-      });
+      print('💥 Error fetching news: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingNews = false;
+        });
+      }
     }
   }
 
@@ -141,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadUserName();
+      _fetchNotificationCount(); // Also refresh notification count
     }
   }
 
@@ -151,9 +226,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _loadUserName() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -262,12 +339,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
                     article['image'] ?? '',
-                    width: 80,
-                    height: 80,
+                    width: 90,
+                    height: 90,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      width: 80,
-                      height: 80,
+                      width: 90,
+                      height: 90,
                       color: Colors.grey[200],
                       child: const Icon(Icons.image, color: Colors.grey),
                     ),
@@ -315,6 +392,276 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
       },
     );
+  }
+  
+  Widget _buildPromoCard(Map<String, dynamic> promo) {
+    final hasImage = promo['gambar_promo'] != null && 
+                     promo['gambar_promo'].toString().isNotEmpty;
+    
+    if (hasImage) {
+      // ✅ Promo with image - use ApiConstants.getImageUrl()
+      return Stack(
+        children: [
+          // Background image
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18), // Slightly smaller than parent
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Image.network(
+                ApiConstants.getImageUrl(promo['gambar_promo']), // ✅ Use getImageUrl
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: appTheme.lightBadge100,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: appTheme.orange200,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Loading image...',
+                            style: TextStyle(
+                              color: appTheme.lightGrey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print('❌ Error loading promo image: ${promo['gambar_promo']} - $error');
+                  print('❌ Full URL: ${ApiConstants.getImageUrl(promo['gambar_promo'])}');
+                  
+                  // ✅ Fallback to no-image design
+                  return _buildNoImagePromoCard(promo);
+                },
+              ),
+            ),
+          ),
+          
+          // Dark overlay for better text readability
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.7),
+                ],
+              ),
+            ),
+          ),
+          
+          // Text content
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    promo['nama_promo'] ?? 'Promo Spesial',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    promo['deskripsi_promo'] ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Discount indicator
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: appTheme.orange200,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getDiscountText(promo),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      // ✅ Promo without image
+      return _buildNoImagePromoCard(promo);
+    }
+  }
+
+  Widget _buildNoImagePromoCard(Map<String, dynamic> promo) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            appTheme.lightBadge100,
+            appTheme.lightGreen.withOpacity(0.3),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon at top
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: appTheme.orange200.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.local_offer,
+                    color: appTheme.orange200,
+                    size: 24,
+                  ),
+                ),
+                const Spacer(),
+                // Discount badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: appTheme.darkCherry,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _getDiscountText(promo),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const Spacer(),
+            
+            // Content at bottom
+            Text(
+              promo['nama_promo'] ?? 'Promo Spesial',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: appTheme.black900,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              promo['deskripsi_promo'] ?? '',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: appTheme.black900.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Period info
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: appTheme.lightGreen,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Berlaku hingga ${_formatPromoDate(promo['tanggal_berakhir'])}',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: appTheme.black900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ Add helper methods
+  String _getDiscountText(Map<String, dynamic> promo) {
+    if (promo['tipe_potongan'] == 'Diskon') {
+      return 'Diskon ${promo['potongan_harga']}%';
+    } else {
+      return 'Hemat ${_formatCurrency(promo['potongan_harga'])}';
+    }
+  }
+
+  String _formatCurrency(dynamic amount) {
+    if (amount == null) return '0';
+    try {
+      final num value = num.parse(amount.toString());
+      if (value >= 1000000) {
+        return '${(value / 1000000).toStringAsFixed(1)}Jt';
+      } else if (value >= 1000) {
+        return '${(value / 1000).toStringAsFixed(0)}K';
+      } else {
+        return value.toStringAsFixed(0);
+      }
+    } catch (e) {
+      return '0';
+    }
+  }
+
+  String _formatPromoDate(dynamic date) {
+    if (date == null) return 'TBA';
+    try {
+      final DateTime dateTime = DateTime.parse(date.toString());
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    } catch (e) {
+      return date.toString();
+    }
   }
 
   @override
@@ -452,55 +799,56 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ],
               ),
             ),
-          ),
-          actions: [
+        ),
+        actions: [
           // Notification bell with badge
           Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.notifications,
-                color: appTheme.black900,
-                size: 36,
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.notifications,
+                  color: appTheme.black900,
+                  size: 32,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.notificationScreen)
+                      .then((_) => _fetchNotificationCount());
+                },
               ),
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.notificationScreen)
-                    .then((_) => _fetchNotificationCount());
-              },
-            ),
-            if (_notificationCount > 0)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: appTheme.darkCherry,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  child: Text(
-                    _notificationCount > 99 ? '99+' : _notificationCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+              if (_notificationCount > 0)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: appTheme.darkCherry,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    textAlign: TextAlign.center,
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    child: Text(
+                      _notificationCount > 99 ? '99+' : _notificationCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(width: 12),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _loadUserName,
+        onRefresh: _refreshAllData, // Updated to refresh all data including promos
         color: appTheme.orange200,
         backgroundColor: Colors.white,
         child: SingleChildScrollView(
@@ -551,7 +899,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? Container(
                 height: 250,
                 alignment: Alignment.center,
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: appTheme.orange200),
               )
                   : _promos.isEmpty
                   ? Padding(
@@ -560,7 +908,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   height: 250,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: appTheme.lightBadge100,
+                    color: appTheme.whiteA700,
                     borderRadius: BorderRadius.circular(24.0),
                     border: Border.all(color: Colors.black, width: 2),
                   ),
@@ -604,43 +952,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               offset: const Offset(0, 3),
                             ),
                           ],
-                          image: DecorationImage(
-                            image: NetworkImage(promo['gambar_promo']),
-                            fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(
-                              Colors.black.withAlpha((0.3 * 255).toInt()),
-                              BlendMode.darken,
-                            ),
-                          ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(
-                                promo['nama_promo'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                promo['deskripsi_promo'] ?? '',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        ),
+                        child: _buildPromoCard(promo), // ✅ Extract to separate method
                       ),
                     );
                   },
@@ -665,49 +978,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
 
+              
               const SizedBox(height: 36),
-
-              // Jadwal Treatment dengan padding
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  height: 70,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: appTheme.lightGreen,
-                    borderRadius: BorderRadius.circular(24.0),
-                    border: Border.all(color: appTheme.black900, width: 2),
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.doctorScheduleScreen);
-                    },
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Waktu Treatment Tersedia",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: appTheme.black900,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.calendar_today,
-                            color: appTheme.black900,
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Add this after the doctor schedule section in the body
-              const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: const Divider(

@@ -164,27 +164,45 @@ class _PromoScreenState extends State<PromoScreen> {
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: Image.network(
-                  promo['gambar_promo'],
+                  ApiConstants.getImageUrl(promo['gambar_promo'] ?? ''), // ✅ Use getImageUrl
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                            : null,
+                    return Container(
+                      color: appTheme.lightBadge100,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: appTheme.orange200,
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
                       ),
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
+                    print('❌ Error loading promo image: ${promo['gambar_promo']} - $error');
                     return Container(
                       color: appTheme.lightBadge100,
                       child: Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: appTheme.lightGrey,
-                          size: 50,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image_not_supported,
+                              color: appTheme.lightGrey,
+                              size: 50,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Gambar tidak tersedia',
+                              style: TextStyle(
+                                color: appTheme.lightGrey,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );

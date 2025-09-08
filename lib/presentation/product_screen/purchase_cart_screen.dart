@@ -727,16 +727,61 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
-                              product['gambar_produk'] ?? '',
+                              ApiConstants.getImageUrl(product['gambar_produk'] ?? ''), // ✅ Use getImageUrl
                               width: 100,
                               height: 100,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
                                 return Container(
                                   width: 100,
                                   height: 100,
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                                  color: appTheme.lightBadge100,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: appTheme.orange200,
+                                      strokeWidth: 2,
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('❌ Error loading cart product image: ${product['gambar_produk']} - $error');
+                                print('❌ Full URL attempted: ${ApiConstants.getImageUrl(product['gambar_produk'] ?? '')}');
+                                
+                                return Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: appTheme.lightBadge100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: appTheme.lightGrey.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.image_not_supported,
+                                        color: appTheme.lightGrey,
+                                        size: 32,
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'No Image',
+                                        style: TextStyle(
+                                          color: appTheme.lightGrey,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 );
                               },
                             ),
@@ -1042,29 +1087,67 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           return;
                         }
 
-                        // Format products array from cart items
-                        List<Map<String, dynamic>> products = cartItems.map((item) {
-                          return {
-                            "id_produk": item['produk']['id_produk'],
-                            "jumlah_produk": int.parse(item['jumlah'].toString())
-                          };
-                        }).toList();
+                        // Format products array from cart items with better null safety
+                        List<Map<String, dynamic>> products = [];
+                        
+                        for (var item in cartItems) {
+                          // Safely extract product ID
+                          dynamic productIdRaw = item['produk']?['id_produk'];
+                          int? productId;
+                          
+                          if (productIdRaw is int) {
+                            productId = productIdRaw;
+                          } else if (productIdRaw is String) {
+                            productId = int.tryParse(productIdRaw);
+                          } else if (productIdRaw is double) {
+                            productId = productIdRaw.toInt();
+                          }
+                          
+                          // Safely extract quantity
+                          dynamic quantityRaw = item['jumlah'];
+                          int? quantity;
+                          
+                          if (quantityRaw is int) {
+                            quantity = quantityRaw;
+                          } else if (quantityRaw is String) {
+                            quantity = int.tryParse(quantityRaw);
+                          } else if (quantityRaw is double) {
+                            quantity = quantityRaw.toInt();
+                          }
+                          
+                          // Only add if both values are valid
+                          if (productId != null && quantity != null && quantity > 0) {
+                            products.add({
+                              "id_produk": productId,
+                              "jumlah_produk": quantity
+                            });
+                          } else {
+                            print('Skipping invalid item: productId=$productId, quantity=$quantity');
+                            print('Raw values: productIdRaw=$productIdRaw, quantityRaw=$quantityRaw');
+                          }
+                        }
 
-                        double potonganHarga = _selectedPromo?.calculateDiscount(totalPrice) ?? 0.0;
-                        double besaranPajak = _calculateTax();
+                        // Check if we have valid products
+                        if (products.isEmpty) {
+                          setState(() {
+                            isLoading = false;
+                          });
+                          _showMessage('Tidak ada produk valid untuk checkout');
+                          return;
+                        }
 
-                        // Prepare request body
+                        // Prepare request body sesuai format API
                         Map<String, dynamic> requestBody = {
                           'id_user': userId,
                           'produk': products,
-                          'potongan_harga': potonganHarga.toStringAsFixed(2),
-                          'besaran_pajak': besaranPajak.toStringAsFixed(2),
                         };
 
-                        // Add promo if selected
-                        if (_selectedPromo != null) {
+                        // Add promo if selected (hanya jika ada)
+                        if (_selectedPromo != null && _selectedPromo!.idPromo != null) {
                           requestBody['id_promo'] = _selectedPromo!.idPromo;
                         }
+
+                        print('Checkout request body: ${jsonEncode(requestBody)}');
 
                         final response = await http.post(
                           Uri.parse(ApiConstants.penjualanProduk),
@@ -1075,40 +1158,88 @@ class _PurchaseCartScreenState extends State<PurchaseCartScreen> {
                           body: jsonEncode(requestBody),
                         );
 
+                        print('Checkout response status: ${response.statusCode}');
+                        print('Checkout response body: ${response.body}');
+
                         if (response.statusCode == 200 || response.statusCode == 201) {
                           final responseData = jsonDecode(response.body);
 
                           if (responseData['success'] == true) {
-                            int purchaseId = responseData['data']['id_penjualan_produk'];
+                            // Safely extract purchase ID dari struktur response yang benar
+                            dynamic purchaseIdRaw = responseData['data']?['pembelian']?['id_penjualan_produk'];
+                            
+                            if (purchaseIdRaw != null) {
+                              // Convert to guaranteed non-null int
+                              int purchaseId;
+                              
+                              if (purchaseIdRaw is int) {
+                                purchaseId = purchaseIdRaw;
+                              } else if (purchaseIdRaw is String) {
+                                final parsed = int.tryParse(purchaseIdRaw);
+                                if (parsed != null) {
+                                  purchaseId = parsed;
+                                } else {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  _showMessage('Format ID pembelian tidak valid');
+                                  return;
+                                }
+                              } else if (purchaseIdRaw is double) {
+                                purchaseId = purchaseIdRaw.toInt();
+                              } else {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                                _showMessage('Tipe data ID pembelian tidak valid');
+                                return;
+                              }
 
-                            // Clear cart after successful checkout
-                            await _clearCart(token, userId);
+                              print('Purchase ID extracted: $purchaseId'); // Debug line
 
-                            // Navigate to purchase product screen
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PurchaseProductScreen(
-                                  purchaseId: purchaseId,
+                              // Clear cart after successful checkout
+                              await _clearCart(token, userId);
+
+                              // Navigate to purchase product screen
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PurchaseProductScreen(
+                                    purchaseId: purchaseId, // Guaranteed non-null
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              setState(() {
+                                isLoading = false;
+                              });
+                              _showMessage('ID pembelian tidak ditemukan dalam response');
+                              print('Response structure: ${responseData['data']}'); // Debug line
+                            }
                           } else {
                             setState(() {
                               isLoading = false;
                             });
-                            _showMessage('Gagal melakukan checkout: ${responseData['message']}');
+                            _showMessage('Gagal melakukan checkout: ${responseData['message'] ?? 'Unknown error'}');
                           }
                         } else {
                           setState(() {
                             isLoading = false;
                           });
-                          _showMessage('Gagal melakukan checkout. Silakan coba lagi.');
+                          
+                          // Try to parse error message
+                          try {
+                            final errorData = jsonDecode(response.body);
+                            _showMessage('Gagal melakukan checkout: ${errorData['message'] ?? 'Silakan coba lagi'}');
+                          } catch (e) {
+                            _showMessage('Gagal melakukan checkout. Status: ${response.statusCode}');
+                          }
                         }
                       } catch (e) {
                         setState(() {
                           isLoading = false;
                         });
+                        print('Checkout error: $e');
                         _showMessage('Error: $e');
                       }
                     } : null,

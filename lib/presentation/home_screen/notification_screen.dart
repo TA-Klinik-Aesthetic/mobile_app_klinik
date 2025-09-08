@@ -1,11 +1,13 @@
-// file: lib/screens/notifikasi_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:mobile_app_klinik/core/providers/notifikasi_provider.dart';
-import 'package:mobile_app_klinik/core/utils/shared_preferences_util.dart';
-import 'package:mobile_app_klinik/core/widgets/notification_item.dart';
-import 'package:provider/provider.dart';
+import 'package:mobile_app_klinik/core/services/fcm_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+
+import '../../api/api_constant.dart';
+import '../../core/app_export.dart';
+import 'detail_notification_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -15,154 +17,589 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  late int userId;
+  List<Map<String, dynamic>> notifications = [];
+  int unreadCount = 0;
   bool isLoading = true;
+  String? errorMessage;
+  int? currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId();
+    _initializeAndFetch();
   }
 
-  Future<void> _loadUserId() async {
-    final id = await SharedPreferencesUtil.getUserId();
-    if (id != null) {
+  Future<void> _initializeAndFetch() async {
+    await _getCurrentUserId();
+    if (currentUserId != null) {
+      await _fetchNotifications();
+    } else {
       setState(() {
-        userId = id;
+        errorMessage = 'User belum login';
         isLoading = false;
       });
-      _refreshNotifications();
-    } else {
-      // Handle case when user is not logged in
-      Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 
-  Future<void> _refreshNotifications() async {
-    if (!isLoading) {
-      await Provider.of<NotifikasiProvider>(context, listen: false).fetchNotifications(userId);
+  Future<void> _getCurrentUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // ✅ Try multiple ways to get user ID
+      int? userId = prefs.getInt('id_user');
+      
+      if (userId == null) {
+        // Try as string and convert
+        final userIdString = prefs.getString('id_user');
+        if (userIdString != null) {
+          userId = int.tryParse(userIdString);
+        }
+      }
+
+      print('🔍 Debug: Current user ID = $userId');
+      print('🔍 Debug: All SharedPrefs keys = ${prefs.getKeys()}');
+      
+      setState(() {
+        currentUserId = userId;
+      });
+
+      // If no user ID found, redirect to login
+      if (userId == null) {
+        final token = prefs.getString('token');
+        if (token == null) {
+          // No token, definitely not logged in
+          if (mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context, 
+              AppRoutes.loginUserScreen, 
+              (route) => false
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Error getting current user ID: $e');
+      setState(() {
+        errorMessage = 'Error mengambil data user: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchNotifications() async {
+    if (currentUserId == null) {
+      setState(() {
+        errorMessage = 'User ID tidak ditemukan';
+        isLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context, 
+            AppRoutes.loginUserScreen, 
+            (route) => false
+          );
+        }
+        return;
+      }
+
+      final url = '${ApiConstants.baseUrl}/notifications/$currentUserId';
+      print('📡 Fetching notifications from: $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        if (data['success'] == true) {
+          final notificationsData = data['data']['notifications'] as List;
+          final unreadCountData = data['data']['unread_count'] ?? 0;
+
+          // Set state dulu
+          setState(() {
+            notifications = List<Map<String, dynamic>>.from(notificationsData);
+            unreadCount = unreadCountData;
+            isLoading = false;
+            errorMessage = null;
+          });
+
+          // Fallback push lokal: tampilkan push untuk item UNREAD baru sejak fetch terakhir
+          try {
+            final lastKey = 'last_seen_notif_id_${currentUserId!}';
+            final lastSeenId = prefs.getInt(lastKey) ?? 0;
+
+            final newUnread = notifications.where((n) {
+              final id = int.tryParse(n['id_notifikasi'].toString()) ?? 0;
+              final status = (n['status'] ?? 'unread').toString().toLowerCase();
+              return status == 'unread' && id > lastSeenId;
+            }).toList();
+
+            if (newUnread.isNotEmpty) {
+              print('🔔 Fallback push for ${newUnread.length} new unread items');
+              for (final n in newUnread) {
+                await FCMService.showLocalFromNotificationMap(n);
+              }
+            }
+
+            // Simpan maksimum id_notifikasi yang ada sekarang agar tidak double push
+            final maxId = notifications.fold<int>(lastSeenId, (acc, n) {
+              final id = int.tryParse(n['id_notifikasi'].toString()) ?? 0;
+              return id > acc ? id : acc;
+            });
+            await prefs.setInt(lastKey, maxId);
+          } catch (e) {
+            print('⚠️ Fallback push error: $e');
+          }
+
+          print('✅ Notifications loaded: ${notifications.length} items, $unreadCount unread');
+        } else {
+          throw Exception(data['message'] ?? 'Failed to fetch notifications');
+        }
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context, 
+            AppRoutes.loginUserScreen, 
+            (route) => false
+          );
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('❌ Error fetching notifications: $e');
+      setState(() {
+        errorMessage = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _markAsRead(int notificationId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) return;
+
+      // ✅ Use correct full URL
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/notifications/read/$notificationId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('✅ Mark as read response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        setState(() {
+          final index = notifications.indexWhere(
+            (notif) => notif['id_notifikasi'] == notificationId
+          );
+          if (index != -1 && notifications[index]['status'] == 'unread') {
+            notifications[index]['status'] = 'read';
+            unreadCount = (unreadCount - 1).clamp(0, notifications.length);
+          }
+        });
+      }
+    } catch (e) {
+      print('❌ Error marking notification as read: $e');
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    if (currentUserId == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) return;
+
+      // ✅ Use correct full URL
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/notifications/read-all/$currentUserId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          for (var notification in notifications) {
+            notification['status'] = 'read';
+          }
+          unreadCount = 0;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Semua notifikasi telah dibaca')),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error marking all notifications as read: $e');
+    }
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays == 0) {
+        if (difference.inHours == 0) {
+          if (difference.inMinutes == 0) {
+            return 'Baru saja';
+          }
+          return '${difference.inMinutes} menit yang lalu';
+        }
+        return '${difference.inHours} jam yang lalu';
+      } else if (difference.inDays == 1) {
+        return 'Kemarin';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays} hari yang lalu';
+      } else {
+        return DateFormat('dd MMM yyyy', 'id_ID').format(date);
+      }
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  // ✅ Simple method that returns Icon directly
+  Icon _getNotificationIcon(String jenis) {
+    print('🔍 Notification jenis: "$jenis"');
+    
+    switch (jenis.toLowerCase().trim()) {
+      case 'produk':
+      case 'product':
+        return Icon(Icons.shopping_bag, color: appTheme.orange200, size: 24);
+      case 'treatment':
+        return Icon(Icons.spa, color: appTheme.lightGreen, size: 24);
+      case 'konsultasi':
+        return Icon(Icons.medical_services, color: Color.fromARGB(255, 92, 158, 213), size: 24);
+      case 'promo':
+        return Icon(Icons.local_offer, color: appTheme.darkCherry, size: 24);
+      default:
+        print('⚠️ Unknown notification type: "$jenis"');
+        return Icon(Icons.notifications, color: Colors.grey, size: 24);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: appTheme.whiteA700,
       appBar: AppBar(
-        title: const Text('Notifikasi'),
+        title: Text(
+          'Notifikasi',
+          style: TextStyle(
+            color: appTheme.orange200,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: appTheme.whiteA700,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: appTheme.black900),
         actions: [
-          if (!isLoading)
+          if (unreadCount > 0)
             IconButton(
-              icon: const Icon(Icons.check_circle_outline),
+              icon: Icon(Icons.done_all, color: appTheme.orange200),
               tooltip: 'Tandai semua telah dibaca',
-              onPressed: () async {
-                await Provider.of<NotifikasiProvider>(context, listen: false).markAllAsRead(userId);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Semua notifikasi telah dibaca')),
-                );
-              },
+              onPressed: _markAllAsRead,
             ),
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Consumer<NotifikasiProvider>(
-        builder: (context, notifikasiProvider, child) {
-          if (notifikasiProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (notifikasiProvider.error != null) {
-            return Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  CircularProgressIndicator(color: appTheme.orange200),
                   const SizedBox(height: 16),
                   Text(
-                    'Terjadi kesalahan',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    'Memuat notifikasi...',
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
-                  Text(notifikasiProvider.error!),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _refreshNotifications,
-                    child: const Text('Coba Lagi'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (notifikasiProvider.notifications.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: _refreshNotifications,
-              child: ListView(
-                children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.notifications_off, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Belum ada notifikasi',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ],
-                      ),
+                  Text(
+                    'User ID: ${currentUserId ?? "Loading..."}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
                     ),
                   ),
                 ],
               ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: _refreshNotifications,
-            child: ListView.builder(
-              itemCount: notifikasiProvider.notifications.length,
-              itemBuilder: (context, index) {
-                final notification = notifikasiProvider.notifications[index];
-                return NotificationItem(
-                  notification: notification,
-                  onTap: () {
-                    if (notification.status == 'unread') {
-                      notifikasiProvider.markAsRead(notification.idNotifikasi);
-                    }
-                    _navigateToDetail(notification);
-                  },
-                );
-              },
-            ),
-          );
-        },
-      ),
+            )
+          : errorMessage != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Terjadi kesalahan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'User ID: ${currentUserId ?? "Tidak ditemukan"}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _initializeAndFetch,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: appTheme.orange200,
+                        ),
+                        child: const Text(
+                          'Coba Lagi',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (currentUserId == null)
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context, 
+                              AppRoutes.loginUserScreen, 
+                              (route) => false
+                            );
+                          },
+                          child: Text(
+                            'Login Ulang',
+                            style: TextStyle(color: appTheme.orange200),
+                          ),
+                        ),
+                    ],
+                  ),
+                )
+              : notifications.isEmpty
+                  ? RefreshIndicator(
+                      onRefresh: _fetchNotifications,
+                      color: appTheme.orange200,
+                      child: ListView(
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.notifications_off, 
+                                       size: 64, 
+                                       color: Colors.grey),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Belum ada notifikasi',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'User ID: ${currentUserId ?? "Tidak ditemukan"}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _fetchNotifications,
+                      color: appTheme.orange200,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          final notification = notifications[index];
+                          final isUnread = notification['status'] == 'unread';
+                          
+                          // ✅ Debug the notification data
+                          print('🔍 Notification $index: ${notification['jenis']} - ${notification['judul']}');
+                          
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: isUnread 
+                                  ? Colors.white
+                                  : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isUnread 
+                                    ? appTheme.orange200.withOpacity(0.3)
+                                    : Colors.grey.shade300,
+                                width: isUnread ? 2 : 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              leading: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  // ✅ Use the icon method directly
+                                  color: _getNotificationIcon(notification['jenis'] ?? '').color!
+                                      .withOpacity(isUnread ? 0.2 : 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                // ✅ Use the icon method directly
+                                child: _getNotificationIcon(notification['jenis'] ?? ''),
+                              ),
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      notification['judul'] ?? '',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: isUnread 
+                                            ? FontWeight.bold 
+                                            : FontWeight.w500,
+                                        color: isUnread 
+                                            ? appTheme.black900 
+                                            : Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isUnread)
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: appTheme.orange200,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    notification['pesan'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isUnread 
+                                          ? Colors.grey[600] 
+                                          : Colors.grey[500],
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _formatDate(notification['tanggal_notifikasi'] ?? ''),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isUnread 
+                                              ? appTheme.orange200 
+                                              : Colors.grey.shade500,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      // ✅ Show notification type for debugging (remove in production)
+                                      if (true) // Set to false in production
+                                        Text(
+                                          '(${notification['jenis'] ?? 'unknown'})',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey.shade400,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              onTap: () {
+                                if (isUnread) {
+                                  _markAsRead(notification['id_notifikasi']);
+                                }
+                                
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailNotificationScreen(
+                                      notification: notification,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
     );
-  }
-
-  void _navigateToDetail(notification) {
-    // Navigate based on notification type
-    final jenis = notification.jenis;
-    final idReferensi = notification.idReferensi;
-
-    if (idReferensi == null) return;
-
-    switch (jenis) {
-      case 'treatment':
-        Navigator.of(context).pushNamed('/treatment-detail', arguments: idReferensi);
-        break;
-      case 'konsultasi':
-        Navigator.of(context).pushNamed('/konsultasi-detail', arguments: idReferensi);
-        break;
-      case 'produk':
-        Navigator.of(context).pushNamed('/produk-detail', arguments: idReferensi);
-        break;
-      case 'promo':
-        Navigator.of(context).pushNamed('/promo-detail', arguments: idReferensi);
-        break;
-    }
   }
 }

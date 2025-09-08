@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/app_export.dart';
 import 'en_us/en_us_translations.dart';
 import 'id/id_translation.dart';
 

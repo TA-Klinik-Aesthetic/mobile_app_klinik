@@ -2,19 +2,19 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_app_klinik/core/services/auth_service.dart';
 import 'package:mobile_app_klinik/core/services/fcm_service.dart';
-import 'package:mobile_app_klinik/core/widgets/language_selector.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../../api/api_constant.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/custom_outlined_button.dart';
-import '../home_screen/home_screen.dart';
 
 class LoginUserScreen extends StatefulWidget {
   const LoginUserScreen({super.key});
@@ -84,10 +84,23 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     try {
       print('Attempting login with email: $email');
       
+      // ✅ Get FCM token before login
+      String? fcmToken;
+      try {
+        fcmToken = await FCMService.getToken();
+        print('🔔 FCM Token for login: ${fcmToken?.substring(0, 50)}...');
+      } catch (e) {
+        print('⚠️ Failed to get FCM token for login: $e');
+      }
+      
       final response = await http.post(
         Uri.parse(ApiConstants.login),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({
+          'email': email, 
+          'password': password,
+          'fcm_token': fcmToken, // ✅ Send FCM token to backend
+        }),
       );
 
       print('Login response status: ${response.statusCode}');
@@ -118,15 +131,40 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           return;
         }
 
+        // ✅ Save all user data including FCM token from response
+        await AuthService.saveUserData(
+          token: responseData['token'],
+          userId: responseData['user']['id_user'].toString(),
+          userName: responseData['user']['nama_user'],
+          userEmail: responseData['user']['email'],
+        );
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('id_user', responseData['user']['id_user']);
         await prefs.setString('nama_user', responseData['user']['nama_user']);
-        await prefs.setString('no_telp', responseData['user']['no_telp']);
+        await prefs.setString('no_telp', responseData['user']['no_telp'] ?? '');
         await prefs.setString('email', responseData['user']['email']);
         await prefs.setString('role', responseData['user']['role']);
         await prefs.setString('token', responseData['token']);
+        
+        // ✅ Save FCM token from response (if provided by backend)
+        if (responseData['fcm_token'] != null) {
+          await prefs.setString('fcm_token', responseData['fcm_token']);
+          print('🔔 FCM token from server saved: ${responseData['fcm_token']}');
+        }
 
-        _registerFCMInBackground();
+        await prefs.setBool('onboarding_completed', true);
+        await prefs.setBool('first_time_user', false);
+
+        // ✅ Initialize FCM listener after login
+        try {
+          await FCMService.initializeNotificationListener();
+          await FCMService.debugStatus();
+          print('✅ FCM listeners initialized after login');
+          
+        } catch (e) {
+          print('⚠️ Error initializing FCM after login: $e');
+        }
 
         if (mounted) {
           toastification.show(
@@ -143,77 +181,49 @@ class LoginUserScreenState extends State<LoginUserScreen> {
             icon: Icon(Icons.check_circle, color: appTheme.whiteA700),
           );
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
+          // UBAH: pakai navigator dari context, bukan NavigatorService
+          Future.delayed(const Duration(milliseconds: 150), () {
+            if (!mounted) return;
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              AppRoutes.homeScreen,
+              (route) => false,
+            );
+          });
         }
       } else {
         final errorData = jsonDecode(response.body);
-        String errorMessage = 'msg_login_failed'.tr;
-        
-        if (response.statusCode == 403) {
-          errorMessage = errorData['message'] ?? 'msg_account_not_verified'.tr;
-        } else if (response.statusCode == 401) {
-          errorMessage = errorData['message'] ?? 'msg_invalid_credentials'.tr;
-        } else if (response.statusCode == 422) {
-          if (errorData['errors'] != null) {
-            final errors = errorData['errors'] as Map<String, dynamic>;
-            final errorMessages = <String>[];
-            
-            errors.forEach((field, messages) {
-              if (messages is List) {
-                errorMessages.addAll(messages.cast<String>());
-              } else {
-                errorMessages.add(messages.toString());
-              }
-            });
-            
-            errorMessage = errorMessages.join('\n');
-          }
-        } else {
-          errorMessage = errorData['message'] ?? 'msg_login_failed'.tr;
-        }
-
         if (mounted) {
           toastification.show(
             context: context,
             title: Text('lbl_login_failed'.tr, style: const TextStyle(color: Colors.white)),
-            description: Text(errorMessage, style: const TextStyle(color: Colors.white)),
-            autoCloseDuration: const Duration(seconds: 5),
+            description: Text(errorData['message'] ?? 'Login failed', style: const TextStyle(color: Colors.white)),
+            autoCloseDuration: const Duration(seconds: 3),
             backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
             style: ToastificationStyle.flat,
             borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
-            icon: Icon(Icons.block, color: appTheme.whiteA700),
+            icon: const Icon(Icons.error, color: Colors.white),
           );
         }
       }
     } catch (e) {
+      print('Login error: $e');
       if (mounted) {
         setState(() {
           isLoading = false;
         });
-      }
-
-      print('Login error: $e');
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${'msg_something_wrong'.tr}: $e")),
+        
+        toastification.show(
+          context: context,
+          title: const Text('Error', style: TextStyle(color: Colors.white)),
+          description: Text('Connection error: $e', style: const TextStyle(color: Colors.white)),
+          autoCloseDuration: const Duration(seconds: 3),
+          backgroundColor: appTheme.darkCherry.withAlpha((0.8 * 255).toInt()),
+          style: ToastificationStyle.flat,
+          borderSide: BorderSide(color: appTheme.whiteA700, width: 2),
+          icon: const Icon(Icons.error, color: Colors.white),
         );
       }
     }
-  }
-
-  void _registerFCMInBackground() {
-    Future.delayed(const Duration(milliseconds: 500), () async {
-      try {
-        await FCMService.registerTokenAfterLogin();
-        print('FCM token registered successfully after login');
-      } catch (fcmError) {
-        print('Failed to register FCM token: $fcmError');
-      }
-    });
   }
 
   @override
@@ -258,11 +268,19 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
               ),
             ),
+            // ✅ NEW: Back to Info Button
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 16,
+              child: _buildBackToInfoButton(),
+            ),  
+
             // Language Selector positioned manually
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
@@ -295,10 +313,12 @@ class LoginUserScreenState extends State<LoginUserScreen> {
           ),
           child: Column(
             children: [
-              // Logo centered (no language selector here)
+              // Logo centered
               buildLogo(),
               
               const SizedBox(height: 40),
+              
+              // Email Input
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
@@ -307,7 +327,10 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                 ),
               ),
               buildEmailInput(),
+              
               const SizedBox(height: 16),
+              
+              // Password Input
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
@@ -316,19 +339,39 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                 ),
               ),
               buildPasswordInput(),
+              
               const SizedBox(height: 8),
+              
+              // Forgot Password
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
                   padding: const EdgeInsets.all(6.0),
-                  child: Text("msg_forgot_password".tr, style: theme.textTheme.bodySmall),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.forgotPasswordScreen);
+                    },
+                    child: Text(
+                      "msg_forgot_password".tr,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: appTheme.orange400,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
+              
               const SizedBox(height: 24),
+              
+              // Login Button
               isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : buildLoginButton(),
+              
               const SizedBox(height: 16),
+              
+              // Register Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -347,11 +390,59 @@ class LoginUserScreenState extends State<LoginUserScreen> {
                     ),
                   ),
                 ],
-              ),
+              ),              
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  // ✅ NEW: Add this method to login_user_screen.dart
+  Widget _buildBackToInfoButton() {
+    return SizedBox(
+      width: 135.h,
+      height: 35.h,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          _goToOnboarding();
+        },
+        icon: Icon(
+          Icons.info_outline,
+          size: 24,
+          color: appTheme.black900,
+        ),
+        label: Text(
+          "Back to Info",
+          style: TextStyle(
+            color: appTheme.black900,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          side: BorderSide(
+            color: appTheme.black900,
+            width: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: appTheme.whiteA700.withOpacity(1),
+        ),
+      ),
+    );
+  }
+
+  // ✅ NEW: Add this method to login_user_screen.dart
+  void _goToOnboarding() {
+    print('🔄 Navigating back to onboarding from login');
+    // UBAH: pakai navigator dari context
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRoutes.onboardingScreen,
+      (route) => false,
     );
   }
 
@@ -388,6 +479,8 @@ class LoginUserScreenState extends State<LoginUserScreen> {
     return CustomOutlinedButton(
       text: "lbl_login".tr,
       onPressed: isLoading ? null : _loginUser,
+      backgroundColor: appTheme.orange200, // Add this parameter
+      textColor: Colors.white, // Add this for contrast
     );
   }
 

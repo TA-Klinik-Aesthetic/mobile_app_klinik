@@ -9,10 +9,10 @@ class NotificationBadge extends StatelessWidget {
   final int userId;
 
   const NotificationBadge({
-    Key? key,
+    super.key,
     required this.child,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
